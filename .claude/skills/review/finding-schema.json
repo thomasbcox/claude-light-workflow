@@ -9,6 +9,7 @@
     },
     "findings": {
       "type": "array",
+      "description": "Empty array if there are no issues.",
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -18,12 +19,12 @@
             "enum": ["BLOCKER", "IMPORTANT", "QUESTION", "NIT"]
           },
           "title": { "type": "string", "description": "Short label for the finding." },
-          "file": { "type": "string", "description": "Path the finding is about, if any." },
-          "line": { "type": "integer", "description": "Line number, if applicable." },
+          "file": { "type": ["string", "null"], "description": "Path the finding is about, or null." },
+          "line": { "type": ["integer", "null"], "description": "Line number, or null." },
           "claim": { "type": "string", "description": "What is wrong and why it matters." },
-          "suggestion": { "type": "string", "description": "A concrete proposed fix, if any." }
+          "suggestion": { "type": ["string", "null"], "description": "Concrete proposed fix, or null." }
         },
-        "required": ["severity", "title", "claim"]
+        "required": ["severity", "title", "file", "line", "claim", "suggestion"]
       }
     }
   },
