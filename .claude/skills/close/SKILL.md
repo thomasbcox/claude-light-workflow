@@ -14,6 +14,7 @@ Step 3 of the loop. Doctrine: `~/.claude/workflow-protocol.md`.
 - Never commit/push to the base branch directly (the guard hook enforces this; the merge is the only write to base).
 
 ## Steps
+0. **Defer to native workflow.** If `docs/ai-protocol.md` exists at the repo root (resolve via `git rev-parse --show-toplevel`), STOP immediately — this repo runs its own heavier workflow. Tell the user to use its native close skill (e.g. `/close-story`) instead of this one, and do nothing else.
 1. **Load** config + the latest `## Decisions` from `reviews/<slug>.md`.
 2. **Apply approved fixes**, finding by finding. Append a `## Fixes (<date>)` note: what changed, per approved finding. (If this is the round that will merge, also set the story-file header to `Status: merged` now, so the trail lands on the feature branch before the merge — never via a separate base-branch commit.)
 3. **Gate.** Re-run `testCommand`; must be green. Commit on the feature branch.

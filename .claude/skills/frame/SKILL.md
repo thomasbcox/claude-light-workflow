@@ -14,6 +14,7 @@ Step 1 of the lightweight Claude↔Codex review loop. Doctrine: `~/.claude/workf
 - You build; Thomas approves. Never self-approve scope.
 
 ## Steps
+0. **Defer to native workflow.** If `docs/ai-protocol.md` exists at the repo root (resolve via `git rev-parse --show-toplevel`), STOP immediately — this repo runs its own heavier workflow. Tell the user to use its native skills (e.g. `/start-story`) instead of this one, and do nothing else.
 1. **Load config.** Read `.claude/workflow.json`. If it is missing, bootstrap this repo first:
    - Base branch: `git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null | sed 's@^origin/@@'` → else `main` if it exists, else `master`.
    - Ask Thomas for the **test command** (the gate).
