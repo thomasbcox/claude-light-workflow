@@ -68,3 +68,8 @@ force-push still blocked; outside a git repo → exit 0 (no error).
  reviews/defer-to-native.md         | 49 +++++++++++++++++++++++++++++++++
 ```
 Gate: placeholder (`echo … && true`) — no executable code added. No CI configured on this repo.
+
+## Codex review (2026-06-03, base main, HEAD 0d354ca, PR #1)
+Clean — **0 findings.** "The changes satisfy the marker-based deferral spec: the hook stands down for
+`docs/ai-protocol.md` at the git root, the three skills add step-0 native workflow guards, and the
+README documents the behavior." (Raw: `reviews/defer-to-native.codex.json`.)

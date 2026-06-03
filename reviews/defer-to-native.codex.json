@@ -1,0 +1,1 @@
+{"summary":"Reviewed `git diff main...HEAD`, `git log --oneline main..HEAD`, and `reviews/defer-to-native.md`. The changes satisfy the marker-based deferral spec: the hook stands down for `docs/ai-protocol.md` at the git root, the three skills add step-0 native workflow guards, and the README documents the behavior. No issues found.","findings":[]}
