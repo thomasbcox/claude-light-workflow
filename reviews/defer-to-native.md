@@ -1,4 +1,4 @@
-Date: 2026-06-03 · Branch: claude/defer-to-native · Status: approved
+Date: 2026-06-03 · Branch: claude/defer-to-native · Status: merged
 
 > Approved by Thomas (2026-06-03): "yes build then review"
 
