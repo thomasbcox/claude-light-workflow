@@ -18,6 +18,12 @@ except Exception:
 [ -z "${cmd:-}" ] && exit 0
 case "$cmd" in *git*) : ;; *) exit 0 ;; esac
 
+# Defer to a repo's native workflow if present: a repo containing the heavy v3
+# protocol marker (docs/ai-protocol.md) has its own, stricter hooks. Stand down
+# (exit 0) so we don't double-fire. Safe outside a git repo (root stays empty).
+root=$(git rev-parse --show-toplevel 2>/dev/null || echo "")
+[ -n "$root" ] && [ -f "$root/docs/ai-protocol.md" ] && exit 0
+
 deny() { echo "BLOCKED by workflow guard: $1" >&2; exit 2; }
 
 # Never bypass verification.

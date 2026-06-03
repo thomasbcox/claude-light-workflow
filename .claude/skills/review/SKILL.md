@@ -13,6 +13,7 @@ Step 2 of the loop. Codex is the **independent** reviewer: it critiques and clas
 - Do not edit Codex's output. Append it verbatim (plus a readable digest) to the story file.
 
 ## Steps
+0. **Defer to native workflow.** If `docs/ai-protocol.md` exists at the repo root (resolve via `git rev-parse --show-toplevel`), STOP immediately — this repo runs its own heavier workflow. Tell the user to use its native review skill (e.g. `/prepare-codex-review`) instead of this one, and do nothing else.
 1. **Load config** from `.claude/workflow.json`; identify `<slug>`, branch, `baseBranch`, `testCommand`, `codexModel`.
 2. **Build note.** Append to `reviews/<slug>.md` a `## Build note (<date>)` section: the AC→file map and `git diff --stat <baseBranch>...HEAD`.
 3. **Gate.** Run `testCommand`. If it fails, fix until green (mechanical self-fixes are allowed to reach green) and record the result. A red gate stops the loop.

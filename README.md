@@ -28,6 +28,13 @@ read-only and never commits; Claude captures its structured findings and commits
 One hook, [`block-main-writes.sh`](.claude/hooks/block-main-writes.sh): blocks commits/pushes to the
 base branch and `--force` / `--no-verify`. Bypass requires a diff-visible edit.
 
+## Deferring to a repo's native workflow
+Because the skills + hook install globally (`~/.claude`), they reach every repo. A repo that already
+runs a heavier/native workflow signals it with a **`docs/ai-protocol.md`** marker at its root. When
+that marker is present, the light workflow **stands down**: the guard hook becomes a no-op (the
+repo's own hooks govern) and `/frame`, `/review`, `/close` stop and point you at the native skills.
+Repos without the marker are governed by the light workflow as normal.
+
 ## Test here, then deploy everywhere
 1. **Test** in this repo (skills/hook are project-local under `.claude/`). Run a real `/frame → /review → /close`.
 2. **Deploy** to every Claude Code app on this machine: `./install.sh` copies the skills + hook to
