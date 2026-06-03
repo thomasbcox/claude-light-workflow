@@ -35,16 +35,18 @@ review loop — a small, real change driven end-to-end to validate the `codex ex
 ## Open questions
 - None. This is a deliberately minimal shakeout change. (Confirm the date/scope is fine.)
 
-## Build note (2026-06-03)
+## Build note (2026-06-03, updated for expanded scope)
 AC→file map:
-- AC1–AC4 → `CHANGELOG.md` (new, root).
-- Spec/trail → `reviews/add-changelog.md`.
+- AC1–AC4 (changelog) → `CHANGELOG.md` (new, root).
+- Expanded scope (workflow fix) → `.claude/skills/review/SKILL.md` (corrected codex command),
+  `.claude/skills/review/finding-schema.json` (strict schema).
+- Spec/trail → `reviews/add-changelog.md`, `reviews/add-changelog.codex.json`.
 
-`git diff --stat main...HEAD`:
+Substantive `git diff --stat main` (excludes the trail files):
 ```
- CHANGELOG.md             | 20 ++++++++++++++++++++
- reviews/add-changelog.md | 34 ++++++++++++++++++++++++++++++++++
- 2 files changed, 54 insertions(+)
+ .claude/skills/review/SKILL.md            | 11 +++---
+ .claude/skills/review/finding-schema.json |  9 +++--
+ CHANGELOG.md                              | 21 ++++++++++
 ```
 Gate: placeholder (`echo … && true`) — no executable code added.
 
@@ -58,3 +60,16 @@ and the Build note no longer matches the actual four-file diff. (Raw: `reviews/a
 | 1 | IMPORTANT | `.claude/skills/review/SKILL.md`:28 | Skill description/intro still say it runs review via `codex exec review`, which the body now forbids — internal contradiction. |
 | 2 | IMPORTANT | `CHANGELOG.md`:12 | Bootstrap entry still cites `codex exec review`, pointing future adopters at the retired command. |
 | 3 | IMPORTANT | `reviews/add-changelog.md`:43 | Build note diff-stat shows 2 files; the real diff is 4 (adds SKILL.md + finding-schema.json). Stale audit trail. |
+
+## Decisions (2026-06-03)
+Thomas: "fix all three as recommended."
+- Finding 1 (SKILL.md stale subcommand wording) → **FIX**
+- Finding 2 (CHANGELOG.md stale command) → **FIX**
+- Finding 3 (Build note stale diff-stat) → **FIX**
+
+## Fixes (2026-06-03)
+- Finding 1: reworded `review/SKILL.md` frontmatter description + intro to the read-only
+  `codex exec` + structured-output handoff (removed the obsolete `codex exec review` self-reference).
+- Finding 2: reworded the `CHANGELOG.md` bootstrap entry's `review` line to the corrected handoff.
+- Finding 3: regenerated the Build note's AC→file map and diff stat to the actual 4-file scope.
+All three were doc/wording only — no code or workflow-authority changes.

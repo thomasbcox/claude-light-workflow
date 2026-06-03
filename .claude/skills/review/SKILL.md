@@ -1,11 +1,11 @@
 ---
 name: review
-description: Step 2 of the lightweight Claude↔Codex review loop. Run the test gate, then have Codex independently review the feature branch via `codex exec review`, capture structured findings, and present a decision menu for Thomas. Use after code is implemented and committed on the feature branch.
+description: Step 2 of the lightweight Claude↔Codex review loop. Run the test gate, then have Codex independently review the feature branch via a read-only `codex exec` with a structured-output schema, capture the findings, and present a decision menu for Thomas. Use after code is implemented and committed on the feature branch.
 ---
 
 # /review — independent critique by Codex
 
-Step 2 of the loop. Codex is the **independent** reviewer: it critiques and classifies; it never fixes or merges (`codex exec review` is read-only and Codex has no commit authority here). Contract: `AGENTS.md`. Doctrine: `~/.claude/workflow-protocol.md`.
+Step 2 of the loop. Codex is the **independent** reviewer: it critiques and classifies; it never fixes or merges (it runs under `-s read-only` and has no commit authority here). Contract: `AGENTS.md`. Doctrine: `~/.claude/workflow-protocol.md`.
 
 ## Hard constraints
 - Tests must be **green** before you call Codex. Never ask Codex to review a red build.

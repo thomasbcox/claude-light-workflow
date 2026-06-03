@@ -9,7 +9,8 @@ All notable changes to this workflow are recorded here. The format follows
 
 ### Added
 - **Three skills** driving the Claude↔Codex review loop: `frame` (intake → spec → implement),
-  `review` (gate → `codex exec review` → decision menu), and `close` (apply approved fixes → merge).
+  `review` (gate → read-only `codex exec` with a structured-output schema → decision menu), and
+  `close` (apply approved fixes → merge).
 - **Guard hook** (`.claude/hooks/block-main-writes.sh`): blocks commits/pushes to the base branch and
   `--force` / `--no-verify`, wired as a `PreToolUse` hook.
 - **Reviewer contract** (`AGENTS.md`): Codex's standing instructions — critique and classify, never
