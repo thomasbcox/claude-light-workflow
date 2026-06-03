@@ -1,6 +1,8 @@
 Date: 2026-06-03 · Branch: claude/add-changelog · Status: approved
 
 > Approved by Thomas (2026-06-03): "approve - go implement it"
+> Scope expanded by Thomas (2026-06-03): fold in the workflow fixes the shakeout surfaced
+> (corrected `/review` codex command + strict finding schema) and re-review the full diff.
 
 ## Problem
 The repo has no human-readable record of how the workflow itself changes over time. Git history
@@ -32,3 +34,16 @@ review loop — a small, real change driven end-to-end to validate the `codex ex
 
 ## Open questions
 - None. This is a deliberately minimal shakeout change. (Confirm the date/scope is fine.)
+
+## Build note (2026-06-03)
+AC→file map:
+- AC1–AC4 → `CHANGELOG.md` (new, root).
+- Spec/trail → `reviews/add-changelog.md`.
+
+`git diff --stat main...HEAD`:
+```
+ CHANGELOG.md             | 20 ++++++++++++++++++++
+ reviews/add-changelog.md | 34 ++++++++++++++++++++++++++++++++++
+ 2 files changed, 54 insertions(+)
+```
+Gate: placeholder (`echo … && true`) — no executable code added.
