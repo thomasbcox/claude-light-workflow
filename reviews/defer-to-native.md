@@ -47,3 +47,24 @@ light workflow should recognize a repo that already has a native workflow and **
 
 ## Open questions
 - None. Marker = `docs/ai-protocol.md`, deferral = full stand-down (hook no-op + skill stop).
+
+## Build note (2026-06-03)
+AC→file map:
+- AC1/AC2/AC4 → `.claude/hooks/block-main-writes.sh` (marker early-exit before deny logic).
+- AC3 → `.claude/skills/{frame,review,close}/SKILL.md` (step 0 deferral guard).
+- AC5 → `README.md` (deferral section).
+- Spec/trail → `reviews/defer-to-native.md`.
+
+Hook ACs verified locally before commit: marker present → exit 0; no marker on main → exit 2;
+force-push still blocked; outside a git repo → exit 0 (no error).
+
+`git diff --stat main...HEAD`:
+```
+ .claude/hooks/block-main-writes.sh |  6 +++++
+ .claude/skills/close/SKILL.md      |  1 +
+ .claude/skills/frame/SKILL.md      |  1 +
+ .claude/skills/review/SKILL.md     |  1 +
+ README.md                          |  7 ++++++
+ reviews/defer-to-native.md         | 49 +++++++++++++++++++++++++++++++++
+```
+Gate: placeholder (`echo … && true`) — no executable code added. No CI configured on this repo.
