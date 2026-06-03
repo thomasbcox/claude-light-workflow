@@ -73,3 +73,7 @@ Thomas: "fix all three as recommended."
 - Finding 2: reworded the `CHANGELOG.md` bootstrap entry's `review` line to the corrected handoff.
 - Finding 3: regenerated the Build note's AC→file map and diff stat to the actual 4-file scope.
 All three were doc/wording only — no code or workflow-authority changes.
+
+## Codex re-review (2026-06-03, diff-only, base f5c3b90, HEAD 11d9121)
+Clean — 0 findings. "The three prior IMPORTANT findings are resolved in the diff-only re-review."
+(Raw: `reviews/add-changelog.codex.json`.)
