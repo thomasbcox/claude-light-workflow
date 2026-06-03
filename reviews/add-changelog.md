@@ -47,3 +47,14 @@ AC→file map:
  2 files changed, 54 insertions(+)
 ```
 Gate: placeholder (`echo … && true`) — no executable code added.
+
+## Codex review (2026-06-03, base main, HEAD f5c3b90)
+Summary: The changelog mostly satisfies the original ACs, but the expanded workflow-fix scope is only
+partially reflected — stale `codex exec review` references remain in the review skill and changelog,
+and the Build note no longer matches the actual four-file diff. (Raw: `reviews/add-changelog.codex.json`.)
+
+| # | Severity | File:line | Claim |
+|---|---|---|---|
+| 1 | IMPORTANT | `.claude/skills/review/SKILL.md`:28 | Skill description/intro still say it runs review via `codex exec review`, which the body now forbids — internal contradiction. |
+| 2 | IMPORTANT | `CHANGELOG.md`:12 | Bootstrap entry still cites `codex exec review`, pointing future adopters at the retired command. |
+| 3 | IMPORTANT | `reviews/add-changelog.md`:43 | Build note diff-stat shows 2 files; the real diff is 4 (adds SKILL.md + finding-schema.json). Stale audit trail. |
