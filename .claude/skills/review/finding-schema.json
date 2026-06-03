@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "summary": {
+      "type": "string",
+      "description": "One-paragraph overall assessment of the change."
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": ["BLOCKER", "IMPORTANT", "QUESTION", "NIT"]
+          },
+          "title": { "type": "string", "description": "Short label for the finding." },
+          "file": { "type": "string", "description": "Path the finding is about, if any." },
+          "line": { "type": "integer", "description": "Line number, if applicable." },
+          "claim": { "type": "string", "description": "What is wrong and why it matters." },
+          "suggestion": { "type": "string", "description": "A concrete proposed fix, if any." }
+        },
+        "required": ["severity", "title", "claim"]
+      }
+    }
+  },
+  "required": ["summary", "findings"]
+}
