@@ -22,7 +22,7 @@ three are bundled and ready to `/frame` together.
 
 | id | Summary | Status |
 |---|---|---|
-| BUG-D1 | `/close` pre-sets `Status: merged` speculatively — a branch can carry a `merged` header while still unmerged. Use a pre-merge status (`ready`/`approved`); flip to `merged` only at the real merge step. (Story AC1) | Open |
+| BUG-D1 | `/close` pre-sets `Status: merged` speculatively — a branch can carry a `merged` header while still unmerged. Fix (SSOT): header records declared state only (`approved` terminal, never `merged`); merge/shipped state is owned by git — the merge commit + an annotated `shipped/<slug>` tag, read back by deriving. (Story AC1/AC8/AC9) | Open |
 | BUG-D2 | Merge-approval gate is squishy — never states whether invoking `/close` itself counts as approval. Add one unambiguous sentence: *invoking `/close` is NOT merge authorization.* (Story AC2) | Open |
 | BUG-D3 | Merge can fire without a distinct "merge" instruction — observed `/close` skipping the "re-review or merge?" fork and merging on the command invocation alone. Fork must be mandatory and non-skippable, even on a clean review with zero fixes. (Story AC3) | Open |
 

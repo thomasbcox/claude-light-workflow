@@ -24,6 +24,7 @@ read-only and never commits; Claude captures its structured findings and commits
 - `reviews/<slug>.codex.json` — raw structured Codex output per round.
 - `.claude/workflow.json` — per-repo config: `baseBranch`, `branchPrefix`, `testCommand`, `codexModel`.
 - `AGENTS.md` — Codex's reviewer contract.
+- `shipped/<slug>` tag — the honest "this shipped" marker. The story header records only declared state (`proposed → approved`); merge/shipped state is owned by git (the merge commit + this tag) and read back by deriving (`git tag -l "shipped/<slug>"`), never stored in the header.
 
 ## Guardrail
 One hook, [`block-main-writes.sh`](.claude/hooks/block-main-writes.sh): blocks commits/pushes to the

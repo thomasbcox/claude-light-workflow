@@ -16,8 +16,9 @@ The `frame→review→close` loop is supposed to guarantee a merge never happens
 
 ## In scope
 
-1. `.claude/skills/close/SKILL.md` — fix D1/D2/D3 per the ACs below.
+1. `.claude/skills/close/SKILL.md` — fix D1/D2/D3 per the ACs below, plus the shipped-tag + derived-status mechanism (AC8/AC9).
 2. `.claude/skills/review/SKILL.md` — minimal matching tweak to the decision-menu / routing wording so the gate is consistent across the two skills (only what AC2/AC3 require; no redesign).
+2b. `.claude/workflow-protocol.md` + `.claude/skills/frame/SKILL.md` — document the declared-vs-observed status lifecycle (AC10).
 3. `BACKLOG.md` — include the already-drafted staging-area artifact (commit it; minor edits as needed for consistency with the chosen AC1 resolution).
 4. `README.md` — add a discoverability pointer to `BACKLOG.md` in the Artifacts section.
 5. `workflow-skill-defects.story.md` — commit the discovery doc to the branch as part of the trail (already untracked).
@@ -31,13 +32,16 @@ The `frame→review→close` loop is supposed to guarantee a merge never happens
 
 ## Acceptance criteria
 
-1. **No premature `merged` status.** `close/SKILL.md` no longer sets `Status: merged` in step 2. The feature branch carries a distinct pre-merge status (`approved`/`ready`) through the review/close rounds; any flip to `merged` happens only at the real merge step. The chosen resolution of the "no separate base-branch commit" tension is documented in the skill (see Open question 1 for the recommended option).
+1. **The story header never asserts `merged` — declared state only (SSOT).** `close/SKILL.md` records only *declared* state in the header (`proposed` → `approved`); `approved` is terminal. Whether the branch shipped is *observed* state owned by git, never hand-written into the header. The header cannot drift from reality because it never stores the merge fact. (Industry option b: single source of truth / declared-vs-observed, à la Kubernetes `spec` vs `status`.)
 2. **Unambiguous merge-approval gate.** `close/SKILL.md` states explicitly, in one sentence, that **invoking `/close` is NOT merge authorization**. A distinct, affirmative human merge instruction (the word "merge" or equivalent) is required **after** the step-4 fork is presented, **every** time. A prior or general "yes" does not count; the command invocation does not count.
 3. **Mandatory, non-skippable fork.** `close/SKILL.md` makes clear that step 4 must present "re-review or merge?" and **stop** for Thomas's answer — even when there are zero approved fixes to apply (clean review). The clean-review path may not fast-path to merge.
 4. **(Recommended) Trail/merge consistency guard.** `close/SKILL.md` notes that the `merged` status and the actual merge must be consistent at every point a reader could observe the branch; if they cannot be made atomic, the wording must not assert a merge that has not occurred.
 5. **`BACKLOG.md` committed** as the staging-area artifact, listing BUG-D1/D2/D3 (cross-linked to the defects story) and OPS-1/2/3, with the lifecycle and id conventions described.
 6. **README points to `BACKLOG.md`** from the Artifacts section, one line, consistent with the existing artifact entries.
 7. **`review/SKILL.md` consistency tweak** applied so its decision-menu/`/close` routing wording does not imply that proceeding to `/close` authorizes a merge.
+8. **Self-contained shipped marker via an annotated tag.** `close/SKILL.md`'s merge step creates `shipped/<slug>` as an annotated tag (pushed on the remote path), atomically with the merge. The tag is a ref — not a base-tree commit — so it satisfies "no writes to base beyond the merge," and it is honest by construction: no tag ⇒ not shipped. The merge commit carries a `Story: reviews/<slug>.md` trailer.
+9. **"Did it ship?" is derived, not stored.** `close/SKILL.md` documents the read-time check (`git tag -l "shipped/<slug>"` / `git ls-remote --tags origin "shipped/<slug>"`) so a reader gets the at-a-glance answer without a stored status field (command-query separation).
+10. **The doctrine is updated.** `workflow-protocol.md` and `frame/SKILL.md` document the declared-vs-observed lifecycle: the header's terminal state is `approved`; merge/shipped state lives in the merge commit + `shipped/<slug>` tag.
 
 ## Test notes
 
@@ -89,3 +93,11 @@ Thomas, this session:
 - **AC1 → option (c)** — atomic flip at merge. Carry `approved`/`ready` through the rounds; set `Status: merged` only in the same close step that issues the merge, immediately before the merge command, true within one atomic action. No extra base-branch commits.
 - **AC7 → explicit menu note** — beyond the light routing-wording fix, add a line to `/review`'s decision menu stating that deciding fix/defer/reject is not a merge decision; the merge gate is separate and lives in `/close`.
 - **Scope approved**, "implement and /review please" — covers building on the branch only; not merge authorization.
+
+## Decisions (2026-06-05, review round 1)
+
+Both Codex findings accepted; they collapse to one resolution.
+- **Finding ① (BLOCKER) → fix.** Real: on the `gh pr merge` path the local `merged` commit is never pushed, so it can be dropped from the merge.
+- **Finding ② (IMPORTANT) → fix.** Real: option (c)'s pre-merge `merged` commit is racy; an interrupted merge leaves the D1 false state.
+- **AC1 reversed: option (c) → option (b) + industry-standard mechanism.** After discussing prior art, Thomas chose the complete fix: header records declared state only (never `merged`); merge/shipped state is observed and owned by git, recorded by the merge commit + an annotated `shipped/<slug>` tag, and read back via a derived check. Scope enlarged to add AC8/AC9/AC10 and update the protocol doctrine + `frame`. Thomas, this session: *"fold it all in, I want a complete fix - enlarge scope as needed."*
+- Rationale captured in the trilemma: the self-contained-header property is recovered by an out-of-tree tag (a ref, not a tree write), dissolving the pick-two tension. Not merge authorization.
