@@ -26,6 +26,7 @@ Step 1 of the lightweight Claude↔Codex review loop. Doctrine: `~/.claude/workf
 4. **Branch.** From an up-to-date base: `git checkout -b <branchPrefix><slug> <baseBranch>` (use `origin/<baseBranch>` if a remote exists). If already on the right feature branch, stay.
 5. **Draft the spec** into `reviews/<slug>.md`:
    - Header line: `Date: <YYYY-MM-DD> · Branch: <branch> · Status: proposed`
+   - The `Status` field records only *declared* state: `proposed → approved`. `approved` is terminal — it never becomes `merged`. Whether it shipped is *observed* state owned by git (the merge commit + `shipped/<slug>` tag), read back by deriving, never written into the header.
    - `## Problem` — what and why.
    - `## In scope` / `## Non-goals`.
    - `## Acceptance criteria` — numbered, each testable.

@@ -27,8 +27,19 @@ Loop 2 ↔ 3 as many rounds as needed.
 4. No AI grades its own homework — the builder is never the approver.
 5. No direct commits/pushes to the base branch; the feature-branch + merge path is the only way in (enforced by the guard hook).
 
+## Status & shipped-state (single source of truth)
+The story-file header records only **declared** state — `proposed → approved`, with `approved`
+as the terminal value. It never stores **observed** state. "Did it merge/ship?" is owned by git,
+not the file. The **authoritative** shipped signal is the merge commit (`merge: <slug>`, with a
+`Story:` trailer) / the PR's `MERGED` state — atomic: it exists or it doesn't. The **`shipped/<slug>`**
+tag is a *best-effort convenience label* on top of that (a ref, not a base-tree write, so it preserves
+rule 5), useful for a fast `git tag -l` lookup but never the authority — a merged PR with a missing
+tag is still shipped (repair by re-tagging). The header can never drift from reality because it never
+holds the merge fact — the same discipline as Kubernetes `spec` (declared) vs `status` (observed).
+
 ## Per-repo artifacts
 - `reviews/<slug>.md` — the story file / audit trail.
+- `shipped/<slug>` tag — convenience marker for "this shipped"; the merge commit / PR-MERGED state is the authority.
 - `reviews/<slug>.codex.json` — raw structured Codex output per round.
 - `.claude/workflow.json` — config: `baseBranch`, `branchPrefix`, `testCommand`, `codexModel`.
 - `AGENTS.md` — Codex's reviewer contract (tunable per repo).

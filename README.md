@@ -19,10 +19,12 @@ Codex is called directly via the `codex` CLI (`codex exec review`) — no copy/p
 read-only and never commits; Claude captures its structured findings and commits the trail.
 
 ## Artifacts (the audit trail)
+- [`BACKLOG.md`](BACKLOG.md) — staging area in front of the loop: outstanding bugs (`BUG-`) and tooling improvements (`OPS-`), each graduating to a `reviews/<slug>.md` story.
 - `reviews/<slug>.md` — spec → build note → Codex findings → decisions, appended across rounds.
 - `reviews/<slug>.codex.json` — raw structured Codex output per round.
 - `.claude/workflow.json` — per-repo config: `baseBranch`, `branchPrefix`, `testCommand`, `codexModel`.
 - `AGENTS.md` — Codex's reviewer contract.
+- `shipped/<slug>` tag — a convenience "this shipped" marker. The story header records only declared state (`proposed → approved`); shipped state is owned by git — authoritatively the merge commit / PR-MERGED, with this tag as a best-effort label — and read back by deriving, never stored in the header.
 
 ## Guardrail
 One hook, [`block-main-writes.sh`](.claude/hooks/block-main-writes.sh): blocks commits/pushes to the
