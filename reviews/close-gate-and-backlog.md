@@ -49,6 +49,28 @@ This repo's gate is a placeholder (`echo … && true`), so verification is by in
 - AC5/AC6: confirm `BACKLOG.md` is tracked and README has the pointer link; follow the link.
 - AC7: confirm `review/SKILL.md` wording no longer implies command-as-consent.
 
+## Build note (2026-06-05)
+
+AC → file map:
+- AC1 (no premature `merged`; atomic flip, option c) → `.claude/skills/close/SKILL.md` (hard constraints + steps 2, 5, 6)
+- AC2 (invoking `/close` is not merge authorization) → `.claude/skills/close/SKILL.md` (hard constraints + steps 4, 5)
+- AC3 (mandatory non-skippable fork, even on clean review) → `.claude/skills/close/SKILL.md` (hard constraints + steps 2, 4)
+- AC4 (trail/merge consistency guard) → `.claude/skills/close/SKILL.md` (hard constraints + step 5 revert-on-failure)
+- AC5 (BACKLOG staging artifact) → `BACKLOG.md` (+ discovery doc `workflow-skill-defects.story.md`)
+- AC6 (README pointer) → `README.md` (Artifacts section)
+- AC7 (review consistency tweak + explicit menu note) → `.claude/skills/review/SKILL.md` (steps 7, 8)
+
+`git diff --stat main...HEAD`:
+```
+ .claude/skills/close/SKILL.md     |  20 +++++---
+ .claude/skills/review/SKILL.md    |   4 +-
+ BACKLOG.md                        |  48 ++++++++++++++++++
+ README.md                         |   1 +
+ reviews/close-gate-and-backlog.md |  57 +++++++++++++++++++++
+ workflow-skill-defects.story.md   | 103 ++++++++++++++++++++++++++++++++++++++
+ 6 files changed, 223 insertions(+), 10 deletions(-)
+```
+
 ## Decisions (2026-06-05)
 
 Thomas, this session:
