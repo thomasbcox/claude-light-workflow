@@ -39,8 +39,8 @@ The `frame→review→close` loop is supposed to guarantee a merge never happens
 5. **`BACKLOG.md` committed** as the staging-area artifact, listing BUG-D1/D2/D3 (cross-linked to the defects story) and OPS-1/2/3, with the lifecycle and id conventions described.
 6. **README points to `BACKLOG.md`** from the Artifacts section, one line, consistent with the existing artifact entries.
 7. **`review/SKILL.md` consistency tweak** applied so its decision-menu/`/close` routing wording does not imply that proceeding to `/close` authorizes a merge.
-8. **Self-contained shipped marker via an annotated tag.** `close/SKILL.md`'s merge step creates `shipped/<slug>` as an annotated tag (pushed on the remote path), atomically with the merge. The tag is a ref — not a base-tree commit — so it satisfies "no writes to base beyond the merge," and it is honest by construction: no tag ⇒ not shipped. The merge commit carries a `Story: reviews/<slug>.md` trailer.
-9. **"Did it ship?" is derived, not stored.** `close/SKILL.md` documents the read-time check (`git tag -l "shipped/<slug>"` / `git ls-remote --tags origin "shipped/<slug>"`) so a reader gets the at-a-glance answer without a stored status field (command-query separation).
+8. **Merge commit is the authoritative shipped signal; tag is a convenience label.** The authoritative, atomic record that a branch shipped is the merge commit (`merge: <slug>`, with a `Story: reviews/<slug>.md` trailer) / the PR's `MERGED` state. `close/SKILL.md`'s merge step additionally creates `shipped/<slug>` as a *best-effort* annotated tag (a ref, not a base-tree commit — satisfies "no writes to base beyond the merge"), verifies the push, and documents a repair path. The tag's *absence* is never read as "not shipped" (it is not atomic with the merge — git cannot make merge-commit + tag-push one transaction).
+9. **"Did it ship?" is derived, not stored — preferring the authoritative signal.** `close/SKILL.md` documents the read-time check: prefer `gh pr view <PR#> --json state` (`MERGED`) / `git log <baseBranch> --grep "^merge: <slug>"`, with `git tag -l "shipped/<slug>"` as a fast secondary lookup only (command-query separation).
 10. **The doctrine is updated.** `workflow-protocol.md` and `frame/SKILL.md` document the declared-vs-observed lifecycle: the header's terminal state is `approved`; merge/shipped state lives in the merge commit + `shipped/<slug>` tag.
 
 ## Test notes
@@ -123,6 +123,11 @@ AC → file map (new/changed this round):
 ### BLOCKER
 3. **Shipped tag is not atomic with the merge** (`close/SKILL.md:27`). Step 5 claims the tag is created by the merge and that `no tag ⇒ not shipped`, but both paths merge first and tag second. If tag creation/push fails after a successful merge, the branch is shipped with no marker, so the AC9 derived check reports a false "not shipped." Git cannot make a merge commit and a tag ref-update one transaction, so the atomicity claim overpromises.
    *Suggestion:* either make merge + tag one transactional op (not possible across the `gh` merge + tag push), or drop the atomicity / `no tag ⇒ not shipped` claim and make the **merge commit** the authoritative shipped signal, with the tag as a best-effort convenience marker plus push-verification and a documented repair path.
+
+## Decisions (2026-06-05, review round 2)
+
+- **① / ② → confirmed resolved**, no further action.
+- **③ (BLOCKER) → fix, reframe to merge-commit-as-authority.** Thomas chose: the merge commit / PR-MERGED state is the authoritative, atomic shipped signal; the `shipped/<slug>` tag is demoted to a best-effort convenience label (verify push + documented repair path); the derived check prefers the authoritative signal; drop the "no tag ⇒ not shipped" overclaim. Updates `close/SKILL.md`, `workflow-protocol.md`, and story AC8/AC9. Not merge authorization.
 
 ## Decisions (2026-06-05, review round 1)
 
