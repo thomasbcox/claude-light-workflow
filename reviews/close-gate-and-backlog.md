@@ -142,6 +142,12 @@ Changes since last-reviewed SHA `d255521`, addressing re-review finding ③ (tag
  reviews/close-gate-and-backlog.md         | 17 +++++++++++++++--
 ```
 
+## Codex review (2026-06-05, re-review round 3, base d255521, HEAD 19bf8e3)
+
+**Summary:** Re-review round 3 resolves prior finding ③. The diff removes the atomic-tag / "no tag ⇒ not shipped" overclaim, makes the merge commit or PR `MERGED` state the authoritative shipped signal, keeps `shipped/<slug>` as a best-effort convenience label with remote push verification and repair wording, and updates the derived check to prefer the authoritative signal. **AC8 and AC9 are met, and no new inconsistency in the changed wording.**
+
+**Findings: none (clean review).**
+
 ## Decisions (2026-06-05, review round 2)
 
 - **① / ② → confirmed resolved**, no further action.
