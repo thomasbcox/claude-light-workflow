@@ -71,6 +71,18 @@ AC → file map:
  6 files changed, 223 insertions(+), 10 deletions(-)
 ```
 
+## Codex review (2026-06-05, base main, HEAD 495dc84)
+
+**Summary:** The branch implements the backlog artifact and most of the merge-gate wording, but the new close-step status lifecycle still has a merge-path bug: the `merged` status commit is made before the merge and is not guaranteed to be included in the remote PR merge.
+
+### BLOCKER
+1. **Remote merge path can omit the merged-status commit** (`close/SKILL.md:27`). Step 5 creates the `Status: merged` commit locally, then the remote path runs `gh pr merge --merge --delete-branch` without pushing first. The merge command is not guaranteed to include the new status commit, contradicting step 6's claim that the `merged` line arrives with the merge and violating AC1/AC4's no-separate-base-commit lifecycle.
+   *Suggestion:* after the status commit, push the branch and verify the PR head/checks are on that SHA before `gh pr merge` — or use a merge-state strategy that doesn't depend on an unpublished pre-merge commit.
+
+### IMPORTANT
+2. **`merged` status is still committed before the merge happens** (`close/SKILL.md:25`). The hard constraint says never assert `merged` before the merge and that status/reality must agree at every observable point, but step 5 still commits `Status: merged` before issuing the merge. If the merge prompts, hangs, is interrupted, or fails before the revert completes, the branch again has a committed `merged` header while unmerged — the D1/AC4 failure this story is meant to prevent.
+   *Suggestion:* don't commit a final `merged` header before the merge. Keep `approved`/`ready` until the merge completes and record merge state via merge/PR metadata, or explicitly accept and document a trailing post-merge status commit.
+
 ## Decisions (2026-06-05)
 
 Thomas, this session:
