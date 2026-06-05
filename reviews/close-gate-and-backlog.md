@@ -116,6 +116,14 @@ AC → file map (new/changed this round):
  reviews/close-gate-and-backlog.md         | 28 ++++++++++++++++++++++++++--
 ```
 
+## Codex review (2026-06-05, re-review round 2, base 495dc84, HEAD d255521)
+
+**Summary:** The SSOT header change resolves both prior findings — the branch no longer commits `Status: merged` before merge, and the remote PR merge no longer depends on an unpublished merged-status commit. **AC1/AC4/AC9/AC10 covered. ① and ② resolved.** But AC8 is not fully met: the shipped tag is created/pushed *after* the merge as a separate operation.
+
+### BLOCKER
+3. **Shipped tag is not atomic with the merge** (`close/SKILL.md:27`). Step 5 claims the tag is created by the merge and that `no tag ⇒ not shipped`, but both paths merge first and tag second. If tag creation/push fails after a successful merge, the branch is shipped with no marker, so the AC9 derived check reports a false "not shipped." Git cannot make a merge commit and a tag ref-update one transaction, so the atomicity claim overpromises.
+   *Suggestion:* either make merge + tag one transactional op (not possible across the `gh` merge + tag push), or drop the atomicity / `no tag ⇒ not shipped` claim and make the **merge commit** the authoritative shipped signal, with the tag as a best-effort convenience marker plus push-verification and a documented repair path.
+
 ## Decisions (2026-06-05, review round 1)
 
 Both Codex findings accepted; they collapse to one resolution.
