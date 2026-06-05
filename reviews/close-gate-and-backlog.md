@@ -124,6 +124,24 @@ AC → file map (new/changed this round):
 3. **Shipped tag is not atomic with the merge** (`close/SKILL.md:27`). Step 5 claims the tag is created by the merge and that `no tag ⇒ not shipped`, but both paths merge first and tag second. If tag creation/push fails after a successful merge, the branch is shipped with no marker, so the AC9 derived check reports a false "not shipped." Git cannot make a merge commit and a tag ref-update one transaction, so the atomicity claim overpromises.
    *Suggestion:* either make merge + tag one transactional op (not possible across the `gh` merge + tag push), or drop the atomicity / `no tag ⇒ not shipped` claim and make the **merge commit** the authoritative shipped signal, with the tag as a best-effort convenience marker plus push-verification and a documented repair path.
 
+## Build note (2026-06-05, re-review round 3)
+
+Changes since last-reviewed SHA `d255521`, addressing re-review finding ③ (tag not atomic with merge) via the merge-commit-as-authority reframe. Wording/doctrine only — no new mechanism.
+
+- AC8/AC9 reframed (merge commit / PR-MERGED authoritative; tag best-effort; derived check prefers authoritative signal) → `.claude/skills/close/SKILL.md` (hard constraints, steps 5/7)
+- Doctrine → `.claude/workflow-protocol.md`
+- Trail → `BACKLOG.md`, `README.md`, story AC8/AC9
+
+`git diff --stat d255521...HEAD`:
+```
+ .claude/skills/close/SKILL.md             | 25 ++++++++++++++-----------
+ .claude/workflow-protocol.md              | 13 +++++++------
+ BACKLOG.md                                |  2 +-
+ README.md                                 |  2 +-
+ reviews/close-gate-and-backlog.codex.json |  2 +-
+ reviews/close-gate-and-backlog.md         | 17 +++++++++++++++--
+```
+
 ## Decisions (2026-06-05, review round 2)
 
 - **① / ② → confirmed resolved**, no further action.
