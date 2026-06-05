@@ -94,6 +94,28 @@ Thomas, this session:
 - **AC7 → explicit menu note** — beyond the light routing-wording fix, add a line to `/review`'s decision menu stating that deciding fix/defer/reject is not a merge decision; the merge gate is separate and lives in `/close`.
 - **Scope approved**, "implement and /review please" — covers building on the branch only; not merge authorization.
 
+## Build note (2026-06-05, re-review round 2)
+
+Changes since last-reviewed SHA `495dc84`, addressing Codex findings ①/② via the SSOT redesign.
+
+AC → file map (new/changed this round):
+- AC1 (header declared-state only, never `merged`) → `.claude/skills/close/SKILL.md` (hard constraints, steps 2/5)
+- AC8 (annotated `shipped/<slug>` tag + `Story:` trailer; remote fetch-before-tag fixes finding ①) → `.claude/skills/close/SKILL.md` (step 5)
+- AC9 (derived "did it ship?" check) → `.claude/skills/close/SKILL.md` (step 7)
+- AC10 (declared-vs-observed doctrine) → `.claude/workflow-protocol.md`, `.claude/skills/frame/SKILL.md`
+- Trail updates → `BACKLOG.md` (BUG-D1), `README.md` (Artifacts)
+
+`git diff --stat 495dc84...HEAD`:
+```
+ .claude/skills/close/SKILL.md             | 30 ++++++++++++++++++++----------
+ .claude/skills/frame/SKILL.md             |  1 +
+ .claude/workflow-protocol.md              | 10 ++++++++++
+ BACKLOG.md                                |  2 +-
+ README.md                                 |  1 +
+ reviews/close-gate-and-backlog.codex.json |  1 +
+ reviews/close-gate-and-backlog.md         | 28 ++++++++++++++++++++++++++--
+```
+
 ## Decisions (2026-06-05, review round 1)
 
 Both Codex findings accepted; they collapse to one resolution.
