@@ -19,6 +19,7 @@ Codex is called directly via the `codex` CLI (`codex exec review`) — no copy/p
 read-only and never commits; Claude captures its structured findings and commits the trail.
 
 ## Artifacts (the audit trail)
+- [`BACKLOG.md`](BACKLOG.md) — staging area in front of the loop: outstanding bugs (`BUG-`) and tooling improvements (`OPS-`), each graduating to a `reviews/<slug>.md` story.
 - `reviews/<slug>.md` — spec → build note → Codex findings → decisions, appended across rounds.
 - `reviews/<slug>.codex.json` — raw structured Codex output per round.
 - `.claude/workflow.json` — per-repo config: `baseBranch`, `branchPrefix`, `testCommand`, `codexModel`.
