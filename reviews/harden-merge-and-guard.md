@@ -75,6 +75,12 @@ AC6 requires blocking `--force-with-lease`, but the detector only matches exact 
 
 Diff-only re-review, base = last-reviewed `58a02ff`. Delta = the BLOCKER fix only: `+FORCE_EQ_PREFIX` clause in the guard, 2 force-with-lease fixtures. `git diff --stat 58a02ff...HEAD`: 4 files, +31. Gate: 19/19 green.
 
+## Codex review (2026-06-06, base 58a02ff, HEAD bd56e66) — round 2
+
+**Summary:** Re-reviewed the delta. The new change directly addresses the prior blocker by blocking `--force-with-lease=<…>` value forms and adding matching fixtures; targeted payloads for both forms exit 2 and `git diff --check` is clean. (Full guard test couldn't run in Codex's read-only sandbox due to `mktemp` — environmental, not a diff issue.)
+
+**Findings:** none. ✅ Clean.
+
 ## Open questions
 1. **Guard severity / approach:** harden the string-matcher in place (faster, still fragile), or accept the report's framing that the doc overclaim ("bypass requires a diff-visible edit") is itself the defect and soften that claim alongside a best-effort harden? I propose: harden the known forms **and** soften the absolute claim, since string-matching can't be made airtight.
 2. **Gate wiring:** the repo's `testCommand` is a placeholder (`echo … && true`). Do you want the new guard test wired in as the real gate, or left as a standalone script invoked manually?
