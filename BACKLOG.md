@@ -20,16 +20,7 @@ Two kinds of item, tracked separately:
 Storied in [`workflow-skill-defects.story.md`](workflow-skill-defects.story.md) — these
 three are bundled and ready to `/frame` together.
 
-| id | Summary | Status |
-|---|---|---|
-| BUG-D1 | `/close` pre-sets `Status: merged` speculatively — a branch can carry a `merged` header while still unmerged. Fix (SSOT): header records declared state only (`approved` terminal, never `merged`); shipped state owned by git — authoritatively the merge commit / PR-MERGED, with a best-effort `shipped/<slug>` convenience tag, read back by deriving. (Story AC1/AC8/AC9) | Open |
-| BUG-D2 | Merge-approval gate is squishy — never states whether invoking `/close` itself counts as approval. Add one unambiguous sentence: *invoking `/close` is NOT merge authorization.* (Story AC2) | Open |
-| BUG-D3 | Merge can fire without a distinct "merge" instruction — observed `/close` skipping the "re-review or merge?" fork and merging on the command invocation alone. Fork must be mandatory and non-skippable, even on a clean review with zero fixes. (Story AC3) | Open |
-
-Related acceptance criteria from the same story:
-- **AC1 resolution** — pick and document how to resolve the "no separate base-branch commit" tension (trailing status commit / merge-commit metadata / `ready`→atomic-`merged`).
-- **AC4 (optional)** — guard against trail/merge mismatch: `merged` status and the actual merge must be consistent at every observable point.
-- **`/review` matching tweak** — its decision-menu wording may need to align with the tightened gate (flagged out-of-scope-ish in the story, but likely required for a consistent gate).
+_(all shipped — see [Done](#done))_
 
 ## Deployment & tooling improvements
 
@@ -45,4 +36,10 @@ Not yet storied — smaller, may not each warrant a full `.story.md`.
 
 ## Done
 
-_(Move items here with their PR/commit when they land.)_
+| id | Summary | Shipped |
+|---|---|---|
+| BUG-D1 | `/close` pre-set `Status: merged` speculatively. Fixed (SSOT): header records declared state only (`approved` terminal, never `merged`); shipped state owned by git — authoritatively the merge commit / PR-MERGED, with a best-effort `shipped/<slug>` convenience tag, read back by deriving. | PR #2 / `5225bdb` |
+| BUG-D2 | Merge-approval gate was squishy. Fixed: `/close` now states unambiguously that *invoking `/close` is NOT merge authorization* — a distinct in-session "merge" instruction is required after the fork. | PR #2 / `5225bdb` |
+| BUG-D3 | Merge could fire without a distinct "merge" instruction (fork skipped). Fixed: the "re-review or merge?" fork is mandatory and non-skippable, even on a clean review with zero fixes. | PR #2 / `5225bdb` |
+
+Shipped together as the `close-gate-and-backlog` story ([reviews/close-gate-and-backlog.md](reviews/close-gate-and-backlog.md)); also added the declared-vs-observed doctrine, the `shipped/<slug>` tag convention, and the `/review` decision-menu consistency tweak.
