@@ -63,3 +63,7 @@ Thomas, this session: **scope approved** — "implement and review". Open questi
 ## Decisions (2026-06-05, review round 1)
 
 - **① (IMPORTANT) → fix.** Past-tense the BACKLOG preface so it no longer describes the shipped bugs as future `/frame` work. Not merge authorization.
+
+## Fixes (2026-06-05)
+
+- **① fixed** (`bee89f0`): rewrote the `BACKLOG.md` Skill-behavior-bugs preface in past tense — "BUG-D1/D2/D3 were storied … and shipped together via PR #2 / `5225bdb`; see Done." No longer contradicts the Done entries.
