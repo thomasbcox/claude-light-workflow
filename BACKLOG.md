@@ -31,6 +31,7 @@ Not yet storied — smaller, may not each warrant a full `.story.md`.
 | OPS-1 | No drift detection between repo `.claude/skills` and the `~/.claude` deployment. `install.sh` is a manual one-way push; nothing warns when deployed skills diverge. Package the `diff -rq` check (e.g. a `--check` flag or a `verify.sh`). | Open |
 | OPS-2 | No version/provenance stamp on deployed skills — can't tell which repo commit a global copy came from, so staleness is invisible. Consider stamping the source commit into deployed files or a manifest. | Open |
 | OPS-3 | `install.sh` propagation is hard-overwrite + manual: an edit to a global copy is silently clobbered with no record. Acceptable by design, but pair it with OPS-1/OPS-2 so drift is at least observable before the clobber. | Open |
+| OPS-4 | `/close`'s merge step runs `git push` immediately followed by `gh pr merge`. When GitHub hasn't finished recomputing mergeability (PR shows `mergeable: UNKNOWN` / `mergeStateStatus: UNKNOWN`), the merge is rejected with `GraphQL: Head branch is out of date` and the step fails — leaving the PR unmerged and no `shipped/<slug>` tag. Observed on PR #3 (2026-06-05); recovered only by manually waiting for mergeability to settle and retrying. Unattended (e.g. scheduled/headless), the merge step fails. | Open |
 
 ---
 
