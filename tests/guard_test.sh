@@ -51,6 +51,8 @@ run 2 "$FEAT" 'git push --force origin main'           "--force"
 run 2 "$FEAT" 'git push --force-with-lease'            "--force-with-lease"
 run 2 "$FEAT" 'git push -f origin x'                   "-f"
 run 2 "$FEAT" 'git push --mirror origin'              "--mirror"
+run 2 "$FEAT" 'git push --force-with-lease=main origin main'  "--force-with-lease=<ref> value form"
+run 2 "$FEAT" 'git push --force-with-lease=main:abc123 origin main' "--force-with-lease=<ref>:<expect> form"
 run 2 "$FEAT" "git -C $BASE push +HEAD:main"          "git -C force +refspec"
 
 echo "== --no-verify never allowed =="

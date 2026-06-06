@@ -66,6 +66,7 @@ GLOBAL_WITH_ARG = {"-C", "-c", "--git-dir", "--work-tree", "--namespace",
 GLOBAL_EQ_PREFIX = ("--git-dir=", "--work-tree=", "--namespace=", "--config-env=")
 BASE_BRANCHES = {"main", "master"}
 FORCE_FLAGS = {"--force", "-f", "--force-with-lease", "--force-if-includes", "--mirror"}
+FORCE_EQ_PREFIX = ("--force-with-lease=", "--force-if-includes=")  # value forms, e.g. --force-with-lease=main
 SHORT_F = re.compile(r"^-[A-Za-z]*f[A-Za-z]*$")   # -f bundled in short flags, e.g. -fv
 
 def git_out(cdir, *a):
@@ -125,6 +126,7 @@ for seg in segments:
 
     if sub == "push":
         forced = any(t in FORCE_FLAGS for t in rest) \
+            or any(t.startswith(FORCE_EQ_PREFIX) for t in rest) \
             or any(SHORT_F.match(t) for t in rest) \
             or any((not t.startswith("-")) and t.startswith("+") for t in rest)  # +refspec
         if forced:
