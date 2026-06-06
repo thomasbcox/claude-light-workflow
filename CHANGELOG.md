@@ -5,6 +5,27 @@ All notable changes to this workflow are recorded here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+- **`/close` merge gate & status lifecycle** (story `close-gate-and-backlog`, PR #2):
+  - The story header no longer asserts `Status: merged` before a merge happens. It records only
+    *declared* state (`proposed → approved`, terminal); whether it shipped is *observed* state owned
+    by git — authoritatively the merge commit / PR-`MERGED` state — read back by deriving, never
+    hand-written into the header (single source of truth; declared-vs-observed).
+  - `/close` now states unambiguously that **invoking `/close` is NOT merge authorization**; a
+    distinct, in-session "merge" instruction is required *after* the re-review fork, every time.
+  - The "re-review or merge?" fork is **mandatory and non-skippable**, even on a clean review with
+    zero fixes.
+
+### Added
+- **`shipped/<slug>` tag convention** — a best-effort, out-of-tree "this shipped" marker created at
+  merge time (the merge commit / PR-`MERGED` state remains the authority).
+- **`BACKLOG.md`** — staging area in front of the loop (`BUG-`/`OPS-` items) + README pointer.
+
+### Changed
+- **`/review`** decision menu/routing wording clarified: deciding fix/defer/reject is not a merge
+  decision, and routing to `/close` does not authorize a merge.
+- **Doctrine** (`workflow-protocol.md`, `frame`) documents the declared-vs-observed status lifecycle.
+
 ## [2026-06-03] — Bootstrap
 
 ### Added
