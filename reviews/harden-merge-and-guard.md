@@ -45,6 +45,24 @@ The workflow's safety model rests on two mechanisms, and both have holes:
 - **AC8:** `grep -rn "codex exec review"` over README.md and `.claude/workflow-protocol.md` returns nothing (the deny-note in `review/SKILL.md:29`, which references the subcommand to warn against it, is exempt).
 - **Gate:** `testCommand` (currently a placeholder) must stay green; the new shell test should be runnable standalone and, ideally, wired so the gate actually exercises it.
 
+## Build note (2026-06-05)
+
+AC → file map:
+- AC1–4 (`/close` stale-head): [.claude/skills/close/SKILL.md](../.claude/skills/close/SKILL.md) — remote recipe now captures `localSha`, pushes HEAD, polls `mergeStateStatus`, asserts `headRefOid == localSha`, merges with `--match-head-commit "$localSha"`.
+- AC5–7 (guard): [.claude/hooks/block-main-writes.sh](../.claude/hooks/block-main-writes.sh) — rewritten to tokenize the command, isolate real `git` invocations, walk global options (`-C`/`-c`/…) to the true subcommand, resolve the target repo before the branch check, and detect `+refspec`/`--mirror`/`-f` force forms. Fails open on unparseable input.
+- AC8 (docs): [README.md](../README.md), [.claude/workflow-protocol.md](../.claude/workflow-protocol.md) — `codex exec review` replaced with `codex exec -s read-only --output-schema …`; `review/SKILL.md:29` warn-note left intact.
+- AC9 (test/gate): [tests/guard_test.sh](../tests/guard_test.sh) — 17 JSON-payload cases (bypass forms denied, benign/native-defer allowed); wired in as `testCommand` in [.claude/workflow.json](../.claude/workflow.json).
+
+`git diff --stat main...HEAD`: 7 files, +280/−53 (hook +172/−… is the bulk). Gate `bash tests/guard_test.sh`: 17 passed / 0 failed.
+
+## Codex review (2026-06-05, base main, HEAD 58a02ff)
+
+**Summary:** Reviewed `git diff main...HEAD`, `git log`, and the spec. The close recipe and docs mostly match the spec, but the guard still misses a standard `--force-with-lease=<ref>` form. (Codex's own full guard-test run was blocked by its read-only sandbox's `mktemp`; it confirmed the bypass via targeted hook payloads instead.)
+
+**BLOCKER — Guard misses `--force-with-lease` value form** · `.claude/hooks/block-main-writes.sh:127`
+AC6 requires blocking `--force-with-lease`, but the detector only matches exact tokens in `FORCE_FLAGS`. Git also accepts `--force-with-lease=<ref>` / `--force-with-lease=<ref>:<expect>`; `git push --force-with-lease=main origin main` exits 0 from a feature branch — a real bypass.
+*Suggestion:* block long force options on exact match **or** `--force-with-lease=` prefix; add a fixture for `git push --force-with-lease=main origin main`.
+
 ## Open questions
 1. **Guard severity / approach:** harden the string-matcher in place (faster, still fragile), or accept the report's framing that the doc overclaim ("bypass requires a diff-visible edit") is itself the defect and soften that claim alongside a best-effort harden? I propose: harden the known forms **and** soften the absolute claim, since string-matching can't be made airtight.
 2. **Gate wiring:** the repo's `testCommand` is a placeholder (`echo … && true`). Do you want the new guard test wired in as the real gate, or left as a standalone script invoked manually?
