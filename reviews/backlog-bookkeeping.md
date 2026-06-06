@@ -33,6 +33,21 @@ Date: 2026-06-05 · Branch: claude/backlog-bookkeeping · Status: approved
 - AC4: confirm OPS rows unchanged.
 - AC5: `git diff --stat main...HEAD` shows only the two docs files + the story file.
 
+## Build note (2026-06-05)
+
+AC → file map:
+- AC1/AC2 (BUG-D1/D2/D3 → Done; open bugs table emptied with a "(all shipped)" note; dangling Related-ACs note removed) → `BACKLOG.md`
+- AC3 (`[Unreleased]` Fixed/Added/Changed entry) → `CHANGELOG.md`
+- AC4 (OPS-1/2/3 unchanged) → `BACKLOG.md` (verified: 3 OPS rows still Open)
+- AC5 (docs-only diff) → verified via `git diff --name-only main...HEAD`
+
+`git diff --stat main...HEAD`:
+```
+ BACKLOG.md                     | 19 ++++++++-----------
+ CHANGELOG.md                   | 21 +++++++++++++++++++++
+ reviews/backlog-bookkeeping.md | 38 ++++++++++++++++++++++++++++++++++++++
+```
+
 ## Decisions (2026-06-05)
 
 Thomas, this session: **scope approved** — "implement and review". Open question 1 → default kept (Skill-behavior-bugs header retained with an "(all shipped — see Done)" note). Not merge authorization.
