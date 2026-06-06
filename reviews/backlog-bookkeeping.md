@@ -48,6 +48,14 @@ AC → file map:
  reviews/backlog-bookkeeping.md | 38 ++++++++++++++++++++++++++++++++++++++
 ```
 
+## Codex review (2026-06-05, base main, HEAD 678433b)
+
+**Summary:** Docs-only; the BUG-D1/D2/D3 Done rows, CHANGELOG shipped-fix claims, OPS-1/2/3 rows, PR #2 tag, and `5225bdb` merge reference all check out. One BACKLOG wording issue remains against AC2.
+
+### IMPORTANT
+1. **Open bug section preface still describes the shipped bugs as future work** (`BACKLOG.md:20`). The table was replaced with an "all shipped" note, but the preceding two lines still say the three bugs "are bundled and ready to `/frame` together" — contradicting the new Done entries.
+   *Suggestion:* remove or past-tense the preface, e.g. "BUG-D1/D2/D3 were storied in `workflow-skill-defects.story.md` and shipped via PR #2 / `5225bdb`; see Done."
+
 ## Decisions (2026-06-05)
 
 Thomas, this session: **scope approved** — "implement and review". Open question 1 → default kept (Skill-behavior-bugs header retained with an "(all shipped — see Done)" note). Not merge authorization.
