@@ -71,6 +71,10 @@ AC6 requires blocking `--force-with-lease`, but the detector only matches exact 
 
 - **BLOCKER — `--force-with-lease` value form (FIXED):** added `FORCE_EQ_PREFIX = ("--force-with-lease=", "--force-if-includes=")` to [.claude/hooks/block-main-writes.sh](../.claude/hooks/block-main-writes.sh) and OR'd a `t.startswith(FORCE_EQ_PREFIX)` clause into the force-push detector. Added two fixtures to [tests/guard_test.sh](../tests/guard_test.sh): `--force-with-lease=main origin main` and `--force-with-lease=main:abc123 origin main`. Gate now 19/19.
 
+## Build note (2026-06-05, re-review round 2)
+
+Diff-only re-review, base = last-reviewed `58a02ff`. Delta = the BLOCKER fix only: `+FORCE_EQ_PREFIX` clause in the guard, 2 force-with-lease fixtures. `git diff --stat 58a02ff...HEAD`: 4 files, +31. Gate: 19/19 green.
+
 ## Open questions
 1. **Guard severity / approach:** harden the string-matcher in place (faster, still fragile), or accept the report's framing that the doc overclaim ("bypass requires a diff-visible edit") is itself the defect and soften that claim alongside a best-effort harden? I propose: harden the known forms **and** soften the absolute claim, since string-matching can't be made airtight.
 2. **Gate wiring:** the repo's `testCommand` is a placeholder (`echo … && true`). Do you want the new guard test wired in as the real gate, or left as a standalone script invoked manually?
