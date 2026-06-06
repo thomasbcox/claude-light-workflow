@@ -12,11 +12,12 @@ The full doctrine lives in [`.claude/workflow-protocol.md`](.claude/workflow-pro
 | Skill | Does | Human gate |
 |---|---|---|
 | `/frame`  | request → short spec on a feature branch → implement AC-by-AC | **approves scope** |
-| `/review` | gate green → `codex exec review` (read-only) → decision menu | **decides per finding** |
+| `/review` | gate green → `codex exec` (read-only, schema-validated) → decision menu | **decides per finding** |
 | `/close`  | apply approved fixes → re-review or merge → cleanup | **approves merge** |
 
-Codex is called directly via the `codex` CLI (`codex exec review`) — no copy/paste. It runs
-read-only and never commits; Claude captures its structured findings and commits the trail.
+Codex is called directly via the `codex` CLI — a read-only `codex exec -s read-only` run with a
+structured-output schema (the canonical command lives in [`review/SKILL.md`](.claude/skills/review/SKILL.md)),
+no copy/paste. It runs read-only and never commits; Claude captures its structured findings and commits the trail.
 
 ## Artifacts (the audit trail)
 - [`BACKLOG.md`](BACKLOG.md) — staging area in front of the loop: outstanding bugs (`BUG-`) and tooling improvements (`OPS-`), each graduating to a `reviews/<slug>.md` story.
@@ -27,8 +28,12 @@ read-only and never commits; Claude captures its structured findings and commits
 - `shipped/<slug>` tag — a convenience "this shipped" marker. The story header records only declared state (`proposed → approved`); shipped state is owned by git — authoritatively the merge commit / PR-MERGED, with this tag as a best-effort label — and read back by deriving, never stored in the header.
 
 ## Guardrail
-One hook, [`block-main-writes.sh`](.claude/hooks/block-main-writes.sh): blocks commits/pushes to the
-base branch and `--force` / `--no-verify`. Bypass requires a diff-visible edit.
+One hook, [`block-main-writes.sh`](.claude/hooks/block-main-writes.sh): parses each command's real
+`git` invocation (so `git -C <repo> commit` and `git -c k=v commit` are caught, and a `grep 'git push'`
+is not) and blocks commits/pushes to the base branch, `--no-verify`, and force-pushes
+(`--force` / `--force-with-lease` / `-f` / `--mirror` / `+refspec`). It's a cooperative guardrail, not an
+adversarial sandbox — the real backstop is server-side branch protection; bypassing the hook still takes a
+diff-visible edit to it or `settings.json`. Covered by [`tests/guard_test.sh`](tests/guard_test.sh) (the gate).
 
 ## Deferring to a repo's native workflow
 Because the skills + hook install globally (`~/.claude`), they reach every repo. A repo that already
@@ -44,5 +49,5 @@ Repos without the marker are governed by the light workflow as normal.
 3. In each app, run `/frame` once — it bootstraps that repo's `.claude/workflow.json` + `AGENTS.md`.
 
 ## Requirements
-`codex` CLI (`codex exec review`), `git`, `python3`, `jq`. `gh` + a remote enable PR mode; without a
+`codex` CLI (`codex exec`), `git`, `python3`, `jq`. `gh` + a remote enable PR mode; without a
 remote the loop runs fully local (local `--no-ff` merge).
