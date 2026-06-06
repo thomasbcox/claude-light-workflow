@@ -1,6 +1,6 @@
 {
   "baseBranch": "main",
   "branchPrefix": "claude/",
-  "testCommand": "echo 'no tests yet (placeholder gate)' && true",
+  "testCommand": "bash tests/guard_test.sh",
   "codexModel": ""
 }

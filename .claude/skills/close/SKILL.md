@@ -22,9 +22,22 @@ Step 3 of the loop. Doctrine: `~/.claude/workflow-protocol.md`.
 4. **Re-review fork (mandatory — never skip).** Present exactly this choice and **STOP** for Thomas's answer: **re-review** (→ `/review`, base = last-reviewed SHA, diff-only) or **merge**? Ask this **every** time, including on a clean review with zero fixes — the human still chooses. Do not proceed to step 5 until Thomas gives a distinct merge instruction this session (see hard constraints).
    - If any approved fix touched money / security / auth / business logic / data-loss, recommend a re-review before merge.
 5. **Merge.** ONLY after Thomas's distinct "merge" instruction this session. **Do NOT touch the header** — it stays `approved`. The **merge commit** (`merge: <slug>`, with a `Story:` trailer) / the PR's `MERGED` state is the authoritative, atomic shipped fact — that is what makes it shipped, not the tag. Then add `shipped/<slug>` as a **best-effort convenience label** and verify the push; a merged PR with a missing tag is still shipped — re-run the tag step to repair, never read its absence as "not shipped."
-   - **Remote + `gh`:**
+   - **Remote + `gh`:** the merge must ship *exactly* the reviewed/fixed HEAD — never whatever stale commit the remote PR happens to point at. So: push the local HEAD, prove the PR points at it, wait for mergeability to settle, then merge that exact SHA.
      ```bash
-     gh pr merge --merge --delete-branch -t "merge: <slug>" -b "Story: reviews/<slug>.md"   # authoritative ship
+     localSha=$(git rev-parse HEAD)                            # the reviewed/fixed commit
+     git push origin HEAD                                      # the PR head must contain the approved fixes
+     # Let GitHub settle mergeability/checks (it computes them async); stop unless actually mergeable.
+     for i in 1 2 3 4 5; do
+       state=$(gh pr view <PR#> --json mergeStateStatus -q .mergeStateStatus)
+       [ "$state" = "UNKNOWN" ] || break
+       sleep 5
+     done
+     case "$state" in CLEAN|UNSTABLE|HAS_HOOKS) : ;; *) echo "ABORT: PR not mergeable (mergeStateStatus=$state)"; exit 1 ;; esac
+     # Prove the PR head equals the reviewed SHA before merging (loud abort on drift).
+     prHead=$(gh pr view <PR#> --json headRefOid -q .headRefOid)
+     [ "$prHead" = "$localSha" ] || { echo "ABORT: PR head $prHead != reviewed $localSha — push/refresh, do not merge"; exit 1; }
+     gh pr merge <PR#> --merge --delete-branch --match-head-commit "$localSha" \
+       -t "merge: <slug>" -b "Story: reviews/<slug>.md"       # authoritative ship; --match-head-commit refuses on head drift
      sha=$(gh pr view <PR#> --json mergeCommit -q .mergeCommit.oid)
      git fetch origin                                          # ensure the merge commit is local
      git tag -a "shipped/<slug>" "$sha" -m "Shipped <slug> (PR #<PR#>)" && git push origin "shipped/<slug>"

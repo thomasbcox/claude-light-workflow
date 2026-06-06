@@ -9,13 +9,13 @@ A small, human-controlled development loop. One idea above all:
 ## Actors
 - **Thomas** — owner / decider. Approves scope, decides each finding's disposition, approves the merge.
 - **Claude** — builder / scribe. Writes the spec, the code, and the audit trail; calls Codex; applies approved fixes; merges on Thomas's word. Never self-approves scope or merge.
-- **Codex** — independent reviewer (`codex exec review`, read-only). Critiques and classifies; never fixes or merges.
+- **Codex** — independent reviewer (`codex exec -s read-only` with a structured-output schema; the canonical command lives in `review/SKILL.md`). Critiques and classifies; never fixes or merges.
 - **Tests / gate** — the mechanical judge. Objective pass/fail. Green never implies business approval.
 - **The repo** — the one source of truth; the per-branch story file `reviews/<slug>.md` is the audit trail.
 
 ## The loop
 1. **`/frame`** — Thomas states a need → Claude drafts a spec on a feature branch → **Thomas approves scope** → Claude implements AC-by-AC.
-2. **`/review`** — gate goes green → `codex exec review` produces structured findings → Claude presents a decision menu → **Thomas decides per finding**.
+2. **`/review`** — gate goes green → `codex exec -s read-only --output-schema …` produces structured findings → Claude presents a decision menu → **Thomas decides per finding**.
 3. **`/close`** — Claude applies only approved fixes → gate green → re-review (Thomas's call) or **Thomas approves merge** → merge + cleanup.
 
 Loop 2 ↔ 3 as many rounds as needed.
