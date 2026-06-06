@@ -63,6 +63,10 @@ AC → file map:
 AC6 requires blocking `--force-with-lease`, but the detector only matches exact tokens in `FORCE_FLAGS`. Git also accepts `--force-with-lease=<ref>` / `--force-with-lease=<ref>:<expect>`; `git push --force-with-lease=main origin main` exits 0 from a feature branch — a real bypass.
 *Suggestion:* block long force options on exact match **or** `--force-with-lease=` prefix; add a fixture for `git push --force-with-lease=main origin main`.
 
+## Decisions (2026-06-05)
+
+- **BLOCKER — Guard misses `--force-with-lease` value form:** **FIX.** Thomas: "fix please." Block long force options on exact match or `--force-with-lease=` / `--force-if-includes=` prefix, and add a guard-test fixture.
+
 ## Open questions
 1. **Guard severity / approach:** harden the string-matcher in place (faster, still fragile), or accept the report's framing that the doc overclaim ("bypass requires a diff-visible edit") is itself the defect and soften that claim alongside a best-effort harden? I propose: harden the known forms **and** soften the absolute claim, since string-matching can't be made airtight.
 2. **Gate wiring:** the repo's `testCommand` is a placeholder (`echo … && true`). Do you want the new guard test wired in as the real gate, or left as a standalone script invoked manually?
