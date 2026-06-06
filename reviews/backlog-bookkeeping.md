@@ -59,3 +59,7 @@ AC → file map:
 ## Decisions (2026-06-05)
 
 Thomas, this session: **scope approved** — "implement and review". Open question 1 → default kept (Skill-behavior-bugs header retained with an "(all shipped — see Done)" note). Not merge authorization.
+
+## Decisions (2026-06-05, review round 1)
+
+- **① (IMPORTANT) → fix.** Past-tense the BACKLOG preface so it no longer describes the shipped bugs as future `/frame` work. Not merge authorization.

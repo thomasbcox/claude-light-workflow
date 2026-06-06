@@ -17,8 +17,8 @@ Two kinds of item, tracked separately:
 
 ## Skill-behavior bugs
 
-Storied in [`workflow-skill-defects.story.md`](workflow-skill-defects.story.md) — these
-three are bundled and ready to `/frame` together.
+BUG-D1/D2/D3 were storied in [`workflow-skill-defects.story.md`](workflow-skill-defects.story.md)
+and shipped together via PR #2 / `5225bdb`; see [Done](#done).
 
 _(all shipped — see [Done](#done))_
 
