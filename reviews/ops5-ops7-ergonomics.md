@@ -85,3 +85,14 @@ AC→file map:
   corrected): `.claude/skills/close/SKILL.md`
 - AC6 (OPS-7: `## Test notes` template warns against file counts for scope-containment ACs,
   directs `git diff --name-only` against the AC's file list): `.claude/skills/frame/SKILL.md`
+
+## Codex review (2026-06-07, base main, HEAD 42df681)
+
+**Summary:** Reviewed `git log --oneline main..HEAD`, `git diff main...HEAD`, and the spec
+against the approved scope. The diff is limited to the two in-scope skill files plus the story
+file; no spec violations found in the changed instructions. (Codex noted it could not run the
+guard gate itself — the read-only sandbox blocks `mktemp`/`git init` — so that is an
+environmental limitation, not a branch finding. The gate was run green outside the sandbox:
+19/19.)
+
+**Findings:** none — empty findings array.
