@@ -122,3 +122,10 @@ Gate: `bash tests/guard_test.sh` → 19/19 passed.
 
 - I2: **fix** — remove gate result from build note entirely; build note = AC→file map only; gate proven implicitly by Codex review existing.
 - N1: **fix** — remove file count from AC10 test note; replace with pointer to AC. Also: backlog OPS-7 (frame spec template should not count files in test notes).
+
+## Fixes (2026-06-07, round 2)
+
+Applied in commit `7a67645`:
+- **I2**: Removed gate result from `/review` step 2. Final text: "the AC→file map only. Do not include a gate result (proven implicitly by the Codex review existing) or a `git diff --stat` block". (`.claude/skills/review/SKILL.md`)
+- **N1**: Replaced "must show only five files" with "run `git diff --name-only main...HEAD`; verify no files appear beyond those listed in AC10." (`reviews/backlog-ops5-ops6-bookkeeping.md`)
+- **OPS-7**: Added to `BACKLOG.md` open table.
