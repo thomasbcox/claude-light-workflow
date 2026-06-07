@@ -60,3 +60,21 @@ backlog items were identified. Specifically:
 ## Open questions
 
 None.
+
+## Build note (2026-06-07)
+
+AC→file map:
+- AC1–5 (OPS-4 to Done, OPS-5/OPS-6 added, lifecycle fix): `BACKLOG.md`
+- AC6–7 (CHANGELOG backfill, bootstrap fix): `CHANGELOG.md`
+- AC8 (Status: merged → approved): `reviews/defer-to-native.md`, `reviews/add-changelog.md`
+- AC9 (gate): `bash tests/guard_test.sh` → 19/19 passed
+- AC10 (docs-only diff): confirmed via `git diff --name-only main...HEAD`
+
+```
+ BACKLOG.md                               | 13 +++----
+ CHANGELOG.md                             | 37 +++++++++++++++++--
+ reviews/add-changelog.md                 |  2 +-
+ reviews/backlog-ops5-ops6-bookkeeping.md | 62 ++++++++++++++++++++++++++++++++
+ reviews/defer-to-native.md               |  2 +-
+ 5 files changed, 106 insertions(+), 10 deletions(-)
+```
