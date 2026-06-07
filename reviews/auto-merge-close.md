@@ -58,3 +58,14 @@ AC→file map:
 ```
 
 Gate: `bash tests/guard_test.sh` → 19/19 passed.
+
+## Codex review (2026-06-06, base main, HEAD 1a222cc)
+
+**Summary:** The branch makes the requested prose/bash-block changes, but the new pre-flight command uses a JSON field that the local `gh repo view` command does not support, so the remote `/close` path would abort even on correctly configured repositories.
+
+### BLOCKER
+
+**B1 — Auto-merge preflight uses unsupported gh field**
+- File: `.claude/skills/close/SKILL.md` line 29
+- Claim: `gh repo view --json autoMergeAllowed` rejects `autoMergeAllowed` as an unknown JSON field. The remote merge path can fail before push/merge regardless of the repository's actual auto-merge setting — AC4 is not reliably implemented.
+- Suggestion: Replace with a supported API query — e.g. `gh api repos/{owner}/{repo} --jq .allow_auto_merge` (REST, confirmed working) — then abort only when the returned value is actually `false`.
