@@ -57,7 +57,7 @@ backlog items were identified. Specifically:
 
 - AC1–8: verified by reading the changed files.
 - AC9: `bash tests/guard_test.sh` → must exit 0.
-- AC10: `git diff --name-only main...HEAD` must show only the five files listed.
+- AC10: run `git diff --name-only main...HEAD`; verify no files appear beyond those listed in AC10.
 
 ## Open questions
 
@@ -117,3 +117,8 @@ Gate: `bash tests/guard_test.sh` → 19/19 passed.
 - File: `reviews/backlog-ops5-ops6-bookkeeping.md` line 60
 - Claim: Updated AC10 allows six paths (including `.claude/skills/review/SKILL.md`), but the test note still says five files.
 - Suggestion: Update the test note to list six files or enumerate the expected paths.
+
+## Decisions (2026-06-07, round 2)
+
+- I2: **fix** — remove gate result from build note entirely; build note = AC→file map only; gate proven implicitly by Codex review existing.
+- N1: **fix** — remove file count from AC10 test note; replace with pointer to AC. Also: backlog OPS-7 (frame spec template should not count files in test notes).
