@@ -75,3 +75,12 @@ AC→file map:
 - AC1–4 (separate-statement `|| reqChecks=0` fallback; `case` integer-sanitise; live-403 → 0;
   if/elif/else branch logic and both `gh pr merge` invocations unchanged):
   `.claude/skills/close/SKILL.md`
+
+## Codex review (2026-06-07, base main, HEAD fe2913c)
+
+**Summary:** Read `git diff main...HEAD`, `git log --oneline main..HEAD`, and the spec. The
+branch matches the approved spec: the inline `|| echo 0` fallback was removed, failure fallback
+is a separate assignment, non-numeric/empty `reqChecks` is sanitised before `-gt`, and the
+merge branch logic is unchanged.
+
+**Findings:** none — empty findings array.
