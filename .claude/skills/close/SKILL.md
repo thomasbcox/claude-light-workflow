@@ -36,8 +36,13 @@ Step 3 of the loop. Doctrine: `~/.claude/workflow-protocol.md`.
      # is unprotected — is treated as zero required checks. GitHub *rulesets* are NOT consulted; if
      # you enforce required checks via rulesets, enable auto-merge so GitHub gates the merge.
      autoMerge=$(gh api repos/{owner}/{repo} --jq .allow_auto_merge)
+     # Capture the count only on success; on ANY gh failure (403/404/network) fall back to 0
+     # via a SEPARATE statement — an inline `|| echo 0` would append 0 to the error body that
+     # gh prints to stdout, yielding a non-integer. Then coerce empty/non-numeric to 0 so the
+     # numeric test below always gets a clean integer.
      reqChecks=$(gh api "repos/{owner}/{repo}/branches/<baseBranch>/protection/required_status_checks" \
-                   --jq '(.checks // []) | length' 2>/dev/null || echo 0)
+                   --jq '(.checks // []) | length' 2>/dev/null) || reqChecks=0
+     case "$reqChecks" in (''|*[!0-9]*) reqChecks=0 ;; esac
      if [ "$autoMerge" = "true" ]; then
        # --match-head-commit refuses if head has drifted from the reviewed SHA.
        gh pr merge <PR#> --auto --merge --delete-branch --match-head-commit "$localSha" \
