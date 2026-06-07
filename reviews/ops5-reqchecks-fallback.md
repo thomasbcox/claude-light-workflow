@@ -68,3 +68,10 @@ outcome was right by luck, not by logic. Discovered by dogfooding the PR #8 merg
 ## Open questions
 
 None.
+
+## Build note (2026-06-07)
+
+AC→file map:
+- AC1–4 (separate-statement `|| reqChecks=0` fallback; `case` integer-sanitise; live-403 → 0;
+  if/elif/else branch logic and both `gh pr merge` invocations unchanged):
+  `.claude/skills/close/SKILL.md`
