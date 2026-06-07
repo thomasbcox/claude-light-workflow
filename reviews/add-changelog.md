@@ -1,4 +1,4 @@
-Date: 2026-06-03 · Branch: claude/add-changelog · Status: merged
+Date: 2026-06-03 · Branch: claude/add-changelog · Status: approved
 
 > Approved by Thomas (2026-06-03): "approve - go implement it"
 > Scope expanded by Thomas (2026-06-03): fold in the workflow fixes the shakeout surfaced
