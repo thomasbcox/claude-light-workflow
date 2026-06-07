@@ -30,7 +30,7 @@ Step 1 of the lightweight Claude↔Codex review loop. Doctrine: `~/.claude/workf
    - `## Problem` — what and why.
    - `## In scope` / `## Non-goals`.
    - `## Acceptance criteria` — numbered, each testable.
-   - `## Test notes` — how each AC will be checked.
+   - `## Test notes` — how each AC will be checked. For a scope-containment AC (one that limits which files the diff may touch), do **not** restate a file count ("must show only N files") — that duplicates the AC's file list and goes stale on any scope change. Instead say: run `git diff --name-only <baseBranch>...HEAD` and verify no files appear beyond those the AC enumerates.
    - `## Open questions` — anything for Thomas to decide.
 6. **Approval gate.** Present the spec. **STOP.** Ask Thomas to approve or adjust scope. Do not write code until he approves.
 7. **On approval:** set `Status: approved`, append a line quoting Thomas's decision, then commit only the story file:

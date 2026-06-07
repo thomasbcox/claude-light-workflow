@@ -22,16 +22,33 @@ Step 3 of the loop. Doctrine: `~/.claude/workflow-protocol.md`.
 4. **Re-review fork (mandatory — never skip).** Present exactly this choice and **STOP** for Thomas's answer: **re-review** (→ `/review`, base = last-reviewed SHA, diff-only) or **merge**? Ask this **every** time, including on a clean review with zero fixes — the human still chooses. Do not proceed to step 5 until Thomas gives a distinct merge instruction this session (see hard constraints).
    - If any approved fix touched money / security / auth / business logic / data-loss, recommend a re-review before merge.
 5. **Merge.** ONLY after Thomas's distinct "merge" instruction this session. **Do NOT touch the header** — it stays `approved`. The **merge commit** (`merge: <slug>`, with a `Story:` trailer) / the PR's `MERGED` state is the authoritative, atomic shipped fact — that is what makes it shipped, not the tag. Then add `shipped/<slug>` as a **best-effort convenience label** and verify the push; a merged PR with a missing tag is still shipped — re-run the tag step to repair, never read its absence as "not shipped."
-   - **Remote + `gh`:** the merge must ship *exactly* the reviewed/fixed HEAD. Merge timing is delegated to GitHub via `--auto` — GitHub performs the merge once all requirements pass, eliminating the client-side mergeability race. So: verify auto-merge is enabled on the repo, push the local HEAD, enable auto-merge on the PR (with `--match-head-commit` for drift safety), then poll for `MERGED`.
+   - **Remote + `gh`:** the merge must ship *exactly* the reviewed/fixed HEAD. When auto-merge is enabled, merge timing is delegated to GitHub via `--auto` — GitHub performs the merge once all requirements pass, eliminating the client-side mergeability race. When auto-merge is disabled, a direct merge ships immediately *unless* the base branch has required status checks (then abort — there is something to wait for). Either way: push the local HEAD, run the appropriate `gh pr merge` (with `--match-head-commit` for drift safety), then poll for `MERGED`.
      ```bash
      localSha=$(git rev-parse HEAD)                            # the reviewed/fixed commit
-     # Pre-flight: abort if auto-merge is not enabled on this repo (avoid silent misbehaviour).
-     autoMerge=$(gh api repos/{owner}/{repo} --jq .allow_auto_merge)
-     [ "$autoMerge" = "true" ] || { echo "ABORT: auto-merge is not enabled for this repo — enable it under Settings → General → Pull Requests → Allow auto-merge, then re-run /close"; exit 1; }
      git push origin HEAD                                      # the PR head must contain the approved fixes
-     # Delegate merge timing to GitHub; --match-head-commit refuses if head has drifted from the reviewed SHA.
-     gh pr merge <PR#> --auto --merge --delete-branch --match-head-commit "$localSha" \
-       -t "merge: <slug>" -b "Story: reviews/<slug>.md"
+     # Pre-flight: pick a merge strategy.
+     #   - Auto-merge ENABLED  → delegate merge timing to GitHub (waits for any required checks).
+     #   - Auto-merge DISABLED + NO required checks → a direct merge succeeds immediately; do that.
+     #   - Auto-merge DISABLED + ≥1 required check  → there is genuinely something to wait for;
+     #     abort and let the human enable auto-merge or merge manually once checks pass.
+     # Required-check detection uses CLASSIC branch protection only. Any failure — including the
+     # 403 "Upgrade to GitHub Pro" returned for free-account private repos, or 404 when the branch
+     # is unprotected — is treated as zero required checks. GitHub *rulesets* are NOT consulted; if
+     # you enforce required checks via rulesets, enable auto-merge so GitHub gates the merge.
+     autoMerge=$(gh api repos/{owner}/{repo} --jq .allow_auto_merge)
+     reqChecks=$(gh api "repos/{owner}/{repo}/branches/<baseBranch>/protection/required_status_checks" \
+                   --jq '(.checks // []) | length' 2>/dev/null || echo 0)
+     if [ "$autoMerge" = "true" ]; then
+       # --match-head-commit refuses if head has drifted from the reviewed SHA.
+       gh pr merge <PR#> --auto --merge --delete-branch --match-head-commit "$localSha" \
+         -t "merge: <slug>" -b "Story: reviews/<slug>.md"
+     elif [ "${reqChecks:-0}" -gt 0 ]; then
+       echo "ABORT: auto-merge is disabled and '<baseBranch>' has required status checks — enable auto-merge (Settings → General → Pull Requests → Allow auto-merge) or merge manually once checks pass, then re-run /close"; exit 1
+     else
+       # Auto-merge off and no required checks: ship the reviewed HEAD immediately.
+       gh pr merge <PR#> --merge --delete-branch --match-head-commit "$localSha" \
+         -t "merge: <slug>" -b "Story: reviews/<slug>.md"
+     fi
      # Wait for GitHub to perform the merge (auto-merge is async). Timeout after 5 minutes.
      for i in $(seq 1 30); do
        prState=$(gh pr view <PR#> --json state -q .state)
