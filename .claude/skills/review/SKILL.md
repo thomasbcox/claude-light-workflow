@@ -15,7 +15,7 @@ Step 2 of the loop. Codex is the **independent** reviewer: it critiques and clas
 ## Steps
 0. **Defer to native workflow.** If `docs/ai-protocol.md` exists at the repo root (resolve via `git rev-parse --show-toplevel`), STOP immediately — this repo runs its own heavier workflow. Tell the user to use its native review skill (e.g. `/prepare-codex-review`) instead of this one, and do nothing else.
 1. **Load config** from `.claude/workflow.json`; identify `<slug>`, branch, `baseBranch`, `testCommand`, `codexModel`.
-2. **Build note.** Append to `reviews/<slug>.md` a `## Build note (<date>)` section: the AC→file map and `git diff --stat <baseBranch>...HEAD`.
+2. **Build note.** Append to `reviews/<slug>.md` a `## Build note (<date>)` section: the AC→file map only. Do not include a gate result (proven implicitly by the Codex review existing) or a `git diff --stat` block (derivable from git; causes self-referential staleness).
 3. **Gate.** Run `testCommand`. If it fails, fix until green (mechanical self-fixes are allowed to reach green) and record the result. A red gate stops the loop.
 4. **PR (only if a remote + `gh` exist).** Ensure a PR targets `baseBranch` and its checks are `SUCCESS` on the current HEAD. Local-only repos skip this entirely.
 5. **Codex review.** Choose the diff base: first review → `<baseBranch>`; re-review → the last-reviewed SHA recorded in the story file. Codex reads `AGENTS.md` automatically and runs read-only (`-s read-only` — it cannot edit the repo). Run:
