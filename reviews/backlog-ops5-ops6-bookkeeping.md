@@ -90,3 +90,14 @@ Gate: `bash tests/guard_test.sh` → 19/19 passed.
 ## Decisions (2026-06-07)
 
 - I1: **fix** — folded into scope: drop diffstat from `/review` step 2 (self-referential staleness); fix current build note; add AC11 to spec.
+
+## Build note (2026-06-07, re-review round 2, base a009e58)
+
+Delta since last review: one commit (`28c9199`) — I1 fix only.
+
+AC→file map (delta):
+- AC11 (`/review` step 2 no longer instructs diffstat): `.claude/skills/review/SKILL.md`
+- Current build note fixed (stale stat replaced with gate result): `reviews/backlog-ops5-ops6-bookkeeping.md`
+- Spec updated (Non-goals, AC10, AC11 added): `reviews/backlog-ops5-ops6-bookkeeping.md`
+
+Gate: `bash tests/guard_test.sh` → 19/19 passed.
