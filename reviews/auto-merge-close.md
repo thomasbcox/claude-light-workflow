@@ -69,3 +69,7 @@ Gate: `bash tests/guard_test.sh` → 19/19 passed.
 - File: `.claude/skills/close/SKILL.md` line 29
 - Claim: `gh repo view --json autoMergeAllowed` rejects `autoMergeAllowed` as an unknown JSON field. The remote merge path can fail before push/merge regardless of the repository's actual auto-merge setting — AC4 is not reliably implemented.
 - Suggestion: Replace with a supported API query — e.g. `gh api repos/{owner}/{repo} --jq .allow_auto_merge` (REST, confirmed working) — then abort only when the returned value is actually `false`.
+
+## Decisions (2026-06-06)
+
+- B1: **fix** — swap `gh repo view --json autoMergeAllowed` → `gh api repos/{owner}/{repo} --jq .allow_auto_merge`.

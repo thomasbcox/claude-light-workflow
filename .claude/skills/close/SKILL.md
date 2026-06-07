@@ -26,7 +26,7 @@ Step 3 of the loop. Doctrine: `~/.claude/workflow-protocol.md`.
      ```bash
      localSha=$(git rev-parse HEAD)                            # the reviewed/fixed commit
      # Pre-flight: abort if auto-merge is not enabled on this repo (avoid silent misbehaviour).
-     autoMerge=$(gh repo view --json autoMergeAllowed -q .autoMergeAllowed)
+     autoMerge=$(gh api repos/{owner}/{repo} --jq .allow_auto_merge)
      [ "$autoMerge" = "true" ] || { echo "ABORT: auto-merge is not enabled for this repo — enable it under Settings → General → Pull Requests → Allow auto-merge, then re-run /close"; exit 1; }
      git push origin HEAD                                      # the PR head must contain the approved fixes
      # Delegate merge timing to GitHub; --match-head-commit refuses if head has drifted from the reviewed SHA.
