@@ -78,3 +78,15 @@ AC→file map:
  reviews/defer-to-native.md               |  2 +-
  5 files changed, 106 insertions(+), 10 deletions(-)
 ```
+*(Note: diffstat recorded at build-note write time; story file grew after the build note was committed — Codex correctly flagged this as stale.)*
+
+## Codex review (2026-06-07, base main, HEAD 05403c2)
+
+**Summary:** Functional bookkeeping changes satisfy the stated AC1–8 and AC10 criteria. One finding: the build note diffstat was captured before the story file reached its final size.
+
+### IMPORTANT
+
+**I1 — Build note diffstat is stale**
+- File: `reviews/backlog-ops5-ops6-bookkeeping.md` line 77
+- Claim: Build note records `reviews/backlog-ops5-ops6-bookkeeping.md | 62` and `5 files changed, 106 insertions(+), 10 deletions(-)`, but `git diff --stat main...HEAD` reports the story file as 80 lines and totals 124 insertions.
+- Suggestion: Regenerate from `git diff --stat main...HEAD` so the audit trail matches the reviewed branch scope.
