@@ -76,3 +76,12 @@ treat any failure — incl. the `403 Upgrade to GitHub Pro` on free-account priv
 zero. GitHub *rulesets* as a required-check source are explicitly out of scope and noted as a
 known limitation in the skill comment, to revisit only if the repo goes public/paid or adopts
 rulesets.)
+
+## Build note (2026-06-07)
+
+AC→file map:
+- AC1–5 (OPS-5: three-way merge pre-flight — auto-merge path / direct-merge / abort-on-
+  required-checks; required-check detection degrading to zero on 403/404; stale section prose
+  corrected): `.claude/skills/close/SKILL.md`
+- AC6 (OPS-7: `## Test notes` template warns against file counts for scope-containment ACs,
+  directs `git diff --name-only` against the AC's file list): `.claude/skills/frame/SKILL.md`
