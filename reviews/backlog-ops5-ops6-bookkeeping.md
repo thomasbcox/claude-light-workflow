@@ -74,8 +74,6 @@ AC→file map:
 
 Gate: `bash tests/guard_test.sh` → 19/19 passed.
 
-*(Diffstat omitted — derivable via `git diff --stat main...HEAD`; see also I1 in Codex review below.)*
-
 ## Codex review (2026-06-07, base main, HEAD 05403c2)
 
 **Summary:** Functional bookkeeping changes satisfy the stated AC1–8 and AC10 criteria. One finding: the build note diffstat was captured before the story file reached its final size.
@@ -101,3 +99,21 @@ AC→file map (delta):
 - Spec updated (Non-goals, AC10, AC11 added): `reviews/backlog-ops5-ops6-bookkeeping.md`
 
 Gate: `bash tests/guard_test.sh` → 19/19 passed.
+
+## Codex review (2026-06-07, base a009e58, HEAD e2049d6) — round 2
+
+**Summary:** The I1 diffstat removal is directionally correct, but the updated `/review` steps now ask for a gate result before the gate is run. One IMPORTANT ordering issue; one NIT on a test note inconsistency.
+
+### IMPORTANT
+
+**I2 — Build note step asks for gate result before gate is run**
+- File: `.claude/skills/review/SKILL.md` line 18
+- Claim: Step 2 instructs appending a build note containing the gate result, but Step 3 is where `testCommand` is actually run. Following the documented order makes it impossible to truthfully record the current gate result in Step 2.
+- Suggestion: Move the gate step before the build-note step, or change Step 2 to gather the AC map and append/update the build note only after Step 3 has produced the gate result.
+
+### NIT
+
+**N1 — AC10 test note still says five files**
+- File: `reviews/backlog-ops5-ops6-bookkeeping.md` line 60
+- Claim: Updated AC10 allows six paths (including `.claude/skills/review/SKILL.md`), but the test note still says five files.
+- Suggestion: Update the test note to list six files or enumerate the expected paths.
