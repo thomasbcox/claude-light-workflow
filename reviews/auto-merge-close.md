@@ -44,3 +44,17 @@ This needs to work across any repo, including repos with existing branch protect
 ## Open questions
 
 None — scope is settled by the research findings and Thomas's decision to use Option A.
+
+## Build note (2026-06-06)
+
+AC→file map:
+- AC1–6 (poll loop removal, --auto, MERGED poll, pre-flight, --match-head-commit, headless-safe): `.claude/skills/close/SKILL.md`
+- AC7 (test gate): `tests/guard_test.sh` (unchanged — existing tests cover guard hook, not skill prose)
+
+```
+ .claude/skills/close/SKILL.md | 25 ++++++++++++-----------
+ reviews/auto-merge-close.md   | 46 +++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 59 insertions(+), 12 deletions(-)
+```
+
+Gate: `bash tests/guard_test.sh` → 19/19 passed.
