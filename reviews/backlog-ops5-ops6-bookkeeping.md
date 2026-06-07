@@ -29,7 +29,7 @@ backlog items were identified. Specifically:
 
 ## Non-goals
 
-- No changes to any skill, hook, config, or test file.
+- No changes to hook, config, or test files.
 - No changes to README or `workflow-protocol.md` (those docs are out of scope here; OPS-6
   doc-softening is a separate story when the hook is fixed).
 - Not fixing the underlying issues OPS-5/OPS-6 describe — this story only records them.
@@ -48,8 +48,10 @@ backlog items were identified. Specifically:
 8. `reviews/defer-to-native.md` and `reviews/add-changelog.md` headers read
    `Status: approved`.
 9. `bash tests/guard_test.sh` passes (19/19).
-10. Diff is docs-only — only `BACKLOG.md`, `CHANGELOG.md`, `reviews/defer-to-native.md`,
-    `reviews/add-changelog.md`, and this story file change.
+10. Diff touches only `BACKLOG.md`, `CHANGELOG.md`, `reviews/defer-to-native.md`,
+    `reviews/add-changelog.md`, `.claude/skills/review/SKILL.md`, and this story file.
+11. `/review` step 2 in `.claude/skills/review/SKILL.md` no longer instructs appending
+    a `git diff --stat` block to the build note — only the AC→file map and gate result.
 
 ## Test notes
 
@@ -70,15 +72,9 @@ AC→file map:
 - AC9 (gate): `bash tests/guard_test.sh` → 19/19 passed
 - AC10 (docs-only diff): confirmed via `git diff --name-only main...HEAD`
 
-```
- BACKLOG.md                               | 13 +++----
- CHANGELOG.md                             | 37 +++++++++++++++++--
- reviews/add-changelog.md                 |  2 +-
- reviews/backlog-ops5-ops6-bookkeeping.md | 62 ++++++++++++++++++++++++++++++++
- reviews/defer-to-native.md               |  2 +-
- 5 files changed, 106 insertions(+), 10 deletions(-)
-```
-*(Note: diffstat recorded at build-note write time; story file grew after the build note was committed — Codex correctly flagged this as stale.)*
+Gate: `bash tests/guard_test.sh` → 19/19 passed.
+
+*(Diffstat omitted — derivable via `git diff --stat main...HEAD`; see also I1 in Codex review below.)*
 
 ## Codex review (2026-06-07, base main, HEAD 05403c2)
 
@@ -90,3 +86,7 @@ AC→file map:
 - File: `reviews/backlog-ops5-ops6-bookkeeping.md` line 77
 - Claim: Build note records `reviews/backlog-ops5-ops6-bookkeeping.md | 62` and `5 files changed, 106 insertions(+), 10 deletions(-)`, but `git diff --stat main...HEAD` reports the story file as 80 lines and totals 124 insertions.
 - Suggestion: Regenerate from `git diff --stat main...HEAD` so the audit trail matches the reviewed branch scope.
+
+## Decisions (2026-06-07)
+
+- I1: **fix** — folded into scope: drop diffstat from `/review` step 2 (self-referential staleness); fix current build note; add AC11 to spec.
