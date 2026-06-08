@@ -57,3 +57,11 @@ Two ship cycles landed without their records being updated, the same drift the
 ## Open questions
 
 None.
+
+## Build note (2026-06-07)
+
+AC→file map:
+- AC1–4 (OPS-5 + OPS-7 moved to Done with PR #8 / `0406185`; OPS-5-fix reqChecks-fallback
+  recorded with PR #9 / `1278814`; OPS-1/2/3/6 untouched in the open table): `BACKLOG.md`
+- AC5–6 (dated entries for PR #8 `ops5-ops7-ergonomics` and PR #9 `ops5-reqchecks-fallback`):
+  `CHANGELOG.md`
