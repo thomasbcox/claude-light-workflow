@@ -59,3 +59,10 @@ documented command so reviews can't stall.
 ## Open questions
 
 None.
+
+## Build note (2026-06-08)
+
+AC→file map — single-file change:
+- AC1–4 (`</dev/null` redirect appended to the `codex exec` block; rationale note; redirect
+  binds to `codex exec` with no in-block pipe; scope limited to the one runnable invocation):
+  `.claude/skills/review/SKILL.md`
