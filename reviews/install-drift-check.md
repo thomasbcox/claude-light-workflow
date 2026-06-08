@@ -111,3 +111,19 @@ drift summary on normal installs (OPS-3) — while keeping the hard-overwrite be
 None. (Resolved 2026-06-07: (1) exit code — file drift → non-zero, commit-moved-but-files-match
 → informational/exit 0; (2) manifest = JSON at `~/.claude/workflow-manifest.json`, written/read
 with the `jq` the script already depends on.)
+
+## Build note (2026-06-08)
+
+AC→file map — all eight ACs are implemented in `install.sh` (single-file change):
+- AC1 (provenance manifest write): `write_manifest()`
+- AC2–AC3 (`--check` read-only per-artifact report; exit codes): `do_check()` + `scan()`
+- AC4 (recorded commit vs HEAD; missing-manifest note): `scan()` provenance block
+- AC5 (STALE / HAND-EDITED / UNCLASSIFIED classification): `classify_drift()`
+- AC6 (pre-overwrite drift summary + hand-edit warning): `do_install()` pre-overwrite block
+- AC7 (deploy target override): `DEST="${CLAUDE_WORKFLOW_DEST:-$HOME/.claude}"`
+- AC8 (idempotent; settings.json preserved): unchanged `jq` hook-merge block
+- Shared artifact set (single source of truth for install + check): `ARTIFACTS` array
+
+Note: a `set -e` trap surfaced and was fixed during build — `scan()` returned the status of its
+last short-circuited `[ … ] && echo` test, which under `set -e` aborted the install path before
+deploying; fixed with an explicit `return 0` (status is owned by `DRIFT_COUNT`).
