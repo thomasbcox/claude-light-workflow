@@ -45,9 +45,17 @@ src_dirty()  {
 classify_drift() {  # args: <src-rel> <dest-path> <commit>
   local srcrel="$1" destpath="$2" commit="$3" tmp
   if [ -z "$commit" ] || [ "$commit" = "unknown" ]; then echo "UNCLASSIFIED"; return; fi
+  # The recorded commit must be resolvable in THIS checkout, else we can't compare the deployed
+  # copy against it — report UNCLASSIFIED rather than guessing HAND-EDITED (a false "you'll lose
+  # local edits" alarm). This covers a SHA absent from this clone (e.g. another machine's commit).
+  if ! git -C "$SRC" cat-file -e "$commit^{tree}" 2>/dev/null; then echo "UNCLASSIFIED"; return; fi
   tmp="$(mktemp -d)"
-  if git -C "$SRC" archive "$commit" -- "$srcrel" 2>/dev/null | tar -x -C "$tmp" 2>/dev/null \
-     && diff -rq "$DEST/$destpath" "$tmp/$srcrel" >/dev/null 2>&1; then
+  # If the recorded commit resolves but its archive/extract for this path fails, we still have no
+  # ground truth to compare against — UNCLASSIFIED, not HAND-EDITED.
+  if ! git -C "$SRC" archive "$commit" -- "$srcrel" 2>/dev/null | tar -x -C "$tmp" 2>/dev/null; then
+    rm -rf "$tmp"; echo "UNCLASSIFIED"; return
+  fi
+  if diff -rq "$DEST/$destpath" "$tmp/$srcrel" >/dev/null 2>&1; then
     echo "STALE"
   else
     echo "HAND-EDITED"
@@ -88,7 +96,11 @@ scan() {
       [ "$show_insync" = "1" ] && echo "  IN SYNC  $destpath"
     else
       cls="$(classify_drift "$srcrel" "$destpath" "$rec_commit")"
-      echo "  DRIFT  $destpath — $cls"
+      if [ "$cls" = "UNCLASSIFIED" ]; then
+        echo "  DRIFT  $destpath — UNCLASSIFIED (recorded commit unavailable — cannot tell stale from hand-edited)"
+      else
+        echo "  DRIFT  $destpath — $cls"
+      fi
       DRIFT_COUNT=$((DRIFT_COUNT+1))
       [ "$cls" = "HAND-EDITED" ] && HANDEDIT_COUNT=$((HANDEDIT_COUNT+1))
     fi

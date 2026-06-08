@@ -158,3 +158,17 @@ passed.
   commit as `UNCLASSIFIED` ("recorded commit unavailable"), never `HAND-EDITED`. Add a test case:
   manifest pointing at a fabricated/absent SHA → `--check` reports `UNCLASSIFIED`, not
   `HAND-EDITED`.
+
+## Fixes (2026-06-08)
+
+- **I1** (`classify_drift`, `install.sh`): added two guards before concluding HAND-EDITED — (1)
+  `git -C "$SRC" cat-file -e "$commit^{tree}"` to confirm the recorded commit is resolvable in
+  this checkout; (2) treat a failed `git archive … | tar` extract as inconclusive. Either failure
+  now returns `UNCLASSIFIED` instead of `HAND-EDITED`. `scan()` prints an explicit
+  "recorded commit unavailable — cannot tell stale from hand-edited" note for that case.
+- Verified (per the decision's test case, run against isolated temp targets): manifest pointed at
+  a fabricated SHA `deadbeef…` with a drifted artifact → `--check` reports **UNCLASSIFIED**, not
+  HAND-EDITED; STALE (valid older commit, deployed matches it) and HAND-EDITED (valid HEAD,
+  deployed matches neither) regressions both still classify correctly; `bash -n` clean; gate
+  19/19. (No permanent install-test file added — consistent with the Non-goal of not adding an
+  install harness to the gate; `--check` itself is the standing verifier.)
