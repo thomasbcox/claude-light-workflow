@@ -150,3 +150,11 @@ passed.
 - Suggestion: verify the recorded commit is usable before archiving (e.g.
   `git -C "$SRC" cat-file -e "$commit^{tree}"`); if verification or extraction fails, return
   `UNCLASSIFIED` with a clear "recorded commit unavailable" message instead of `HAND-EDITED`.
+
+## Decisions (2026-06-08)
+
+- **I1: fix** — Thomas approved the fix ("fix"). `classify_drift` will verify the recorded
+  commit is resolvable (`git cat-file -e "$commit^{tree}"`) and treat an unresolvable/un-archivable
+  commit as `UNCLASSIFIED` ("recorded commit unavailable"), never `HAND-EDITED`. Add a test case:
+  manifest pointing at a fabricated/absent SHA → `--check` reports `UNCLASSIFIED`, not
+  `HAND-EDITED`.
