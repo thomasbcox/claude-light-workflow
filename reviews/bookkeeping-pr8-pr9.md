@@ -65,3 +65,15 @@ AC→file map:
   recorded with PR #9 / `1278814`; OPS-1/2/3/6 untouched in the open table): `BACKLOG.md`
 - AC5–6 (dated entries for PR #8 `ops5-ops7-ergonomics` and PR #9 `ops5-reqchecks-fallback`):
   `CHANGELOG.md`
+
+## Codex review (2026-06-07, base main, HEAD bb16644)
+
+**Summary:** Reviewed `git diff main...HEAD`, `git log --oneline main..HEAD`, and the spec.
+The branch is scoped to `BACKLOG.md`, `CHANGELOG.md`, and the story file; OPS-5/OPS-7 moved
+out of Open into Done with the required PR/commit citations, the PR #9 reqChecks follow-up is
+recorded, and the changelog has dated PR #8 and PR #9 entries matching the spec. (Codex noted
+it could not run `guard_test.sh` in its read-only sandbox — `mktemp` failed with
+`Operation not permitted` — and did not treat that environmental failure as a finding. The
+gate was run green outside the sandbox: 19/19.)
+
+**Findings:** none — empty findings array.
