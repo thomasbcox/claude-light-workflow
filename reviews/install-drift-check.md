@@ -159,6 +159,12 @@ passed.
   manifest pointing at a fabricated/absent SHA → `--check` reports `UNCLASSIFIED`, not
   `HAND-EDITED`.
 
+## Build note (2026-06-08, re-review round 2, base b7d56bc)
+
+Delta since round 1: one commit (`8f530b2`) — the I1 fix only.
+- I1 fix (resolvable-commit guard + archive/extract guard → `UNCLASSIFIED`; explicit scan
+  message): `install.sh` (`classify_drift`, `scan`)
+
 ## Fixes (2026-06-08)
 
 - **I1** (`classify_drift`, `install.sh`): added two guards before concluding HAND-EDITED — (1)
