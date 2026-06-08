@@ -5,6 +5,32 @@ All notable changes to this workflow are recorded here. The format follows
 
 ## [Unreleased]
 
+## [2026-06-07] — ops5-reqchecks-fallback (PR #9)
+
+### Fixed
+- **`/close` required-check detection (OPS-5 follow-up)**: the OPS-5 pre-flight's `reqChecks`
+  count did not degrade to zero on a `403`/`404`. An inline `|| echo 0` inside the command
+  substitution appended `0` to the error body `gh api` prints to stdout on failure, yielding a
+  non-integer (e.g. `{"message":…}0`) that broke the `[ -gt 0 ]` test. Fixed: capture the count
+  on `gh` success only via a separate-statement fallback (`… ) || reqChecks=0`), then coerce
+  empty/non-numeric to `0` with a `case` guard. Surfaced by dogfooding the PR #8 merge.
+
+## [2026-06-07] — ops5-ops7-ergonomics (PR #8)
+
+### Fixed
+- **`/close` auto-merge pre-flight too strict (OPS-5)**: it aborted whenever `allow_auto_merge`
+  was `false`, even with no required checks. Replaced with a three-way strategy — auto-merge
+  path when enabled, direct `gh pr merge` when disabled with no required checks, abort only when
+  disabled *and* the base branch has ≥1 required status check. Required-check detection uses
+  classic branch protection, degrading to zero on `403`/`404`; rulesets are out of scope
+  (documented in the skill comment).
+
+### Changed
+- **`/frame` test-notes guidance (OPS-7)**: the `## Test notes` template now warns against
+  restating file counts ("must show only N files") for scope-containment ACs — a DRY violation
+  that goes stale on scope change — and directs `git diff --name-only` against the AC's
+  enumerated file list instead.
+
 ## [2026-06-06] — auto-merge-close (PR #6)
 
 ### Fixed
