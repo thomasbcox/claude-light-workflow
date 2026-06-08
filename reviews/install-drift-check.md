@@ -178,3 +178,16 @@ Delta since round 1: one commit (`8f530b2`) — the I1 fix only.
   deployed matches neither) regressions both still classify correctly; `bash -n` clean; gate
   19/19. (No permanent install-test file added — consistent with the Non-goal of not adding an
   install harness to the gate; `--check` itself is the standing verifier.)
+
+## Codex review (2026-06-08, base b7d56bc, HEAD 01c1b37) — round 2
+
+**Summary:** Re-reviewed the diff since `b7d56bc` against the spec. The I1 fix is present —
+unresolvable recorded commits and failed archive/extracts now return `UNCLASSIFIED`, and
+`scan()` prints the explicit unavailable-commit message. `bash -n install.sh` and
+`git diff --check b7d56bc...HEAD` passed; no new shell bug in the changed code.
+
+**Findings:** none — empty findings array. I1 confirmed resolved.
+
+(Process note: the codex invocation hung on rounds 2–3 because `codex exec` blocked reading
+stdin; fixed by appending `</dev/null`. The `/review` skill's documented command lacks this
+redirect — flagged as a follow-up backlog item.)
