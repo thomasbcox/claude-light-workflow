@@ -127,3 +127,26 @@ AC→file map — all eight ACs are implemented in `install.sh` (single-file cha
 Note: a `set -e` trap surfaced and was fixed during build — `scan()` returned the status of its
 last short-circuited `[ … ] && echo` test, which under `set -e` aborted the install path before
 deploying; fixed with an explicit `return 0` (status is owned by `DRIFT_COUNT`).
+
+## Codex review (2026-06-08, base main, HEAD b7d56bc)
+
+**Summary:** One IMPORTANT edge-case bug in the drift classifier. The diff is otherwise scoped
+to `install.sh` plus the story file; `bash -n install.sh` and `git diff --check main...HEAD`
+passed.
+
+### IMPORTANT
+
+**I1 — Unusable manifest commits are misclassified as hand-edits** (`install.sh`, ~line 49,
+`classify_drift`)
+- Claim: `classify_drift` treats only an empty or literal `unknown` commit as unclassifiable.
+  If the manifest records a SHA that is **not present in this checkout** (or otherwise can't be
+  archived), the `git archive … | tar …` condition fails and the artifact falls through to
+  `HAND-EDITED`. That isn't grounded in the deployed content — the script never successfully
+  compared against the recorded commit — so `--check` and the pre-overwrite summary can
+  **falsely warn that local edits will be destroyed**. Weakens AC5's classification and misses
+  the unknown/unusable-commit edge case. (Especially relevant to the multi-machine provenance
+  case: a deployment installed from a commit absent on this machine would falsely read
+  HAND-EDITED.)
+- Suggestion: verify the recorded commit is usable before archiving (e.g.
+  `git -C "$SRC" cat-file -e "$commit^{tree}"`); if verification or extraction fails, return
+  `UNCLASSIFIED` with a clear "recorded commit unavailable" message instead of `HAND-EDITED`.
