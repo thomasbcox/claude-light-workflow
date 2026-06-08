@@ -66,3 +66,13 @@ AC→file map — single-file change:
 - AC1–4 (`</dev/null` redirect appended to the `codex exec` block; rationale note; redirect
   binds to `codex exec` with no in-block pipe; scope limited to the one runnable invocation):
   `.claude/skills/review/SKILL.md`
+
+## Codex review (2026-06-08, base main, HEAD ee64142)
+
+**Summary:** Reviewed the diff and spec. The redirect is on the `codex exec` simple command,
+remains correct before an appended `2>&1 | tail`, the rationale note is preserved, and the diff
+scope is limited to `.claude/skills/review/SKILL.md` plus the story file. (Notably, this review
+ran exit 0 with the `</dev/null` fix applied by hand — the fix demonstrated on the very change
+that documents it.)
+
+**Findings:** none — empty findings array. All four ACs confirmed.
