@@ -73,3 +73,12 @@ AC→file map:
 - AC1–4 (OPS-1/2/3 → Done w/ PR #11; review-codex-stdin recorded w/ PR #12; open table cleared;
   new "Decided against" section with OPS-6 + rationale): `BACKLOG.md`
 - AC5 (dated CHANGELOG entries for PR #10, #11, #12): `CHANGELOG.md`
+
+## Codex review (2026-06-08, base main, HEAD 6192793)
+
+**Summary:** Records-only branch; the recorded facts match the spec — OPS-1/2/3 Done with
+PR #11 / `b18993e`, `review-codex-stdin` Done with PR #12 / `706171d`, open table cleared, OPS-6
+under "Decided against" with the required rationale, and dated CHANGELOG entries for PR #10/#11/#12
+with correct slugs.
+
+**Findings:** none — empty findings array. (Ran exit 0 on the deployed `</dev/null` fix — no hang.)
