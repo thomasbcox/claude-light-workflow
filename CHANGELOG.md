@@ -5,6 +5,34 @@ All notable changes to this workflow are recorded here. The format follows
 
 ## [Unreleased]
 
+## [2026-06-08] — review-codex-stdin (PR #12)
+
+### Fixed
+- **`/review` codex hang**: the documented `codex exec` command had no stdin redirect, so codex
+  blocked reading stdin (`Reading additional input from stdin…`) on non-interactive runs and hung
+  the review. Appended `</dev/null` (binds to `codex exec`, before any `2>&1 | tail` a runner
+  adds) plus a note to keep it. Surfaced while reviewing `install-drift-check`.
+
+## [2026-06-08] — install-drift-check (PR #11)
+
+### Added
+- **Deployment-drift observability (OPS-1/2/3)** in `install.sh`:
+  - **OPS-2 — provenance manifest**: every install stamps `~/.claude/workflow-manifest.json`
+    (source commit, dirty flag, timestamp, deployed-artifact list).
+  - **OPS-1 — `install.sh --check`**: read-only per-artifact IN SYNC/DRIFT report across the
+    deployed set; compares the recorded commit to repo HEAD; exits non-zero on file drift.
+    Classifies drift as **STALE** (repo moved forward) vs **HAND-EDITED** (local edits a
+    re-install would clobber) vs **UNCLASSIFIED** (recorded commit unavailable).
+  - **OPS-3 — observable clobber**: a normal install prints a pre-overwrite drift summary,
+    warning when hand-edited artifacts are about to be lost, before the hard-overwrite proceeds.
+  - Deploy target overridable via `CLAUDE_WORKFLOW_DEST` for isolated testing.
+
+## [2026-06-07] — bookkeeping-pr8-pr9 (PR #10)
+
+### Changed
+- **`BACKLOG.md`**: OPS-4 confirmed in Done; OPS-5/OPS-7 moved to Done and the OPS-5-fix
+  follow-up recorded. **`CHANGELOG.md`**: backfilled dated entries for PRs #8 and #9.
+
 ## [2026-06-07] — ops5-reqchecks-fallback (PR #9)
 
 ### Fixed
