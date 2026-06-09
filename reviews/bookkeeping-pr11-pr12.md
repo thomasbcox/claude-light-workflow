@@ -66,3 +66,10 @@ stories existed to clear:
 ## Open questions
 
 None.
+
+## Build note (2026-06-08)
+
+AC→file map:
+- AC1–4 (OPS-1/2/3 → Done w/ PR #11; review-codex-stdin recorded w/ PR #12; open table cleared;
+  new "Decided against" section with OPS-6 + rationale): `BACKLOG.md`
+- AC5 (dated CHANGELOG entries for PR #10, #11, #12): `CHANGELOG.md`
