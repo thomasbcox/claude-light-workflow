@@ -103,3 +103,28 @@ repo-relative (it writes into the project being reviewed) and must stay relative
    a more dynamic resolution from the skill's base directory. Recommending the
    hardcoded user-level path (matches `install.sh`'s deploy target; simplest
    correct fix). Confirm?
+
+## Build note (2026-06-12)
+
+AC → file map:
+
+- **AC1** (absolute `--output-schema` path) → `.claude/skills/review/SKILL.md`
+- **AC2** (`-o reviews/<slug>.codex.json` unchanged) → `.claude/skills/review/SKILL.md`
+- **AC3** (absolute-vs-relative rationale note) → `.claude/skills/review/SKILL.md`
+- **AC4** (scope containment) → bookkeeping only: `BACKLOG.md` (BUG-4 open line + OPS-9),
+  `reviews/review-schema-abs-path.md` (this story). No other skill/hook/tooling file touched.
+
+## Codex review (2026-06-12, base main, HEAD c2d83a6)
+
+**Summary:** 2026-06-12 21:32:50 PDT — Reviewed `git diff main...HEAD`,
+`git log --oneline main..HEAD`, and `reviews/review-schema-abs-path.md`. The branch
+changes satisfy the spec: the schema path is now
+`"$HOME/.claude/skills/review/finding-schema.json"`, `-o reviews/<slug>.codex.json`
+remains repo-relative, the rationale is documented, and the diff is scoped to the review
+skill, backlog bookkeeping, and story file. `bash tests/guard_test.sh` could not run in
+this read-only sandbox because fixture directory creation failed with `Operation not
+permitted`; I did not treat that as a branch finding.
+
+**Findings:** none — empty findings array. (The schema-bound structured output was
+produced correctly, which itself confirms BUG-4 is fixed: the absolute `--output-schema`
+path resolved where the old repo-relative one would have aborted.)
