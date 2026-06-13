@@ -21,13 +21,14 @@ Step 2 of the loop. Codex is the **independent** reviewer: it critiques and clas
 5. **Codex review.** Choose the diff base: first review → `<baseBranch>`; re-review → the last-reviewed SHA recorded in the story file. Codex reads `AGENTS.md` automatically and runs read-only (`-s read-only` — it cannot edit the repo). Run:
    ```bash
    codex exec -s read-only \
-     --output-schema .claude/skills/review/finding-schema.json \
+     --output-schema "$HOME/.claude/skills/review/finding-schema.json" \
      -o reviews/<slug>.codex.json \
      ${codexModel:+-m "$codexModel"} \
      "You are Codex, the independent reviewer in AGENTS.md. Review ONLY this branch's changes versus <base>: run \`git diff <base>...HEAD\` and \`git log --oneline <base>..HEAD\`, and read reviews/<slug>.md for the spec. Judge the change against that spec. Return your result strictly per the provided JSON schema (severities BLOCKER / IMPORTANT / QUESTION / NIT; ground every finding in the actual diff; return an empty findings array if there are no issues)." \
      </dev/null
    ```
    **Keep the `</dev/null`:** without it `codex exec` reads stdin ("Reading additional input from stdin…") and blocks forever when stdin isn't a TTY (background / non-interactive runs), hanging the review. The redirect binds to `codex exec`, so appending `2>&1 | tail` when you run it stays correct (`codex … </dev/null 2>&1 | tail`).
+   **Why `--output-schema` is absolute but `-o` is relative:** the schema is a *skill-local* file installed at the user level (`install.sh` deploys it to `$HOME/.claude/skills/review/`), so it must be addressed there — a repo-relative path resolves against the project being reviewed, which doesn't carry the skill, and `codex` aborts ("Failed to read output schema file … No such file or directory"). The `-o reviews/<slug>.codex.json` output, by contrast, is meant to land *in the reviewed project*, so it stays repo-relative. Don't "normalise" the two to the same form.
    **Do NOT use the `codex exec review` subcommand here:** its `--base` flag conflicts with a custom prompt, and its `-o` output ignores `--output-schema` (it writes prose, not JSON). Also note the schema marks every property `required` with `file`/`line`/`suggestion` nullable — the strict structured-output backend rejects schemas with truly optional keys.
 6. **Record.** Read `reviews/<slug>.codex.json`. Append a `## Codex review (<date>, base <base>, HEAD <sha>)` section to the story file: the `summary`, then findings grouped by severity. Commit both the story file and the `.codex.json`.
 7. **Decision menu.** Present the findings grouped by severity, each with a recommended disposition (**fix / defer / reject / answer**). Ask Thomas to decide per finding. **Never re-raise** anything he deferred or rejected in an earlier round. **Deciding fix/defer/reject is not a merge decision** — the merge gate is separate and lives in `/close`, which stops and asks "re-review or merge?" before any merge.

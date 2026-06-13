@@ -19,7 +19,13 @@ Two kinds of item, tracked separately:
 BUG-D1/D2/D3 were storied in [`workflow-skill-defects.story.md`](workflow-skill-defects.story.md)
 and shipped together via PR #2 / `5225bdb`; see [Done](#done).
 
-_(all shipped — see [Done](#done))_
+BUG-4 — `/review`'s `codex exec` referenced the finding schema by a repo-relative path
+(`.claude/skills/review/finding-schema.json`) that only resolves from this repo, so `/review`
+aborted ("Failed to read output schema file … No such file or directory") from every other
+project repo. Fix: absolute user-level `"$HOME/.claude/skills/review/finding-schema.json"`
+(`-o reviews/<slug>.codex.json` stays repo-relative). Storied in
+[reviews/review-schema-abs-path.md](reviews/review-schema-abs-path.md); in flight on
+`claude/review-schema-abs-path`.
 
 ## Deployment & tooling improvements
 
@@ -28,7 +34,11 @@ Not yet storied — smaller, may not each warrant a full `reviews/<slug>.md` sto
 OPS-8 is tracked separately as a spawned task chip. Everything else here has resolved:
 OPS-1/2/3 shipped (see [Done](#done)); OPS-6 was [decided against](#decided-against).
 
-_(no open items)_
+OPS-9 — Evaluate whether the three skills (`frame`, `review`, `close`) need any YAML
+frontmatter beyond the current `name` + `description` — e.g. `allowed-tools` to scope tool
+permissions, or other recognized skill keys. As of 2026-06-12 all three carry only
+`name` + `description`; nothing is strictly missing, so this is an evaluate-and-decide
+item, not a known gap. (Logged 2026-06-12 alongside BUG-4.)
 
 ---
 
