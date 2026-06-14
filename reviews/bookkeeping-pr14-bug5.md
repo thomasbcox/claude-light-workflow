@@ -109,3 +109,15 @@ AC → file map:
 - **AC5** (self-documenting bookkeeping entry) → `CHANGELOG.md`
 - **AC6** (scope containment) → `BACKLOG.md`, `CHANGELOG.md`,
   `reviews/bookkeeping-pr14-bug5.md` only
+
+## Codex review (2026-06-14, base main, HEAD 4ded2ba)
+
+**Summary:** 2026-06-14 08:07:46 PDT: Reviewed `git log --oneline main..HEAD`,
+`git diff main...HEAD`, and `reviews/bookkeeping-pr14-bug5.md`. The branch matches the
+story: BUG-4 is moved to Done, BUG-5 is logged with the OPS-6 distinction, OPS-9 remains
+open, both changelog entries are present, and the diff is limited to `BACKLOG.md`,
+`CHANGELOG.md`, and `reviews/bookkeeping-pr14-bug5.md`. I attempted `bash
+tests/guard_test.sh`, but the read-only sandbox denied temporary directory/repo creation,
+so that failure is environmental rather than a branch finding.
+
+**Findings:** none — empty findings array.
