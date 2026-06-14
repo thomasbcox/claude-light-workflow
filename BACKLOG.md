@@ -17,15 +17,20 @@ Two kinds of item, tracked separately:
 ## Skill-behavior bugs
 
 BUG-D1/D2/D3 were storied in [`workflow-skill-defects.story.md`](workflow-skill-defects.story.md)
-and shipped together via PR #2 / `5225bdb`; see [Done](#done).
+and shipped together via PR #2 / `5225bdb`; see [Done](#done). BUG-4 shipped via PR #14 /
+`0504e31`; see [Done](#done).
 
-BUG-4 — `/review`'s `codex exec` referenced the finding schema by a repo-relative path
-(`.claude/skills/review/finding-schema.json`) that only resolves from this repo, so `/review`
-aborted ("Failed to read output schema file … No such file or directory") from every other
-project repo. Fix: absolute user-level `"$HOME/.claude/skills/review/finding-schema.json"`
-(`-o reviews/<slug>.codex.json` stays repo-relative). Storied in
-[reviews/review-schema-abs-path.md](reviews/review-schema-abs-path.md); in flight on
-`claude/review-schema-abs-path`.
+BUG-5 — the guard hook (`block-main-writes.sh`) blocks the doctrine-sanctioned
+`shipped/<slug>` **tag** push during `/close`. Step 5 runs `gh pr merge --delete-branch`
+(which leaves HEAD on `main`) and then `git push origin "shipped/<slug>"`; the hook keys on
+"current branch is a base branch?" rather than "is the refspec a base branch?", so it denies
+*any* push from `main` — including a tag ref, which is not a base-tree write. Reproduces on
+every remote close following the documented step order; worked around during PR #14's close
+by pushing the tag from a detached HEAD. Candidate fixes (separate story): hook allows
+tag-only / `refs/tags/*` pushes, or `/close` pushes the tag before leaving the branch.
+**Distinct from the decided-against [OPS-6](#decided-against)** — OPS-6 was about *hardening*
+the guard to catch more bypasses; BUG-5 is the guard being *too aggressive*, blocking a
+legitimate push. Found 2026-06-14 closing PR #14.
 
 ## Deployment & tooling improvements
 
@@ -57,12 +62,15 @@ item, not a known gap. (Logged 2026-06-12 alongside BUG-4.)
 | BUG-D1 | `/close` pre-set `Status: merged` speculatively. Fixed (SSOT): header records declared state only (`approved` terminal, never `merged`); shipped state owned by git — authoritatively the merge commit / PR-MERGED, with a best-effort `shipped/<slug>` convenience tag, read back by deriving. | PR #2 / `5225bdb` |
 | BUG-D2 | Merge-approval gate was squishy. Fixed: `/close` now states unambiguously that *invoking `/close` is NOT merge authorization* — a distinct in-session "merge" instruction is required after the fork. | PR #2 / `5225bdb` |
 | BUG-D3 | Merge could fire without a distinct "merge" instruction (fork skipped). Fixed: the "re-review or merge?" fork is mandatory and non-skippable, even on a clean review with zero fixes. | PR #2 / `5225bdb` |
+| BUG-4 | `/review`'s `codex exec` referenced the finding schema by a repo-relative path (`.claude/skills/review/finding-schema.json`) that only resolved from this repo, so `/review` aborted ("Failed to read output schema file … No such file or directory") from every other project repo. Fixed: absolute user-level `"$HOME/.claude/skills/review/finding-schema.json"`; `-o reviews/<slug>.codex.json` kept repo-relative, with a step-5 note on the asymmetry. Also logged OPS-9. | PR #14 / `0504e31` |
 
 Shipped together as the `close-gate-and-backlog` story ([reviews/close-gate-and-backlog.md](reviews/close-gate-and-backlog.md)); also added the declared-vs-observed doctrine, the `shipped/<slug>` tag convention, and the `/review` decision-menu consistency tweak.
 
 OPS-5 and OPS-7 shipped together as the `ops5-ops7-ergonomics` story ([reviews/ops5-ops7-ergonomics.md](reviews/ops5-ops7-ergonomics.md)); the OPS-5-fix follow-up as `ops5-reqchecks-fallback` ([reviews/ops5-reqchecks-fallback.md](reviews/ops5-reqchecks-fallback.md)) — a same-session bug surfaced by dogfooding the PR #8 merge.
 
 OPS-1/2/3 shipped together as the `install-drift-check` story ([reviews/install-drift-check.md](reviews/install-drift-check.md)); the `review-codex-stdin` fix ([reviews/review-codex-stdin.md](reviews/review-codex-stdin.md)) — a same-session fix to a `/review` codex stdin hang surfaced while reviewing `install-drift-check`.
+
+BUG-4 shipped as the `review-schema-abs-path` story ([reviews/review-schema-abs-path.md](reviews/review-schema-abs-path.md)) — the next defect in the same `codex exec` block as `review-codex-stdin`; also logged OPS-9. Closing its PR surfaced BUG-5 (open above).
 
 ---
 
