@@ -97,3 +97,15 @@ classified **BUG-5**:
 
 _Resolved at approval: (1) predict PR #15 for the self-entry; (2) the guard-hook
 defect is BUG-5 (Skill-behavior), not an OPS item._
+
+## Build note (2026-06-14)
+
+AC → file map:
+
+- **AC1** (BUG-4 open → Done) → `BACKLOG.md`
+- **AC2** (BUG-5 logged open, with OPS-6 distinction) → `BACKLOG.md`
+- **AC3** (OPS-9 untouched) → `BACKLOG.md` (verification only — no change)
+- **AC4** (PR #14 CHANGELOG entry) → `CHANGELOG.md`
+- **AC5** (self-documenting bookkeeping entry) → `CHANGELOG.md`
+- **AC6** (scope containment) → `BACKLOG.md`, `CHANGELOG.md`,
+  `reviews/bookkeeping-pr14-bug5.md` only
