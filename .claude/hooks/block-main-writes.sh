@@ -84,6 +84,27 @@ def current_branch(cdir):
     b = git_out(cdir, "rev-parse", "--abbrev-ref", "HEAD")
     return "" if b == "HEAD" else b
 
+def push_is_tag_only(cdir, rest):
+    # A push that targets ONLY tags does not write the base branch tree, so it is
+    # safe even when HEAD is on a base branch (e.g. /close pushing `shipped/<slug>`
+    # right after `gh pr merge --delete-branch` leaves the checkout on main).
+    # rest = push args after the subcommand; the force `+`/flag forms are handled
+    # by the caller before this is consulted.
+    if "--tags" in rest:
+        return True
+    positionals = [t for t in rest if not t.startswith("-")]
+    refspecs = positionals[1:]                       # positionals[0] is the remote
+    if not refspecs:
+        return False                                 # bare push / no refspec — not tag-only
+    for r in refspecs:
+        src = (r[1:] if r.startswith("+") else r).split(":", 1)[0]   # source side, force "+" stripped
+        if src.startswith("refs/tags/"):
+            continue
+        if git_out(cdir, "rev-parse", "--verify", "--quiet", "refs/tags/" + src):
+            continue                                 # resolves to an existing tag
+        return False                                 # a non-tag refspec — not tag-only
+    return True
+
 for seg in segments:
     # Strip leading env-assignments and harmless command wrappers.
     i = 0
@@ -131,7 +152,10 @@ for seg in segments:
             or any((not t.startswith("-")) and t.startswith("+") for t in rest)  # +refspec
         if forced:
             deny("no force-push (covers --force / --force-with-lease / -f / --mirror / +refspec).")
-        if current_branch(cdir) in BASE_BRANCHES:
+        # Block pushes from a base branch UNLESS the push targets only tags — a tag
+        # ref is not a base-branch tree write, and /close legitimately pushes the
+        # shipped/<slug> tag while left on main by `gh pr merge --delete-branch`.
+        if current_branch(cdir) in BASE_BRANCHES and not push_is_tag_only(cdir, rest):
             deny("don'\''t push to the base branch — open a PR / merge a feature branch instead.")
 
     if sub == "commit":

@@ -24,6 +24,11 @@ BASE="$(mkrepo base_repo main)"
 FEAT="$(mkrepo feat_repo feature/x)"
 NATIVE="$(mkrepo native_repo main native)"
 
+# Give the base repo one commit + a shipped/* tag so the BUG-5 tag-push cases can
+# resolve refs/tags/… (inline identity so no global git config is needed).
+git -C "$BASE" -c user.email=t@t -c user.name=t commit -q --allow-empty -m init
+git -C "$BASE" tag shipped/demo
+
 pass=0 fail=0
 # run <expected_exit> <cwd> <command> <label>
 run() {
@@ -65,6 +70,15 @@ run 0 "$BASE" 'git status'                            "git status on main"
 run 0 "$FEAT" 'git commit -m x'                       "commit on a feature branch"
 run 0 "$FEAT" 'git push origin HEAD'                  "non-force push from a feature branch"
 run 0 "$NATIVE" 'git commit -m x'                     "commit on main in a native-protocol repo (stand down)"
+
+echo "== BUG-5: tag-only push from a base branch allowed; branch/force still blocked =="
+run 0 "$BASE" 'git push origin shipped/demo'           "tag push from main (shipped/<slug>) allowed"
+run 0 "$BASE" 'git push origin refs/tags/shipped/demo' "explicit refs/tags/ push from main allowed"
+run 0 "$BASE" 'git push --tags origin'                 "--tags push from main allowed"
+run 2 "$BASE" 'git push origin main'                   "branch push to base (main) still blocked"
+run 2 "$BASE" 'git push'                               "bare push from main still blocked"
+run 2 "$BASE" 'git push --force origin shipped/demo'   "force tag push from main still blocked"
+run 2 "$BASE" 'git push origin +shipped/demo'          "force (+) tag push from main still blocked"
 
 echo
 echo "passed=$pass failed=$fail"
