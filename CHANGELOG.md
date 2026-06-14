@@ -5,6 +5,29 @@ All notable changes to this workflow are recorded here. The format follows
 
 ## [Unreleased]
 
+## [2026-06-14] — bookkeeping-pr14-bug5 (PR #15)
+
+### Changed
+- **`BACKLOG.md`**: BUG-4 moved to Done (PR #14 / `0504e31`); **BUG-5** logged as a new open
+  skill-behavior bug (guard hook blocks the sanctioned `shipped/<slug>` tag push during
+  `/close`). **`CHANGELOG.md`**: backfilled the dated entry for PR #14. OPS-9 left open.
+
+## [2026-06-14] — review-schema-abs-path (PR #14)
+
+### Fixed
+- **`/review` schema path (BUG-4)**: the documented `codex exec` command passed
+  `--output-schema` as a repo-relative path (`.claude/skills/review/finding-schema.json`),
+  which only resolves from this repo — so `/review` aborted ("Failed to read output schema
+  file … No such file or directory") from every other project repo, before doing any review.
+  Changed to the absolute user-level `"$HOME/.claude/skills/review/finding-schema.json"`
+  (where `install.sh` deploys it); `-o reviews/<slug>.codex.json` stays repo-relative, with a
+  step-5 note on the intentional asymmetry. The next defect in the same command block as
+  `review-codex-stdin` (PR #12).
+
+### Changed
+- **`BACKLOG.md`**: logged **OPS-9** — evaluate whether the three skills need any YAML
+  frontmatter beyond `name` + `description` (e.g. `allowed-tools`); not a known gap.
+
 ## [2026-06-08] — review-codex-stdin (PR #12)
 
 ### Fixed
