@@ -155,3 +155,20 @@ change to the `/close` skill text is required (it never documented the workaroun
    deployed to `~/.claude` (via `install.sh`). I'll deploy during this story's
    `/close` *before* the tag push so it dogfoods the fix; if anything is off I fall
    back to the detached-HEAD workaround. Just flagging the sequence.
+
+## Build note (2026-06-14)
+
+AC → file map:
+
+- **AC1** (tag push from base allowed) → `.claude/hooks/block-main-writes.sh`,
+  `tests/guard_test.sh`
+- **AC2** (`--tags` allowed) → `.claude/hooks/block-main-writes.sh`,
+  `tests/guard_test.sh`
+- **AC3** (branch/bare push to base still blocked) →
+  `.claude/hooks/block-main-writes.sh`, `tests/guard_test.sh`
+- **AC4** (force still wins) → `.claude/hooks/block-main-writes.sh`,
+  `tests/guard_test.sh`
+- **AC5** (existing 19 cases preserved) → `tests/guard_test.sh`
+- **AC6** (gate green) → `tests/guard_test.sh`
+- **AC7** (scope containment) → `.claude/hooks/block-main-writes.sh`,
+  `tests/guard_test.sh`, `reviews/guard-allow-tag-push.md` only
