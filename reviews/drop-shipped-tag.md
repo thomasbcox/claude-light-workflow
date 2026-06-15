@@ -131,3 +131,18 @@ poll) and the merge-approval gate are untouched.
 
 _Resolved at approval: (1) BUG-5 → Done now (obviated-by-design via this story);
 (2) delete the 13 existing `shipped/*` tags (local + remote)._
+
+## Cleanup (2026-06-14)
+
+Deleted all 13 historical `shipped/*` tags (local + remote), per decision 2:
+`auto-merge-close`, `backlog-bookkeeping`, `backlog-ops5-ops6-bookkeeping`,
+`bookkeeping-pr11-pr12`, `bookkeeping-pr14-bug5`, `bookkeeping-pr8-pr9`,
+`close-gate-and-backlog`, `harden-merge-and-guard`, `install-drift-check`,
+`ops5-ops7-ergonomics`, `ops5-reqchecks-fallback`, `review-codex-stdin`,
+`review-schema-abs-path`. Verified: `git tag -l "shipped/*"` and
+`git ls-remote --tags origin "shipped/*"` both empty. (Ref-only operation — not a
+tracked file change. Done from the feature branch, so the guard was not engaged.)
+
+> **Done-row note:** BUG-5's Done row cites `PR #17` (predicted) with a `<merge>`
+> sha placeholder — finalize the PR number at `/review` (PR creation) and the merge
+> sha at `/close`, or in the follow-up bookkeeping story.
