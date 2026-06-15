@@ -163,3 +163,16 @@ AC → file map:
 - **AC9** (all `shipped/*` tags deleted) → git refs only (not a tracked file) —
   see `## Cleanup`
 - **AC10** (scope containment) → the six files above + `reviews/drop-shipped-tag.md`
+
+## Codex review (2026-06-15, base main, HEAD adc431f)
+
+**Summary:** 2026-06-15 14:54:48 PDT — No issues found. The branch matches the
+`drop-shipped-tag` spec: no `shipped/` references remain in `.claude/skills`,
+`.claude/workflow-protocol.md`, or `README.md`; `/close` no longer creates/pushes/
+verifies tags and still derives shipped state from PR `MERGED` state or the
+`merge: <slug>` commit. Scope is limited to the expected files, guard/test diff is
+empty, and local/remote `shipped/*` tag checks returned empty. `bash
+tests/guard_test.sh` could not run under the read-only sandbox (temp-dir setup
+denied — environmental, not a finding).
+
+**Findings:** none — empty findings array.
