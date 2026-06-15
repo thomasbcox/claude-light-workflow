@@ -146,3 +146,20 @@ tracked file change. Done from the feature branch, so the guard was not engaged.
 > **Done-row note:** BUG-5's Done row cites `PR #17` (predicted) with a `<merge>`
 > sha placeholder — finalize the PR number at `/review` (PR creation) and the merge
 > sha at `/close`, or in the follow-up bookkeeping story.
+
+## Build note (2026-06-14)
+
+AC → file map:
+
+- **AC1/AC2** (`/close` drops tag create/push/verify; ship derived from git) →
+  `.claude/skills/close/SKILL.md`
+- **AC3** (doctrine drops the tag) → `.claude/workflow-protocol.md`
+- **AC4** (`/frame` header doctrine drops the tag) → `.claude/skills/frame/SKILL.md`
+- **AC5** (README drops the tag artifact) → `README.md`
+- **AC6** (no `shipped/` refs remain) → `.claude/skills/`, `.claude/workflow-protocol.md`,
+  `README.md`
+- **AC7** (BUG-5 → Done) → `BACKLOG.md`
+- **AC8** (gate green; guard/tests unchanged) → no file change (verification)
+- **AC9** (all `shipped/*` tags deleted) → git refs only (not a tracked file) —
+  see `## Cleanup`
+- **AC10** (scope containment) → the six files above + `reviews/drop-shipped-tag.md`
