@@ -5,6 +5,16 @@ All notable changes to this workflow are recorded here. The format follows
 
 ## [Unreleased]
 
+## [2026-06-14] — drop-shipped-tag (PR #17)
+
+### Removed
+- **`shipped/<slug>` tag convention**: the merge commit (`merge: <slug>`) / PR-`MERGED` state is
+  now the single ship record. `/close` no longer creates, pushes, or verifies a tag; doctrine,
+  `/frame` header guidance, and the README drop the tag as a convenience marker. This obviates
+  **BUG-5** (the guard blocked the post-merge tag push from `main`) by design — nothing pushes
+  from `main`, so the guard is never engaged — and retires the abandoned `guard-allow-tag-push`
+  fix (PR #16, closed unmerged). The 13 existing `shipped/*` tags (local + remote) were deleted.
+
 ## [2026-06-14] — bookkeeping-pr14-bug5 (PR #15)
 
 ### Changed

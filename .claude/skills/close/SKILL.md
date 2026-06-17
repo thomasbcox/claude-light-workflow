@@ -21,10 +21,16 @@ Step 3 of the loop. Doctrine: `~/.claude/workflow-protocol.md`.
 3. **Gate.** Re-run `testCommand`; must be green. Commit on the feature branch.
 4. **Re-review fork (mandatory — never skip).** Present exactly this choice and **STOP** for Thomas's answer: **re-review** (→ `/review`, base = last-reviewed SHA, diff-only) or **merge**? Ask this **every** time, including on a clean review with zero fixes — the human still chooses. Do not proceed to step 5 until Thomas gives a distinct merge instruction this session (see hard constraints).
    - If any approved fix touched money / security / auth / business logic / data-loss, recommend a re-review before merge.
-5. **Merge.** ONLY after Thomas's distinct "merge" instruction this session. **Do NOT touch the header** — it stays `approved`. The **merge commit** (`merge: <slug>`, with a `Story:` trailer) / the PR's `MERGED` state is the atomic shipped fact and the only ship record — there is no separate tag to write or repair.
+5. **Merge.** ONLY after Thomas's distinct "merge" instruction this session.
+   - **First, record the release on the feature branch** so it rides in on the merge commit — no separate base-branch write, and not speculative: this runs only *after* the merge instruction, so choosing re-review at step 4 never reaches it and never leaves release records on an unmerged branch.
+     - `CHANGELOG.md`: turn `[Unreleased]` into a dated `## [<date>] — <slug> (PR #N)` entry describing what shipped.
+     - `BACKLOG.md`: **if** the story resolves a tracked `BUG-`/`OPS-` item, move that row to **Done**, referenced as `PR #N / merge: <slug>` — never a raw SHA (it's derivable: `git log <baseBranch> --oneline --grep "^merge: <slug>"`). A story with no tracked backlog item gets the CHANGELOG entry only.
+     - Commit these on the feature branch. This record-keeping is **mechanical and rides post-review by design** — it does NOT need its own review round or a separate bookkeeping story (see doctrine: no bookkeeping-only stories).
+     - **Do NOT touch the story header** — it stays `approved`. Declared state only; whether it shipped stays owned by git (the merge commit / PR-`MERGED`), never written into the header. The header is never set to `merged`.
+   - Then **merge**. The **merge commit** (`merge: <slug>`, with a `Story:` trailer) / the PR's `MERGED` state is the atomic shipped fact and the only ship record — there is no separate tag to write or repair.
    - **Remote + `gh`:** the merge must ship *exactly* the reviewed/fixed HEAD. When auto-merge is enabled, merge timing is delegated to GitHub via `--auto` — GitHub performs the merge once all requirements pass, eliminating the client-side mergeability race. When auto-merge is disabled, a direct merge ships immediately *unless* the base branch has required status checks (then abort — there is something to wait for). Either way: push the local HEAD, run the appropriate `gh pr merge` (with `--match-head-commit` for drift safety), then poll for `MERGED`.
      ```bash
-     localSha=$(git rev-parse HEAD)                            # the reviewed/fixed commit
+     localSha=$(git rev-parse HEAD)                            # reviewed/fixed HEAD + the step-5 release-record commit
      git push origin HEAD                                      # the PR head must contain the approved fixes
      # Pre-flight: pick a merge strategy.
      #   - Auto-merge ENABLED  → delegate merge timing to GitHub (waits for any required checks).
@@ -69,7 +75,7 @@ Step 3 of the loop. Doctrine: `~/.claude/workflow-protocol.md`.
      git merge --no-ff <branch> -m "merge: <slug>" -m "Story: reviews/<slug>.md"   # authoritative ship
      git branch -d <branch>
      ```
-6. **Sync + cleanup.** If a remote exists: `git fetch --prune && git checkout <baseBranch> && git merge --ff-only`. Nothing else is written — the merge commit is the whole record.
+6. **Sync + cleanup.** If a remote exists: `git fetch --prune && git checkout <baseBranch> && git merge --ff-only`. No *further* base-branch write — the release records (CHANGELOG / BACKLOG-Done) already rode in on the merge commit, which is the shipped fact.
 7. **Report.** State that it shipped and cite the merge commit / PR. "Did it ship?" is *derived* from git, never read from the header:
    - Remote: `gh pr view <PR#> --json state -q .state` → `MERGED`.
    - Either: the merge commit is in base history — `git log <baseBranch> --oneline --grep "^merge: <slug>"` (non-empty ⇒ shipped). For a list of everything shipped, drop the `<slug>`: `git log <baseBranch> --oneline --grep "^merge: "`.

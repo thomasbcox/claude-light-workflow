@@ -16,7 +16,7 @@ A small, human-controlled development loop. One idea above all:
 ## The loop
 1. **`/frame`** — Thomas states a need → Claude drafts a spec on a feature branch → **Thomas approves scope** → Claude implements AC-by-AC.
 2. **`/review`** — gate goes green → `codex exec -s read-only --output-schema …` produces structured findings → Claude presents a decision menu → **Thomas decides per finding**.
-3. **`/close`** — Claude applies only approved fixes → gate green → re-review (Thomas's call) or **Thomas approves merge** → merge + cleanup.
+3. **`/close`** — Claude applies only approved fixes → gate green → re-review (Thomas's call) or **Thomas approves merge** → record the release on the branch (CHANGELOG + BACKLOG-Done) → merge + cleanup.
 
 Loop 2 ↔ 3 as many rounds as needed.
 
@@ -26,6 +26,13 @@ Loop 2 ↔ 3 as many rounds as needed.
 3. The human decides exactly twice: **scope** (after `/frame`) and **merge** (in `/close`). A prior general "yes" never counts for merge.
 4. No AI grades its own homework — the builder is never the approver.
 5. No direct commits/pushes to the base branch; the feature-branch + merge path is the only way in (enforced by the guard hook).
+
+> **Records ride with the merge, not after it.** `/close` writes the `CHANGELOG.md` entry and the
+> `BACKLOG.md` Done-move on the feature branch *after* the merge instruction, so they arrive on the
+> base branch as part of the merge commit — never a separate post-merge base write, never speculative
+> (a re-review choice never reaches them; the story header is never set to `merged`).
+> **No bookkeeping-only stories:** open a follow-up only for a real defect or a new decision, never
+> solely to reconcile a previous story's records.
 
 ## Status & shipped-state (single source of truth)
 The story-file header records only **declared** state — `proposed → approved`, with `approved`
