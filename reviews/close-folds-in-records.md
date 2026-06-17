@@ -206,3 +206,24 @@ analysed options are kept below for the reviewer's audit trail._
    Done-move exercises the new flow, or stay a named story with only a CHANGELOG
    entry (as `drop-shipped-tag` was)? Recommending **named story, CHANGELOG only**
    — it's a doctrine/process change, not a tracked defect/tooling gap.
+
+## Build note (2026-06-17)
+
+AC → file map:
+
+- **AC1** (`/close` step 5 folds records, gated after the merge instruction) →
+  `.claude/skills/close/SKILL.md`
+- **AC2** (BUG-D1 non-regression stated; header never `merged`; re-review writes
+  nothing) → `.claude/skills/close/SKILL.md` + the `## The BUG-D1 non-regression`
+  argument in this story file
+- **AC3** (records reach base only via the merge commit; step 6 reworded) →
+  `.claude/skills/close/SKILL.md`
+- **AC4** (`PR #N / merge: <slug>` reference convention, not raw SHA) → `BACKLOG.md`
+- **AC5** (no-bookkeeping-only-stories rule; loop step 3 mentions record-keeping) →
+  `BACKLOG.md`, `.claude/workflow-protocol.md`
+- **AC6** (one-time squaring: BUG-5 row placeholder fixed; `drop-shipped-tag`
+  CHANGELOG entry added) → `BACKLOG.md`, `CHANGELOG.md`
+- **AC7** (deploy-ordering decision O3 recorded) → this story file (`## Open
+  questions`, resolved)
+- **AC8** (gate green; guard/tests unchanged) → no file change (verification)
+- **AC9** (scope containment) → the five files above
