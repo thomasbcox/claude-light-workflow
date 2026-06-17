@@ -227,3 +227,47 @@ AC → file map:
   questions`, resolved)
 - **AC8** (gate green; guard/tests unchanged) → no file change (verification)
 - **AC9** (scope containment) → the five files above
+
+## Codex review (2026-06-17, base main, HEAD 205c6d6)
+
+**Summary:** 2026-06-17 12:10:16 PDT — Review of `main...HEAD` found two
+substantive issues in the edited `/close` flow and one wording inconsistency. The
+O3 deploy-ordering choice is recorded and is directionally consistent with avoiding
+an unmerged `install.sh` deploy. Could not verify `bash tests/guard_test.sh` —
+read-only sandbox prevented `mktemp`; the guard/test diff itself is empty.
+
+### BLOCKER
+
+1. **Release records can be left on an unmerged PR after a failed merge attempt**
+   (`.claude/skills/close/SKILL.md:25`). Step 5 commits CHANGELOG/BACKLOG release
+   records before invoking the merge path, but the same recipe can still abort
+   afterward — e.g. auto-merge disabled with required checks detected, or the
+   MERGED poll timing out. That contradicts the BUG-D1 non-regression claim that
+   release records are not speculative and cannot remain on an unmerged branch: a
+   valid merge instruction can still leave a pushed PR branch carrying
+   `Done`/changelog records while no merge commit / PR `MERGED` exists.
+   *Suggestion:* move all known merge preflight/abort checks before the
+   release-record commit, and define an explicit cleanup path for any post-commit
+   merge failure or timeout (revert/drop the record commit before stopping, or
+   don't push it until the merge can actually be handed off).
+
+### IMPORTANT
+
+2. **Final merged HEAD is no longer gated after the release-record commit**
+   (`.claude/skills/close/SKILL.md:28`). The gate runs in step 3, but step 5 then
+   creates a new release-record commit and `localSha` is taken from that new HEAD.
+   In the direct-merge path with no required checks, this untested HEAD is merged
+   immediately, so `/close` no longer guarantees the exact shipped commit has
+   passed `testCommand`. Even mechanical CHANGELOG/BACKLOG edits can break markdown
+   or repository checks. *Suggestion:* after committing the step-5 records, re-run
+   `testCommand` against that final HEAD before pushing/merging — no new review
+   round needed, but it should be the gated commit `--match-head-commit` protects.
+
+### NIT
+
+3. **CHANGELOG instruction conflicts with the current file shape**
+   (`.claude/skills/close/SKILL.md:26`). The skill says to "turn `[Unreleased]`
+   into" a dated entry, but the changed `CHANGELOG.md` keeps `## [Unreleased]` and
+   adds the dated entry below it. Read literally, future runs could delete the
+   standing Unreleased section. *Suggestion:* reword to "add a dated entry
+   immediately below `## [Unreleased]`, leaving the Unreleased section in place."
