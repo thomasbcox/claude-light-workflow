@@ -354,3 +354,17 @@ Thomas: "sure try fixing." Round-2 BLOCKER #1 → **fix**.
   default an unset value to direct merge. Keep (a) as the *early* abort (fast-fail
   before records); (d) is the authoritative gate and is correct even if (a) were
   skipped.
+
+## Fixes (2026-06-18) — round 2
+
+Round-2 BLOCKER #1 applied in `.claude/skills/close/SKILL.md` step 5; scope
+unchanged.
+
+- **(d) is now self-contained**: it recomputes `autoMerge` + `reqChecks` (the (a)
+  vars don't survive a separate shell invocation) and runs the full 3-way logic.
+- **Mode decided before `git push`**, via an explicit `case "$autoMerge"` →
+  `auto` / `direct` / `*`-abort. The unknown/empty case **aborts** instead of
+  defaulting to a direct merge; the disabled+required-checks case aborts before
+  pushing — so a backstop abort never pushes the record commit.
+- **(a) reframed** as the *early* fast-fail; (d) is the authoritative gate, correct
+  even if (a) were skipped.

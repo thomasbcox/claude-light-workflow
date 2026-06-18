@@ -23,7 +23,7 @@ Step 3 of the loop. Doctrine: `~/.claude/workflow-protocol.md`.
    - If any approved fix touched money / security / auth / business logic / data-loss, recommend a re-review before merge.
 5. **Merge.** ONLY after Thomas's distinct "merge" instruction this session. The flow is **preflight → record → re-gate → merge**, in that order, so a known-preventable abort never leaves release records on the branch.
 
-   **(a) Preflight — decide the merge hand-off *before* writing any record.**
+   **(a) Preflight — *early* fast-fail *before* writing any record.** This is an early abort so a known-preventable failure never leaves records on the branch; (d) re-checks authoritatively and is correct even if this step were skipped.
    - **Local-only:** none needed (a `git merge --no-ff` is immediate); go to (b).
    - **Remote + `gh`:** compute the merge strategy and, if there is genuinely something to wait for, **abort here — before any record commit**:
      ```bash
@@ -52,19 +52,34 @@ Step 3 of the loop. Doctrine: `~/.claude/workflow-protocol.md`.
    **(c) Re-gate the record commit.** Re-run `testCommand` against this HEAD; it must be green before push/merge, so the commit `--match-head-commit` ships is the gated one. (Mechanical record edits still get the gate; this needs no new *review* round.)
 
    **(d) Merge** the gated record HEAD. The **merge commit** (`merge: <slug>`, with a `Story:` trailer) / the PR's `MERGED` state is the atomic shipped fact and the only ship record — there is no separate tag to write or repair.
-   - **Remote + `gh`:** push HEAD, run the strategy chosen in (a) (with `--match-head-commit` for drift safety), then poll for `MERGED`:
+   - **Remote + `gh`:** this block is **self-contained and authoritative** — shell variables from (a) do NOT survive into this separate invocation, so recompute the strategy here, **decide the mode before pushing** (a backstop abort must never push the record commit), dispatch an explicit command, then poll for `MERGED`:
      ```bash
      localSha=$(git rev-parse HEAD)                            # the gated record HEAD (reviewed/fixed + release records)
-     git push origin HEAD                                      # the PR head must contain the approved fixes + records
-     if [ "$autoMerge" = "true" ]; then
-       # --match-head-commit refuses if head has drifted from the gated SHA.
-       gh pr merge <PR#> --auto --merge --delete-branch --match-head-commit "$localSha" \
-         -t "merge: <slug>" -b "Story: reviews/<slug>.md"
-     else
-       # Preflight (a) guaranteed no required checks here → direct merge ships immediately.
-       gh pr merge <PR#> --merge --delete-branch --match-head-commit "$localSha" \
-         -t "merge: <slug>" -b "Story: reviews/<slug>.md"
-     fi
+     # Recompute the merge strategy authoritatively (do NOT rely on (a)'s vars).
+     # reqChecks: capture on gh success only via a SEPARATE statement; an inline `|| echo 0`
+     # would append 0 to the error body gh prints to stdout. Classic branch protection only;
+     # any failure (403 "Upgrade to GitHub Pro" on free private repos, 404 unprotected) ⇒ 0.
+     autoMerge=$(gh api repos/{owner}/{repo} --jq .allow_auto_merge)
+     reqChecks=$(gh api "repos/{owner}/{repo}/branches/<baseBranch>/protection/required_status_checks" \
+                   --jq '(.checks // []) | length' 2>/dev/null) || reqChecks=0
+     case "$reqChecks" in (''|*[!0-9]*) reqChecks=0 ;; esac
+     # Decide the mode BEFORE pushing. Explicit mode; abort on unknown — NEVER default to direct.
+     case "$autoMerge" in
+       true)  mode=auto ;;                                     # GitHub waits for any required checks
+       false) if [ "${reqChecks:-0}" -gt 0 ]; then
+                echo "ABORT: auto-merge is disabled and '<baseBranch>' has required status checks — enable auto-merge (Settings → General → Pull Requests → Allow auto-merge) or merge manually once checks pass, then re-run /close"; exit 1
+              fi
+              mode=direct ;;                                   # no required checks → direct merge ships now
+       *)     echo "ABORT: could not determine allow_auto_merge (got '$autoMerge') — re-run /close"; exit 1 ;;
+     esac
+     git push origin HEAD                                      # PR head = approved fixes + records (only after the mode is decided)
+     # --match-head-commit refuses if head has drifted from the gated SHA.
+     case "$mode" in
+       auto)   gh pr merge <PR#> --auto --merge --delete-branch --match-head-commit "$localSha" \
+                 -t "merge: <slug>" -b "Story: reviews/<slug>.md" ;;
+       direct) gh pr merge <PR#> --merge --delete-branch --match-head-commit "$localSha" \
+                 -t "merge: <slug>" -b "Story: reviews/<slug>.md" ;;
+     esac
      # Wait for GitHub to perform the merge (auto-merge is async). Timeout after 5 minutes.
      for i in $(seq 1 30); do
        prState=$(gh pr view <PR#> --json state -q .state)
