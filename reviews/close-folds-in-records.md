@@ -320,3 +320,24 @@ All three approved findings applied; scope unchanged (same five files).
 3. **NIT #3** → step 5(b) CHANGELOG instruction now reads "add a dated
    `## [<date>] — <slug> (PR #N)` entry **immediately below** `## [Unreleased]`,
    leaving the Unreleased section in place."
+
+## Codex review (2026-06-18, base 205c6d6, HEAD ba83005) — round 2 (diff-only)
+
+**Summary:** 2026-06-18 07:14:21 PDT — The re-gate, tightened BUG-D1 wording,
+CHANGELOG instruction, and doctrine files are consistent, but the reordered shell
+recipe introduces a blocker: its preflight decision does not survive into merge
+dispatch.
+
+### BLOCKER
+
+1. **Preflight merge strategy is lost before merge dispatch**
+   (`.claude/skills/close/SKILL.md:59`). `autoMerge` is assigned in the separate
+   (a) shell block, then used in (d) after the record and gate operations. Shell
+   variables do not survive separate command invocations, so ordinary execution
+   reaches (d) with `autoMerge` empty and incorrectly selects direct merge. If (a)
+   cleared because auto-merge was enabled despite required checks, the (d)
+   direct-merge assumption is false; the direct merge can fail after the record
+   commit is pushed, recreating the prior BLOCKER. *Suggestion:* persist and reload
+   an explicit `auto`/`direct` merge mode across phases, or make (d) select an
+   explicit command from a recomputed preflight result. Abort if the mode is
+   missing; never default an unset value to direct merge.
