@@ -368,3 +368,31 @@ unchanged.
   pushing — so a backstop abort never pushes the record commit.
 - **(a) reframed** as the *early* fast-fail; (d) is the authoritative gate, correct
   even if (a) were skipped.
+
+## Codex review (2026-06-18, base ba83005, HEAD 9fec4bd) — round 3 (diff-only)
+
+**Summary:** 2026-06-18 08:10:03 PDT — The round-2 BLOCKER is closed and step 5(d)
+otherwise preserves the required safeguards, but step 5(a) is inconsistent with the
+new authoritative unknown-state gate.
+
+### BLOCKER
+
+1. **Early preflight permits a known-invalid unknown mode**
+   (`.claude/skills/close/SKILL.md:26`). Step 5(a) claims to stop known-preventable
+   failures before records are committed, but its condition only aborts when
+   required checks are positive. If `autoMerge` is empty or unknown and `reqChecks`
+   is zero, (a) clears, (b) commits release records, and the new authoritative `*`
+   branch in (d) then aborts. This leaves records on a branch without a handed-off
+   merge, contradicting the preflight ordering and BUG-D1 framing. *Suggestion:*
+   give step 5(a) the same three-way `case "$autoMerge"` policy as (d) — allow
+   `true`, allow `false` only with zero required checks, abort unknown/empty values
+   before creating records — keeping (d)'s independent recomputation as the
+   authoritative backstop.
+
+> **Note (round 3 — recurring defect class).** This is the **third consecutive
+> BLOCKER in this one recipe**, and all three are the same shape: a
+> *consistency* defect between step 5(a) and step 5(d), which duplicate the
+> merge-strategy policy in two places. Patching (a) to mirror (d) (Codex's
+> suggestion) fixes this instance but leaves two copies of a three-way policy to
+> keep in sync forever — the exact surface that produced rounds 2 and 3. Decision
+> for Thomas at the fork: targeted patch vs. simplify to a single decision point.
