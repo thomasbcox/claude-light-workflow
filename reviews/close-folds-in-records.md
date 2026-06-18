@@ -413,3 +413,19 @@ decision point)**, not the targeted patch.
   the MERGED-poll timeout (a handed-off-merge case). This avoids the round-2
   shell-var trap: (d) does not read an (a) shell variable; it runs the command
   matching (a)'s printed `MODE`.
+
+## Fixes (2026-06-18) — round 3 (Option B)
+
+Round-3 BLOCKER #1 fixed by simplification, **superseding** the round-2
+(d)-recomputes approach.
+
+- **`/close` step 5(a)** is now the single merge-strategy decision: a three-way
+  `case "$autoMerge"` that prints `MODE=auto` / `MODE=direct` or **aborts**
+  (`false` + required checks, or unknown/empty `autoMerge`). All aborts happen
+  before (b), so a known-preventable failure never commits records.
+- **Step 5(d)** no longer recomputes or re-decides — it pushes and dispatches the
+  single `gh pr merge` command for `MODE` (only the `--auto` flag differs), then
+  polls. The (a)/(d) policy duplication that caused the round-2 and round-3
+  BLOCKERs is gone; there is exactly one decision point.
+- The `*`-abort lives only in (a) now, so the round-3 gap (unknown mode clearing
+  (a) but aborting (d) after records) is structurally impossible.
