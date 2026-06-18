@@ -271,3 +271,19 @@ read-only sandbox prevented `mktemp`; the guard/test diff itself is empty.
    adds the dated entry below it. Read literally, future runs could delete the
    standing Unreleased section. *Suggestion:* reword to "add a dated entry
    immediately below `## [Unreleased]`, leaving the Unreleased section in place."
+
+## Decisions (2026-06-17)
+
+Thomas: "fix all these as suggested." All three findings → **fix**.
+
+1. **BLOCKER #1 → fix.** Reorder `/close` step 5 so all local merge preflights/abort
+   checks run *before* the release-record commit; the record commit is only made
+   once the merge can actually be handed off. Tighten the BUG-D1 non-regression
+   wording (skill + story) to be precise: release records may briefly ride a PR
+   branch while a *handed-off* merge is pending, reach base only via the merge
+   commit, and the header is never set to `merged`.
+2. **IMPORTANT #2 → fix.** After the step-5 record commit, re-run `testCommand`
+   against that HEAD before push/merge, so the shipped (`--match-head-commit`)
+   commit is the gated one. No new review round.
+3. **NIT #3 → fix.** Reword the CHANGELOG instruction to "add a dated entry
+   immediately below `## [Unreleased]`, leaving the Unreleased section in place."
