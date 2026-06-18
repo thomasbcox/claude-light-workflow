@@ -341,3 +341,16 @@ dispatch.
    an explicit `auto`/`direct` merge mode across phases, or make (d) select an
    explicit command from a recomputed preflight result. Abort if the mode is
    missing; never default an unset value to direct merge.
+
+## Decisions (2026-06-18)
+
+Thomas: "sure try fixing." Round-2 BLOCKER #1 → **fix**.
+
+- Make `/close` step 5(d) **self-contained and authoritative**: recompute
+  `autoMerge` + `reqChecks` there (vars from (a) do not survive a separate
+  invocation) and run the full 3-way decision. **Decide the mode before `git
+  push`** so a backstop abort never pushes the record commit. **Explicit mode with
+  abort-on-unknown** (`case "$autoMerge"` → `true`/`false`/`*`-abort); never
+  default an unset value to direct merge. Keep (a) as the *early* abort (fast-fail
+  before records); (d) is the authoritative gate and is correct even if (a) were
+  skipped.
