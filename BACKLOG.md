@@ -5,8 +5,13 @@ deployment tooling. One line per item with a stable id so story files, commits, 
 `reviews/<slug>.md` trails can reference it.
 
 **Lifecycle:** a line here → `/frame` writes `reviews/<slug>.md` (spec + audit trail) →
-`/review` → `/close` → `CHANGELOG.md`. The backlog is the staging area in front of the
-loop. Move an item to **Done** (with the PR/commit) when it lands; don't delete it.
+`/review` → `/close`. As part of the merge, `/close` moves the item to **Done** here and
+adds the `CHANGELOG.md` entry *on the feature branch*, so both ride in on the merge commit.
+The backlog is the staging area in front of the loop; don't delete a landed item — move it
+to **Done** and reference it as `PR #N / merge: <slug>` (never a raw SHA — derive it with
+`git log <base> --oneline --grep "^merge: <slug>"`). **No bookkeeping-only stories:** records
+land with the story they describe; open a follow-up only for a real defect or a new decision,
+never solely to reconcile a previous story's records.
 
 Two kinds of item, tracked separately:
 - **BUG-** — skill-behavior / workflow-correctness defects (change what the skills *do*).
@@ -54,7 +59,7 @@ item, not a known gap. (Logged 2026-06-12 alongside BUG-4.)
 | BUG-D2 | Merge-approval gate was squishy. Fixed: `/close` now states unambiguously that *invoking `/close` is NOT merge authorization* — a distinct in-session "merge" instruction is required after the fork. | PR #2 / `5225bdb` |
 | BUG-D3 | Merge could fire without a distinct "merge" instruction (fork skipped). Fixed: the "re-review or merge?" fork is mandatory and non-skippable, even on a clean review with zero fixes. | PR #2 / `5225bdb` |
 | BUG-4 | `/review`'s `codex exec` referenced the finding schema by a repo-relative path (`.claude/skills/review/finding-schema.json`) that only resolved from this repo, so `/review` aborted ("Failed to read output schema file … No such file or directory") from every other project repo. Fixed: absolute user-level `"$HOME/.claude/skills/review/finding-schema.json"`; `-o reviews/<slug>.codex.json` kept repo-relative, with a step-5 note on the asymmetry. Also logged OPS-9. | PR #14 / `0504e31` |
-| BUG-5 | The guard hook blocked the `shipped/<slug>` **tag** push during `/close` (it keys on "on a base branch?" not "is the refspec a base branch?"), since `gh pr merge --delete-branch` leaves HEAD on `main`. **Obviated by design** rather than fixed: `drop-shipped-tag` removed the tag entirely (the merge commit / PR-`MERGED` is the single ship record), so nothing pushes from `main` and the guard is never engaged — no guard change. The earlier smarter-guard fix (`guard-allow-tag-push`) was abandoned (PR #16 closed unmerged). | PR #17 / `<merge>` |
+| BUG-5 | The guard hook blocked the `shipped/<slug>` **tag** push during `/close` (it keys on "on a base branch?" not "is the refspec a base branch?"), since `gh pr merge --delete-branch` leaves HEAD on `main`. **Obviated by design** rather than fixed: `drop-shipped-tag` removed the tag entirely (the merge commit / PR-`MERGED` is the single ship record), so nothing pushes from `main` and the guard is never engaged — no guard change. The earlier smarter-guard fix (`guard-allow-tag-push`) was abandoned (PR #16 closed unmerged). | PR #17 / `merge: drop-shipped-tag` |
 
 Shipped together as the `close-gate-and-backlog` story ([reviews/close-gate-and-backlog.md](reviews/close-gate-and-backlog.md)); also added the declared-vs-observed doctrine, the `shipped/<slug>` tag convention, and the `/review` decision-menu consistency tweak.
 
