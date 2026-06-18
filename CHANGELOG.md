@@ -5,6 +5,26 @@ All notable changes to this workflow are recorded here. The format follows
 
 ## [Unreleased]
 
+## [2026-06-18] — close-folds-in-records (PR #18)
+
+### Changed
+- **`/close` folds release records into the pre-merge branch.** After the distinct merge
+  instruction (and after the merge-strategy preflight), `/close` writes the `CHANGELOG.md` entry
+  and the `BACKLOG.md` Done-move *on the feature branch*, so they ride in on the merge commit —
+  no separate post-merge base write, and not speculative (a re-review choice never reaches them;
+  the story header is never set to `merged`). Step 5 is ordered **preflight → record → re-gate →
+  merge**, with a **single** merge-strategy decision in 5(a) (prints `MODE=auto`/`MODE=direct` or
+  aborts) that 5(d) merely dispatches — no duplicated policy. Retires the per-story
+  `bookkeeping-*` follow-up pattern.
+- **Doctrine.** `.claude/workflow-protocol.md` and `BACKLOG.md` add the **no bookkeeping-only
+  stories** rule and the `PR #N / merge: <slug>` reference convention (Done items no longer store a
+  derivable raw merge SHA).
+- **Books squared (one-time).** Fixed the BUG-5 Done-row placeholder (`<merge>` →
+  `merge: drop-shipped-tag`) and added the missing `drop-shipped-tag (PR #17)` entry above.
+- Independent review (Codex) caught three BLOCKERs on the merge path across rounds 1–3 (stranded
+  records on abort; shell-var scope; (a)/(d) policy divergence); resolved by the single-decision
+  Option B and verified clean in round 4.
+
 ## [2026-06-14] — drop-shipped-tag (PR #17)
 
 ### Removed
