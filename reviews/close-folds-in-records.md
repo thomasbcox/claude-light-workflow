@@ -429,3 +429,12 @@ Round-3 BLOCKER #1 fixed by simplification, **superseding** the round-2
   BLOCKERs is gone; there is exactly one decision point.
 - The `*`-abort lives only in (a) now, so the round-3 gap (unknown mode clearing
   (a) but aborting (d) after records) is structurally impossible.
+
+## Codex review (2026-06-18, base 9fec4bd, HEAD 2b072ef) — round 4 (diff-only)
+
+**Summary:** 2026-06-18 09:55:26 PDT — Round-3 BLOCKER is closed. Step 5(a) is the
+sole complete merge-policy decision; step 5(d) only maps the recorded `MODE` to the
+correct command, using the gated `localSha`. BUG-D1 framing and all doctrine files
+remain consistent.
+
+**Findings:** none — empty findings array.
