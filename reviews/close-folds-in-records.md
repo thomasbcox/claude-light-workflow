@@ -49,11 +49,22 @@ re-review choice left a `merged` header on an unmerged branch. The lesson: never
 write **observed/shipped** state until the merge is actually chosen and
 happening.
 
-This story does **not** reopen that, by three guards:
-- The new record-keeping lives **inside step 5**, which runs **only after Thomas's
-  distinct merge instruction** at the step-4 fork. Choosing re-review never
-  reaches it, so no records are ever written to an unmerged-and-staying-unmerged
-  branch.
+This story does **not** reopen that, by these guards (tightened after Codex
+BLOCKER #1, which correctly flagged the original over-broad claim):
+- The new record-keeping lives **inside step 5**, ordered **preflight → record →
+  re-gate → merge**, and runs **only after Thomas's distinct merge instruction**
+  at the step-4 fork. Choosing re-review never reaches it; and the merge-strategy
+  preflight (auto-merge / required-checks abort) runs **before** the record
+  commit, so a *known-preventable* abort never leaves records on the branch
+  either.
+- **Precise claim (not the original over-broad one):** records are *never* written
+  speculatively before the merge is chosen, and *never* reach the **base branch**
+  except via the merge commit. A record commit **can** briefly sit on the *PR
+  branch* while a **handed-off** merge is still pending (auto-merge waiting on
+  async checks, or the local MERGED poll timing out after a valid hand-off) — but
+  that branch is unmerged, so `main` never carries a premature record, and the
+  pending merge completes the record when it lands. This is a strictly weaker,
+  defensible statement than "records can never sit on an unmerged branch."
 - The **story header is still untouched** — it stays `proposed → approved`, never
   `merged`. Whether it shipped remains *derived* from git (the SSOT discipline is
   intact).
@@ -61,6 +72,9 @@ This story does **not** reopen that, by three guards:
   committed in the same atomic action that then issues the merge — exactly
   resolution **(c)** the BUG-D1 story pre-authorized (*"`merged` is set in the
   same step that issues the merge and is true within the same atomic action"*).
+- The record commit is itself **re-gated** (step 5c) before push/merge, so the
+  `--match-head-commit` shipped commit is the one that passed `testCommand`
+  (Codex IMPORTANT #2).
 
 ## The deploy-ordering seam (the central open question — see Open questions)
 
@@ -287,3 +301,22 @@ Thomas: "fix all these as suggested." All three findings → **fix**.
    commit is the gated one. No new review round.
 3. **NIT #3 → fix.** Reword the CHANGELOG instruction to "add a dated entry
    immediately below `## [Unreleased]`, leaving the Unreleased section in place."
+
+## Fixes (2026-06-17)
+
+All three approved findings applied; scope unchanged (same five files).
+
+1. **BLOCKER #1** → `.claude/skills/close/SKILL.md` step 5 restructured to
+   **preflight → record → re-gate → merge**: the merge-strategy preflight
+   (auto-merge / required-checks abort) now runs in **(a)**, *before* the
+   release-record commit in **(b)**, so a known-preventable abort never leaves
+   records on the branch. The BUG-D1 non-regression section in this story file was
+   tightened from the original over-broad claim to the precise one (records never
+   reach *base* except via the merge commit; a record may briefly sit on an
+   unmerged *PR branch* only while a handed-off merge is pending).
+2. **IMPORTANT #2** → added step 5**(c)**: re-run `testCommand` against the record
+   commit HEAD before push/merge, so the `--match-head-commit` shipped commit is
+   the gated one. `localSha` comment updated to "gated record HEAD".
+3. **NIT #3** → step 5(b) CHANGELOG instruction now reads "add a dated
+   `## [<date>] — <slug> (PR #N)` entry **immediately below** `## [Unreleased]`,
+   leaving the Unreleased section in place."
