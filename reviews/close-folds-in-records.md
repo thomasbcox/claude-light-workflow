@@ -396,3 +396,20 @@ new authoritative unknown-state gate.
 > suggestion) fixes this instance but leaves two copies of a three-way policy to
 > keep in sync forever — the exact surface that produced rounds 2 and 3. Decision
 > for Thomas at the fork: targeted patch vs. simplify to a single decision point.
+
+## Decisions (2026-06-18) — round 3
+
+Thomas: "fix via B." Round-3 BLOCKER #1 → **fix via Option B (simplify to a single
+decision point)**, not the targeted patch.
+
+- `/close` step 5(a) **decides the merge mode once** via the three-way
+  `case "$autoMerge"` (`true`→`MODE=auto`; `false`→abort if required checks else
+  `MODE=direct`; `*`→abort). **Every** abort happens here, before any record, so a
+  known-preventable failure never leaves records on the branch.
+- Step 5(d) **dispatches the `MODE` decided in (a)** — push, then run the single
+  `gh pr merge` command for that mode (the only difference is the `--auto` flag),
+  then poll. No recomputation, no second copy of the policy → the (a)/(d)
+  consistency surface that produced rounds 2 and 3 is removed. (d)'s only abort is
+  the MERGED-poll timeout (a handed-off-merge case). This avoids the round-2
+  shell-var trap: (d) does not read an (a) shell variable; it runs the command
+  matching (a)'s printed `MODE`.
