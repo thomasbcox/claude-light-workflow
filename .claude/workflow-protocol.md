@@ -7,25 +7,34 @@ A small, human-controlled development loop. One idea above all:
 > (placed there by `install.sh`). Keep them in sync via the installer.
 
 ## Actors
-- **Thomas** — owner / decider. Approves scope, decides each finding's disposition, approves the merge.
-- **Claude** — builder / scribe. Writes the spec, the code, and the audit trail; calls Codex; applies approved fixes; merges on Thomas's word. Never self-approves scope or merge.
-- **Codex** — independent reviewer (`codex exec -s read-only` with a structured-output schema; the canonical command lives in `review/SKILL.md`). Critiques and classifies; never fixes or merges.
+- **Thomas** — owner / decider. Approves scope **and high-level design**, ratifies one-way-door decisions, decides each finding's disposition, approves the merge.
+- **Claude** — builder / scribe. Writes the spec, the design sketch, the code, and the audit trail; calls Codex; applies approved fixes; merges on Thomas's word. Never self-approves scope, design, or merge.
+- **Codex** — independent reviewer (`codex exec -s read-only` with a structured-output schema; the canonical commands live in `review/SKILL.md` and `frame/SKILL.md`). Reviews at **two altitudes** — design/approach (the *shape*, judged against modern best practice) and correctness (the *diff*). Critiques and classifies; never fixes or merges.
 - **Tests / gate** — the mechanical judge. Objective pass/fail. Green never implies business approval.
 - **The repo** — the one source of truth; the per-branch story file `reviews/<slug>.md` is the audit trail.
 
 ## The loop
-1. **`/frame`** — Thomas states a need → Claude drafts a spec on a feature branch → **Thomas approves scope** → Claude implements AC-by-AC.
-2. **`/review`** — gate goes green → `codex exec -s read-only --output-schema …` produces structured findings → Claude presents a decision menu → **Thomas decides per finding**.
-3. **`/close`** — Claude applies only approved fixes → gate green → re-review (Thomas's call) or **Thomas approves merge** → record the release on the branch (CHANGELOG + BACKLOG-Done) → merge + cleanup.
+1. **`/frame`** — Thomas states a need → Claude drafts a spec **and a design sketch** on a feature branch → Codex design-reviews the sketch (best-practice lens, always-on) → **one consult: Thomas approves scope, ratifies one-way-door decisions, decides best-practice flags** → Claude implements AC-by-AC.
+2. **`/review`** — gate goes green → the **approach pass** (the shape, best-practice lens) gates the **correctness pass** (the diff): one-way-door / major-violation findings block (→ redesign + re-review); minor two-way kludges are advisory; correctness runs only on a shape that cleared approach review → Claude presents the decision menu → **Thomas decides per finding**.
+3. **`/close`** — Claude applies only approved fixes → gate green → re-review (Thomas's call; an accepted redesign always re-reviews) or **Thomas approves merge** → record the release on the branch (CHANGELOG + BACKLOG-Done) → merge + cleanup.
 
 Loop 2 ↔ 3 as many rounds as needed.
 
 ## Rules (the whole thing in five lines)
 1. The repo is authoritative; `reviews/<slug>.md` is the trail (spec → build → findings → decisions, appended).
 2. Claude builds and self-fixes to green; Codex judges; Thomas decides.
-3. The human decides exactly twice: **scope** (after `/frame`) and **merge** (in `/close`). A prior general "yes" never counts for merge.
+3. **The human decides the one-way doors at every altitude** — consulted on requirements, high-level design, and implementation tradeoffs (plus the merge). Reversible (two-way) calls default to Claude and are logged for veto; a prior general "yes" never counts for merge. (See *Consult model* below.)
 4. No AI grades its own homework — the builder is never the approver.
 5. No direct commits/pushes to the base branch; the feature-branch + merge path is the only way in (enforced by the guard hook).
+
+## Consult model (the two dials)
+
+This replaces "decide twice." The human is consulted at three design altitudes — **requirements** (scope, in `/frame`), **high-level design** (the design sketch, in `/frame`), and **implementation tradeoffs** (the approach pass, in `/review`) — plus the **merge** authorization (in `/close`). Two independent dials govern *how* each consult works:
+
+- **Blocking = reversibility (block narrow).** Only **one-way-door** decisions stop Claude and need Thomas: architecture, data model, public contract, a new dependency, or a **cross-cutting pattern future code will copy** (locally reversible, globally not). **Two-way** decisions default to Claude and are logged for veto.
+- **Assessment = best practice (assess broad).** Codex **always** judges every notable decision against modern idiom *and* the repo's conventions, and **flags** nonstandard / dated / kludgy choices **regardless of reversibility.** Guardrails: a flag must name a concrete win (not novelty); internal consistency can outweigh ecosystem fashion; the repo's conventions are the local standard.
+
+Disposition follows the two tags (reversibility × standing): **one-way door OR a major best-practice violation → block/consult; two-way + minor → advisory/log.** The builder is still never the approver (rule 4) — adding altitudes changes how many altitudes get a decision, never who decides.
 
 > **Records ride with the merge, not after it.** `/close` writes the `CHANGELOG.md` entry and the
 > `BACKLOG.md` Done-move on the feature branch *after* the merge instruction, so they arrive on the
@@ -46,12 +55,14 @@ drift from reality because it never holds the merge fact — the same discipline
 
 ## Per-repo artifacts
 - `reviews/<slug>.md` — the story file / audit trail.
-- `reviews/<slug>.codex.json` — raw structured Codex output per round.
+- `reviews/<slug>.design.json` — frame-time Codex design-sketch review (`design-review-schema`).
+- `reviews/<slug>.approach.json` — review-time approach-pass output (`design-review-schema`).
+- `reviews/<slug>.codex.json` — review-time correctness output per round (`finding-schema`).
 - `.claude/workflow.json` — config: `baseBranch`, `branchPrefix`, `testCommand`, `codexModel`.
 - `AGENTS.md` — Codex's reviewer contract (tunable per repo).
 
 ## Global (installed once, shared by every app)
-- `~/.claude/skills/{frame,review,close}/` — the three skills (+ `review/finding-schema.json`).
+- `~/.claude/skills/{frame,review,close}/` — the three skills (+ `review/finding-schema.json` and `review/design-review-schema.json`).
 - `~/.claude/hooks/block-main-writes.sh` — the guard hook, wired in `~/.claude/settings.json`.
 - `~/.claude/workflow-protocol.md` — this document.
 - `~/.claude/workflow-AGENTS-template.md` — the contract template `/frame` copies into new repos.
