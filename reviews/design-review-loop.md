@@ -264,3 +264,15 @@ Thomas: *"fix both please"*
 Both approved fixes applied on the feature branch:
 - **BLOCKER** (`.claude/skills/close/SKILL.md` step 4): rewrote step 4 as **conditional** — if the round's approved fixes include an approach/redesign fix, re-review is the **only** route (no merge offered); otherwise the normal re-review-or-merge fork. Resolves the internal contradiction Codex flagged.
 - **IMPORTANT** (`README.md`): added the `/review approach` / `/review correctness` override args (and the correctness-only-on-re-review default) below the consult-model paragraph.
+
+## Codex review (2026-06-25, re-review, base afbe398, HEAD d4a2e97)
+
+**Summary:** Re-reviewed `afbe398...HEAD`. The README override-args fix is **sound**. The close-flow fix is **incomplete**: step 4 is now conditional, but the hard-constraints section still mandates asking "re-review or merge?" after every fix round — so the same contradiction persists at a different location.
+
+### BLOCKER
+- **Redesign path still conflicts with mandatory merge fork** — `.claude/skills/close/SKILL.md` (hard constraints, not step 4). The new step 4 correctly makes re-review the only route for an approach/redesign fix, but the hard constraint above it still says *"After fixes, ask 're-review or merge?' … every time,"* which remains in force and re-introduces the same contradiction (AC11 violation).
+  - *Codex suggestion:* Update the hard constraint to defer to the conditional step-4 fork — redesign fixes offer only re-review; otherwise ask "re-review or merge?" and stop.
+
+*(README override-args fix confirmed sound — no finding.)*
+
+Raw output: `reviews/design-review-loop.codex.json`.
