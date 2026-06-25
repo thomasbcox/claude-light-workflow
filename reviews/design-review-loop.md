@@ -238,3 +238,17 @@ AC → file map:
 - AC13 (docs; README-only per the amendment) → `README.md`
 
 Reviewed under the installed single-pass `/review` (the new two-pass skill is on this branch, not yet deployed) — see the note in `/review` handoff.
+
+## Codex review (2026-06-25, base main, HEAD afbe398)
+
+**Summary:** Reviewed the branch against `reviews/design-review-loop.md`. Two spec mismatches: one workflow contradiction that can allow an unreviewed redesign to merge, and one README omission against AC13.
+
+### BLOCKER
+- **Redesign path still offers merge** — `.claude/skills/close/SKILL.md:22`. AC11 requires an accepted approach/redesign fix to route to re-review, not straight to merge, but step 4's lead still says to present exactly the "re-review … or merge" choice **every time**. The added bullet says not to offer a straight merge for redesigns, so the procedure is internally contradictory and can still lead Claude to offer the forbidden merge option after a redesign.
+  - *Codex suggestion:* Make step 4 conditional — if the latest approved fixes include an approach/redesign fix, stop with re-review as the only route; otherwise present the normal re-review-or-merge fork.
+
+### IMPORTANT
+- **README omits review override args** — `README.md:15`. AC13 requires README to describe the `/review approach` and `/review correctness` override args, but the new `/review` row only describes the default approach-gates-correctness flow and README contains no mention of either override.
+  - *Codex suggestion:* Add a short note that `/review approach` forces the approach pass and `/review correctness` skips straight to the correctness pass.
+
+Raw output: `reviews/design-review-loop.codex.json`.
