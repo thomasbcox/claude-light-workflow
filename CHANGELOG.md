@@ -5,6 +5,38 @@ All notable changes to this workflow are recorded here. The format follows
 
 ## [Unreleased]
 
+## [2026-06-25] — design-review-loop (PR #19)
+
+### Added
+- **A design-review altitude + a one-way-door consult model**, replacing "decide twice." The human is
+  consulted at three altitudes — requirements, high-level design, implementation tradeoffs — plus the
+  merge. Two decoupled dials: *blocking* by reversibility (only one-way doors — architecture, data
+  model, a new dependency, or a cross-cutting pattern future code will copy — stop Claude; two-way
+  calls default and are logged for veto), and *assessment* always-on against modern best practice
+  (Codex flags nonstandard/dated/kludgy choices even when reversible; guardrails: a concrete win not
+  novelty, weigh internal consistency, repo conventions are the local standard).
+- **`/frame` gains a design sketch + a Codex design review** of it (new shared `design-review-schema.json`),
+  decided in one combined frame consult (scope + one-way-door ratification + best-practice flags).
+- **`/review` gains an approach pass that gates the correctness pass** — round-keyed default (approach
+  on first review + post-redesign rounds; correctness-only on fix-verification re-reviews), bare-arg
+  overrides `/review approach|correctness`, and a decision-gated short-circuit (an accepted redesign
+  skips correctness and re-reviews; a blessed/clean shape runs correctness in the same round).
+  Invariant: correctness only runs on a shape that cleared approach review.
+
+### Changed
+- `AGENTS.md` splits grounding (correctness = diff; design/approach = spec + surroundings, may cite
+  absent code) and adds the always-on best-practices mandate, guardrails, and reversibility/standing tags.
+- `/close` step 4 is now conditional — an accepted approach/redesign fix routes to re-review, never a
+  straight merge.
+- `README.md` documents the new loop and the override args.
+
+### Notes
+- Independent review (Codex) caught a self-inflicted merge-fork contradiction across rounds 1–2 (the
+  AC11 "redesign ⇒ re-review only" rule was contradicted first in `/close` step 4, then in its hard
+  constraint + `/review` step 9); resolved at the source and verified clean in round 3.
+- `ai-dev-workflow-architecture.md` (which documents the parent AI Protocol v3, not this system) is
+  intentionally untouched; de-parenting it is a follow-up story.
+
 ## [2026-06-18] — close-folds-in-records (PR #18)
 
 ### Changed
