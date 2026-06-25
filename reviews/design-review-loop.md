@@ -224,3 +224,17 @@ one-way **or** major best-practice violation → **block/consult**; two-way + mi
 ## Open questions
 
 None — scope approved. Implementation proceeds AC-by-AC.
+
+## Build note (2026-06-25)
+
+AC → file map:
+- AC1 (doctrine: consult model, two dials, one-way-door blocking) → `.claude/workflow-protocol.md`
+- AC2 (contract: design altitude, always-on best-practice mandate, three guardrails, reversibility/standing tags) → `AGENTS.md`
+- AC3 (shared strict schema) → `.claude/skills/review/design-review-schema.json`
+- AC4–AC7 (design sketch, Codex design review, combined frame consult, first-review override reminder) → `.claude/skills/frame/SKILL.md`
+- AC8–AC10 (approach pass, round-keyed default + bare-arg overrides, decision-gated short-circuit + disposition split + invariant) → `.claude/skills/review/SKILL.md`
+- AC11 (accepted approach/redesign fix → re-review) → `.claude/skills/close/SKILL.md`
+- AC12 (deploys via `install.sh` `cp -R`, no installer edit) → verified, no file change
+- AC13 (docs; README-only per the amendment) → `README.md`
+
+Reviewed under the installed single-pass `/review` (the new two-pass skill is on this branch, not yet deployed) — see the note in `/review` handoff.
