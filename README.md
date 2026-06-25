@@ -11,9 +11,17 @@ The full doctrine lives in [`.claude/workflow-protocol.md`](.claude/workflow-pro
 
 | Skill | Does | Human gate |
 |---|---|---|
-| `/frame`  | request → short spec on a feature branch → implement AC-by-AC | **approves scope** |
-| `/review` | gate green → `codex exec` (read-only, schema-validated) → decision menu | **decides per finding** |
+| `/frame`  | request → spec **+ design sketch** → Codex design-reviews the sketch → implement AC-by-AC | **approves scope + design** |
+| `/review` | gate green → **approach pass** (shape, best-practice) gates **correctness pass** (diff) → decision menu | **decides per finding** |
 | `/close`  | apply approved fixes → re-review or merge → cleanup | **approves merge** |
+
+**Who decides what.** The human is consulted at three altitudes — **requirements**, **high-level
+design** (the `/frame` design sketch), and **implementation tradeoffs** (the `/review` approach pass)
+— plus the merge. Blocking is gated by reversibility: only **one-way-door** decisions (architecture,
+data model, a new dependency, or a cross-cutting pattern future code will copy) stop you; reversible
+calls default to Claude, logged for veto. Independently, Codex **always** assesses each change against
+modern best practice and flags substandard choices — even reversible ones — with guardrails (a
+concrete win, not novelty). Full rules in [`.claude/workflow-protocol.md`](.claude/workflow-protocol.md).
 
 Codex is called directly via the `codex` CLI — a read-only `codex exec -s read-only` run with a
 structured-output schema (the canonical command lives in [`review/SKILL.md`](.claude/skills/review/SKILL.md)),
@@ -21,8 +29,10 @@ no copy/paste. It runs read-only and never commits; Claude captures its structur
 
 ## Artifacts (the audit trail)
 - [`BACKLOG.md`](BACKLOG.md) — staging area in front of the loop: outstanding bugs (`BUG-`) and tooling improvements (`OPS-`), each graduating to a `reviews/<slug>.md` story.
-- `reviews/<slug>.md` — spec → build note → Codex findings → decisions, appended across rounds.
-- `reviews/<slug>.codex.json` — raw structured Codex output per round.
+- `reviews/<slug>.md` — spec + design sketch → Codex findings → decisions, appended across rounds.
+- `reviews/<slug>.design.json` — frame-time Codex design-sketch review.
+- `reviews/<slug>.approach.json` — review-time approach-pass output.
+- `reviews/<slug>.codex.json` — review-time correctness output per round.
 - `.claude/workflow.json` — per-repo config: `baseBranch`, `branchPrefix`, `testCommand`, `codexModel`.
 - `AGENTS.md` — Codex's reviewer contract.
 
