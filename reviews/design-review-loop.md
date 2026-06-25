@@ -84,8 +84,10 @@ one-way **or** major best-practice violation → **block/consult**; two-way + mi
    the **round-keyed default**, **bare-arg overrides**, and the
    **decision-gated short-circuit + disposition split** gating the correctness pass.
 6. **Close** (`close/SKILL.md`): accepted approach/redesign fix routes to re-review.
-7. **Docs** (`README.md`, `ai-dev-workflow-architecture.md`): describe the new loop,
-   pointing at the skills as the normative source.
+7. **Docs** (`README.md`): describe the new loop, pointing at the skills as the
+   normative source. *(De-parenting `ai-dev-workflow-architecture.md` — which
+   documents the parent v3 system, not this one — is deferred to a follow-up story;
+   see Decisions.)*
 
 ## Non-goals
 
@@ -178,9 +180,10 @@ one-way **or** major best-practice violation → **block/consult**; two-way + mi
     `install.sh` `cp -R`s `.claude/skills/review/`; `/frame` references it by the
     absolute installed path (mirroring how `/review` references its schema).
     Verified, not assumed.
-13. **`README.md` + `ai-dev-workflow-architecture.md`** describe the new loop (three
-    consults, two dials, the always-on best-practices lens, the override args),
-    pointing at the skills as normative rather than restating the rules.
+13. **`README.md`** describes the new loop (three consults, two dials, the always-on
+    best-practices lens, the override args), pointing at the skills as normative
+    rather than restating the rules. *(`ai-dev-workflow-architecture.md` is out of
+    scope — it documents the parent v3 system; de-parenting it is a follow-up story.)*
 
 ## Test notes
 
@@ -196,8 +199,7 @@ one-way **or** major best-practice violation → **block/consult**; two-way + mi
   the ACs enumerate: `.claude/workflow-protocol.md`, `AGENTS.md`,
   `.claude/skills/review/design-review-schema.json`, `.claude/skills/frame/SKILL.md`,
   `.claude/skills/review/SKILL.md`, `.claude/skills/close/SKILL.md`, `README.md`,
-  `ai-dev-workflow-architecture.md`, this story file, and the CHANGELOG entry `/close`
-  adds at merge time.
+  this story file, and the CHANGELOG entry `/close` adds at merge time.
 
 ## Decisions so far (Thomas, 2026-06-25)
 
@@ -214,6 +216,10 @@ one-way **or** major best-practice violation → **block/consult**; two-way + mi
 - **One shared `design-review-schema.json`** for both passes, not per-pass schemas.
 - **Scope approved** 2026-06-25: *"1 yes combine; 2 shared"* (after approving the
   consult model, one-way-door blocking, and the always-on best-practices lens).
+- **AC13 amended → README-only** (2026-06-25): `ai-dev-workflow-architecture.md`
+  documents the parent **AI Protocol v3**, not the light workflow, so it is dropped
+  from this story's scope. De-parenting it (Thomas's call: *rewrite, not delete —
+  next*) is a follow-up story (`standalone-architecture-doc`).
 
 ## Open questions
 
