@@ -9,7 +9,7 @@ Step 3 of the loop. Doctrine: `~/.claude/workflow-protocol.md`.
 
 ## Hard constraints
 - Implement ONLY the findings Thomas approved. Deferred/rejected findings are untouchable without new explicit approval.
-- Re-review is Thomas's call, not automatic. After fixes, ask "re-review or merge?" — and STOP for his answer, even when there were zero fixes to apply (a clean review still stops here).
+- Re-review is Thomas's call, not automatic. After fixes you **STOP at the step-4 fork** for his answer — even when there were zero fixes to apply (a clean review still stops here). *Which* options that fork offers is conditional (see step 4: an approved approach/redesign fix ⇒ re-review only; otherwise re-review or merge); this constraint mandates the **stop**, not a fixed menu.
 - **Invoking `/close` is NOT merge authorization.** A merge requires a distinct, affirmative human instruction — the word "merge" or equivalent — given **after** the step-4 fork is presented, **in the current session, every time**. The command invocation does not count; a prior or general "yes" does not count.
 - **The story header records only declared state (`proposed` → `approved`) — never observed state.** `approved` is terminal. Whether the branch shipped is *observed* state owned by git; it is read back, never hand-written into the header. The shipped signal is the merge commit (`merge: <slug>`) / the PR's `MERGED` state — atomic, it either exists or it doesn't, and it is the **single** source of truth. The header must never say `merged`.
 - Never commit/push to the base branch directly (the guard hook enforces this). The only write to base is the merge commit itself.
@@ -19,8 +19,10 @@ Step 3 of the loop. Doctrine: `~/.claude/workflow-protocol.md`.
 1. **Load** config + the latest `## Decisions` from `reviews/<slug>.md`.
 2. **Apply approved fixes**, finding by finding. Append a `## Fixes (<date>)` note: what changed, per approved finding. Leave the header at `Status: approved` — do NOT set `merged` here; whether this round merges is unknown until step 4. If there were zero approved fixes (clean review), skip the edits but still continue — a clean review does not fast-path to merge.
 3. **Gate.** Re-run `testCommand`; must be green. Commit on the feature branch.
-4. **Re-review fork (mandatory — never skip).** Present exactly this choice and **STOP** for Thomas's answer: **re-review** (→ `/review`, base = last-reviewed SHA, diff-only) or **merge**? Ask this **every** time, including on a clean review with zero fixes — the human still chooses. Do not proceed to step 5 until Thomas gives a distinct merge instruction this session (see hard constraints).
-   - If any approved fix touched money / security / auth / business logic / data-loss, recommend a re-review before merge.
+4. **Re-review fork (mandatory — never skip).** **STOP** for Thomas's answer; do not proceed to step 5 until he gives a distinct merge instruction this session (see hard constraints). *Which* choice you present is conditional on whether this round's approved fixes include an **approach/redesign** fix:
+   - **If they do:** re-review is the **only** route — a redesign reshaped the code, not just patched a line, so it goes back through `/review` (whose approach pass re-runs on the new shape). Present re-review as the sole next step; **do not offer merge.**
+   - **If they do not:** present exactly this choice — **re-review** (→ `/review`, base = last-reviewed SHA) or **merge**? Ask this **every** time, including on a clean review with zero fixes — the human still chooses.
+   - Either way, if any approved fix touched money / security / auth / business logic / data-loss, recommend a re-review before merge.
 5. **Merge.** ONLY after Thomas's distinct "merge" instruction this session. The flow is **preflight → record → re-gate → merge**, in that order, so a known-preventable abort never leaves release records on the branch.
 
    **(a) Decide the merge mode — once, before any record.** This is the *single* place the merge strategy is decided; **every** abort happens here, before (b), so a known-preventable failure never leaves records on the branch. (d) does not re-decide — it dispatches the `MODE` chosen here.
