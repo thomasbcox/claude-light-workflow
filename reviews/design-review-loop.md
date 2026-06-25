@@ -287,3 +287,11 @@ Root cause of the round-1 miss: I point-fixed the location Codex cited (step 4) 
 - **`.claude/skills/close/SKILL.md`** (hard constraint): now mandates the *stop* at the step-4 fork but defers the *menu shape* to step 4's conditional (redesign ⇒ re-review only).
 - **`.claude/skills/review/SKILL.md`** (step 9): the description of `/close` no longer asserts it always "asks re-review or merge" — notes the fork is conditional.
 - Verified consistent, left as-is: `close/SKILL.md:13` ("after the step-4 fork is presented") and `workflow-protocol.md:19` ("an accepted redesign always re-reviews"). README's `/close` table row is a coarse phase summary, not a normative rule.
+
+## Codex review (2026-06-25, re-review round 3, base d4a2e97, HEAD 2cbf682)
+
+**Summary:** Re-reviewed `d4a2e97...HEAD` and the full affected close/review text. The close hard constraint now mandates stopping at the conditional step-4 fork without hard-coding a merge option; step 4 keeps redesign fixes on re-review only; review step 9 describes the conditional fork. **No remaining AC11 contradiction or new close-flow contradiction found.**
+
+**Findings: none — clean.** Loop converged: round 1 (2) → round 2 (1) → round 3 (0).
+
+Raw output: `reviews/design-review-loop.codex.json`.
