@@ -9,7 +9,7 @@ Step 3 of the loop. Doctrine: `~/.claude/workflow-protocol.md`.
 
 ## Hard constraints
 - Implement ONLY the findings Thomas approved. Deferred/rejected findings are untouchable without new explicit approval.
-- Re-review is Thomas's call, not automatic. After fixes, ask "re-review or merge?" — and STOP for his answer, even when there were zero fixes to apply (a clean review still stops here).
+- Re-review is Thomas's call, not automatic. After fixes you **STOP at the step-4 fork** for his answer — even when there were zero fixes to apply (a clean review still stops here). *Which* options that fork offers is conditional (see step 4: an approved approach/redesign fix ⇒ re-review only; otherwise re-review or merge); this constraint mandates the **stop**, not a fixed menu.
 - **Invoking `/close` is NOT merge authorization.** A merge requires a distinct, affirmative human instruction — the word "merge" or equivalent — given **after** the step-4 fork is presented, **in the current session, every time**. The command invocation does not count; a prior or general "yes" does not count.
 - **The story header records only declared state (`proposed` → `approved`) — never observed state.** `approved` is terminal. Whether the branch shipped is *observed* state owned by git; it is read back, never hand-written into the header. The shipped signal is the merge commit (`merge: <slug>`) / the PR's `MERGED` state — atomic, it either exists or it doesn't, and it is the **single** source of truth. The header must never say `merged`.
 - Never commit/push to the base branch directly (the guard hook enforces this). The only write to base is the merge commit itself.

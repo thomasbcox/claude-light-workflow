@@ -276,3 +276,14 @@ Both approved fixes applied on the feature branch:
 *(README override-args fix confirmed sound — no finding.)*
 
 Raw output: `reviews/design-review-loop.codex.json`.
+
+## Decisions (2026-06-25, round 2)
+
+Thomas: *"explain then fix"* → **fix** the BLOCKER.
+
+## Fixes (2026-06-25, round 2)
+
+Root cause of the round-1 miss: I point-fixed the location Codex cited (step 4) instead of grepping for **every** place the "after fixes, offer re-review or merge" rule was encoded. This round, grepped the rule across all skills + doctrine and fixed **both** broken instances:
+- **`.claude/skills/close/SKILL.md`** (hard constraint): now mandates the *stop* at the step-4 fork but defers the *menu shape* to step 4's conditional (redesign ⇒ re-review only).
+- **`.claude/skills/review/SKILL.md`** (step 9): the description of `/close` no longer asserts it always "asks re-review or merge" — notes the fork is conditional.
+- Verified consistent, left as-is: `close/SKILL.md:13` ("after the step-4 fork is presented") and `workflow-protocol.md:19` ("an accepted redesign always re-reviews"). README's `/close` table row is a coarse phase summary, not a normative rule.
