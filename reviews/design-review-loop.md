@@ -252,3 +252,9 @@ Reviewed under the installed single-pass `/review` (the new two-pass skill is on
   - *Codex suggestion:* Add a short note that `/review approach` forces the approach pass and `/review correctness` skips straight to the correctness pass.
 
 Raw output: `reviews/design-review-loop.codex.json`.
+
+## Decisions (2026-06-25)
+
+Thomas: *"fix both please"*
+- **BLOCKER — Redesign path still offers merge** (`close/SKILL.md:22`): **fix** — make step 4 conditional (redesign fix ⇒ re-review is the only route; else the normal fork).
+- **IMPORTANT — README omits review override args** (`README.md:15`): **fix** — add the `/review approach` / `/review correctness` overrides near the `/review` row.
