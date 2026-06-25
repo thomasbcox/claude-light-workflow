@@ -258,3 +258,9 @@ Raw output: `reviews/design-review-loop.codex.json`.
 Thomas: *"fix both please"*
 - **BLOCKER — Redesign path still offers merge** (`close/SKILL.md:22`): **fix** — make step 4 conditional (redesign fix ⇒ re-review is the only route; else the normal fork).
 - **IMPORTANT — README omits review override args** (`README.md:15`): **fix** — add the `/review approach` / `/review correctness` overrides near the `/review` row.
+
+## Fixes (2026-06-25)
+
+Both approved fixes applied on the feature branch:
+- **BLOCKER** (`.claude/skills/close/SKILL.md` step 4): rewrote step 4 as **conditional** — if the round's approved fixes include an approach/redesign fix, re-review is the **only** route (no merge offered); otherwise the normal re-review-or-merge fork. Resolves the internal contradiction Codex flagged.
+- **IMPORTANT** (`README.md`): added the `/review approach` / `/review correctness` override args (and the correctness-only-on-re-review default) below the consult-model paragraph.

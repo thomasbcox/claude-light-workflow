@@ -23,6 +23,10 @@ calls default to Claude, logged for veto. Independently, Codex **always** assess
 modern best practice and flags substandard choices — even reversible ones — with guardrails (a
 concrete win, not novelty). Full rules in [`.claude/workflow-protocol.md`](.claude/workflow-protocol.md).
 
+On a first review both passes run; scope it with **`/review approach`** (force the approach pass) or
+**`/review correctness`** (skip straight to the line-level pass). Re-reviews that only verify fixes are
+correctness-only by default.
+
 Codex is called directly via the `codex` CLI — a read-only `codex exec -s read-only` run with a
 structured-output schema (the canonical command lives in [`review/SKILL.md`](.claude/skills/review/SKILL.md)),
 no copy/paste. It runs read-only and never commits; Claude captures its structured findings and commits the trail.
