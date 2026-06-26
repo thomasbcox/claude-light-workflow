@@ -154,6 +154,16 @@ Thomas approved scope at the frame consult with all three recommendations:
   now binding on implementation.
 - **New narrative location → `ARCHITECTURE.md` at repo root**, linked from the README.
 
+## Codex approach review (2026-06-25, base main, HEAD 1b149a6)
+
+**Verdict:** Clean. Codex would satisfy the ACs the same way — a narrow docs-only truthfulness pass
+using the hook's actual current-branch `main`/`master` behavior as canonical wording, updating only
+README/hook-comment/live-protocol/skill parentheticals, reframing the parent doc with a historical
+banner, and adding one root `ARCHITECTURE.md` linked from README, without changing executable
+behavior. No new dependency or bespoke mechanism; no simpler declarative/library design missed.
+
+**Findings:** none (empty array). Shape blessed → proceeded to correctness pass same round.
+
 ## Build note (2026-06-25)
 
 AC → file map:
