@@ -1,11 +1,19 @@
 # AI-Assisted Development Workflow Architecture
 
-> A reference description of the custom Claude Code skill suite that drives development on this
+> **⚠️ Historical / parent reference — not this repository.** This document describes the heavier
+> **parent** system, *AI Protocol v3*, from which `claude-light-workflow` was trimmed down. It is
+> kept as background on the lineage and the reasoning. It refers to machinery that does **not** exist
+> in this repo (`docs/ai-protocol.md`, `/start-story`, dbt/DuckDB gates, `.github/workflows/test.yml`,
+> the broader hook/script suite). **For what this repo actually is and does, see
+> [`ARCHITECTURE.md`](ARCHITECTURE.md);** the normative rules are in
+> [`.claude/workflow-protocol.md`](.claude/workflow-protocol.md).
+
+> A reference description of the custom Claude Code skill suite that drove development on the parent
 > project. Written so a reader could reverse-engineer an equivalent system for their own repo.
 >
-> Order: **Purpose** → **Approach** → **Details**. The normative rules live in
-> [`docs/ai-protocol.md`](ai-protocol.md) and [`AGENTS.md`](../AGENTS.md); this document explains
-> *why* the system is shaped the way it is and *how* the pieces fit together.
+> Order: **Purpose** → **Approach** → **Details**. In the parent system the normative rules lived in
+> `docs/ai-protocol.md` and `AGENTS.md`; this document explains *why* that system was shaped the way
+> it was and *how* the pieces fit together.
 
 ---
 
@@ -21,7 +29,9 @@ that nobody independent ever challenged.
 
 ### 1.2 What this system is
 
-This repo runs **AI Protocol v3**: a human-controlled, spec-driven, multi-agent development loop.
+The parent project ran **AI Protocol v3**: a human-controlled, spec-driven, multi-agent development
+loop. (This repo, `claude-light-workflow`, runs a trimmed-down port of it — see
+[`ARCHITECTURE.md`](ARCHITECTURE.md).)
 The skills are the *executable encoding* of that protocol — each one is a Markdown "skill file" that
 Claude Code loads on demand and follows step-by-step. Together they turn a casual request from the
 owner into a reviewed, tested, independently-audited pull request, without the owner having to write
@@ -367,8 +377,8 @@ the entire reason the doer and the judge are different actors.
 
 ### 3.12 Reverse-engineering this for your own project
 
-A minimal port needs the following pieces. None require this repo's domain (dbt/DuckDB); swap the
-quality gate for your stack.
+A minimal port needs the following pieces. None require the parent project's domain (dbt/DuckDB); swap
+the quality gate for your stack. (`claude-light-workflow` in this repo is one such minimal port.)
 
 1. **A protocol document** — write down the roles, the loop steps, the severity labels, and the
    source-of-truth rule. This is your `ai-protocol.md`. Everything else references it.

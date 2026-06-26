@@ -25,7 +25,7 @@ Loop 2 ↔ 3 as many rounds as needed.
 2. Claude builds and self-fixes to green; Codex judges; Thomas decides.
 3. **The human decides the one-way doors at every altitude** — consulted on requirements, high-level design, and implementation tradeoffs (plus the merge). Reversible (two-way) calls default to Claude and are logged for veto; a prior general "yes" never counts for merge. (See *Consult model* below.)
 4. No AI grades its own homework — the builder is never the approver.
-5. No direct commits/pushes to the base branch; the feature-branch + merge path is the only way in (enforced by the guard hook).
+5. No direct commits/pushes to the base branch; the feature-branch + merge path is the only way in. (The guard hook is a cooperative backstop — it trips on commits/pushes while you're on `main`/`master` — but this rule holds regardless of what the hook mechanically catches.)
 
 ## Consult model (the two dials)
 

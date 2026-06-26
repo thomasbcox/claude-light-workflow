@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Workflow guard (the one load-bearing hook).
 # Keeps the feature-branch + merge discipline by blocking, at the tool-call layer:
-#   - git commit / git push on the base branch (main/master)
+#   - git commit / git push while the CURRENT branch is literally `main` or `master`
 #   - --no-verify on any git command
 #   - force-push (--force / --force-with-lease / -f / --mirror / +refspec)
 # Wired as a PreToolUse hook on the Bash tool. Exit 2 => block; reason on stderr.
@@ -13,11 +13,20 @@
 #   - the target repo is resolved from -C before the branch check;
 #   - a non-git command that merely mentions a git verb (e.g. `grep 'git push'`)
 #     is NOT blocked.
+#
+# This is a cooperative tripwire for ordinary Git usage, NOT an exhaustive base-
+# branch firewall. By design it does NOT catch:
+#   - a configured non-standard base branch — the trigger set is the literal
+#     {main, master}, not the baseBranch from .claude/workflow.json;
+#   - a destination-refspec push from a feature branch (`git push origin HEAD:main`)
+#     — only the current branch is checked, not the target ref;
+#   - env-wrapped or nested-shell git (`env git commit`, `bash -lc "git commit"`),
+#     which route around the top-level-`git` parse.
 # It fails OPEN (allows) only when the command can't be parsed at all (unbalanced
 # quotes), to avoid blocking legitimate work. Real enforcement belongs in server-
-# side branch protection; this is a cooperative guardrail, not an adversarial sandbox.
-# Bypassing it still only takes editing this file or settings.json — diff-visible —
-# but the easy normal-Git bypasses above are closed.
+# side branch protection; this hook just keeps you from fat-fingering a commit while
+# sitting on main. Bypassing it is diff-visible (editing this file or settings.json),
+# but the gaps above are open by design, not closed.
 set -uo pipefail
 
 exec /usr/bin/env python3 -c '
