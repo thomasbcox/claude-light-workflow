@@ -154,6 +154,15 @@ Thomas approved scope at the frame consult with all three recommendations:
   now binding on implementation.
 - **New narrative location → `ARCHITECTURE.md` at repo root**, linked from the README.
 
+## Codex review (2026-06-25, base main, HEAD 1b149a6)
+
+**Summary:** The diff matches the docs-only spec — hook executable logic unchanged; guard
+descriptions now state the current-branch `main`/`master` behavior and named gaps; live
+protocol/skill parentheticals softened; the parent architecture doc is clearly historical; the new
+`ARCHITECTURE.md` covers the requested narrative. `git diff --check` and `bash -n` passed.
+
+**Findings:** none (empty array).
+
 ## Codex approach review (2026-06-25, base main, HEAD 1b149a6)
 
 **Verdict:** Clean. Codex would satisfy the ACs the same way — a narrow docs-only truthfulness pass
