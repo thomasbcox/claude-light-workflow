@@ -5,6 +5,28 @@ All notable changes to this workflow are recorded here. The format follows
 
 ## [Unreleased]
 
+## [2026-06-25] — honest-system-docs (PR #20)
+
+### Added
+- **`ARCHITECTURE.md`** — a live requirements → approach → intended-implementation narrative for the
+  light workflow, linked from the README. Distinct from the historical parent doc.
+
+### Changed
+- **Guard docs now match the hook's real behavior** (docs-only; no enforcement logic changed). The
+  README Guardrail section, the `block-main-writes.sh` header comment, `workflow-protocol.md` rule 5,
+  and the `/frame` + `/close` parentheticals describe the hook as a cooperative **current-branch
+  `main`/`master` tripwire** — not base-branch enforcement — and name what it does **not** catch
+  (configured `baseBranch`, `HEAD:main` refspec, `env`-wrapped / nested-shell git). The "never commit
+  to base directly" rule stays; only the false enforcement attribution was softened. This delivers the
+  "soften docs" sub-part of the decided-against OPS-6; hardening remains decided-against.
+- **`ai-dev-workflow-architecture.md` reframed as historical** — a prominent parent banner and inline
+  claims re-pointed at the parent AI Protocol v3, so it can no longer be mistaken for this repo's live
+  doctrine.
+
+### Note
+- The hook/skill/protocol edits put the deployed `~/.claude` copy behind this branch; run `./install.sh`
+  to resync (`--check` will report drift until then).
+
 ## [2026-06-25] — design-review-loop (PR #19)
 
 ### Added

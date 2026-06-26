@@ -2,10 +2,13 @@
 
 A lightweight, human-controlled development loop where **Claude builds, Codex critiques, and the
 human decides** — with a small per-branch audit trail. A trimmed-down port of the heavier "AI
-Protocol v3" (see [`ai-dev-workflow-architecture.md`](ai-dev-workflow-architecture.md)), keeping only
-what's needed for a good Claude↔Codex back-and-forth.
+Protocol v3" (kept as a historical reference in
+[`ai-dev-workflow-architecture.md`](ai-dev-workflow-architecture.md)), keeping only what's needed for
+a good Claude↔Codex back-and-forth.
 
-The full doctrine lives in [`.claude/workflow-protocol.md`](.claude/workflow-protocol.md).
+For the full picture of *this* system — requirements through intended implementation — see
+[`ARCHITECTURE.md`](ARCHITECTURE.md). The normative rules live in
+[`.claude/workflow-protocol.md`](.claude/workflow-protocol.md).
 
 ## The loop
 
@@ -43,12 +46,24 @@ no copy/paste. It runs read-only and never commits; Claude captures its structur
 The story header records only declared state (`proposed → approved`). Whether it shipped is owned by git — the `merge: <slug>` commit / PR-`MERGED` state — and read back by deriving (`git log <base> --grep "^merge: <slug>"`), never stored in the header.
 
 ## Guardrail
-One hook, [`block-main-writes.sh`](.claude/hooks/block-main-writes.sh): parses each command's real
+One hook, [`block-main-writes.sh`](.claude/hooks/block-main-writes.sh), parses each command's real
 `git` invocation (so `git -C <repo> commit` and `git -c k=v commit` are caught, and a `grep 'git push'`
-is not) and blocks commits/pushes to the base branch, `--no-verify`, and force-pushes
-(`--force` / `--force-with-lease` / `-f` / `--mirror` / `+refspec`). It's a cooperative guardrail, not an
-adversarial sandbox — the real backstop is server-side branch protection; bypassing the hook still takes a
-diff-visible edit to it or `settings.json`. Covered by [`tests/guard_test.sh`](tests/guard_test.sh) (the gate).
+is not). It trips when **the current branch is literally `main` or `master`** and the command is a
+`commit` or `push`, and on any `--no-verify` or force-push
+(`--force` / `--force-with-lease` / `-f` / `--mirror` / `+refspec`).
+
+It is a **cooperative tripwire for ordinary Git usage, not an exhaustive base-branch firewall.** By
+design it does **not** catch:
+- a **configured non-standard base branch** — the trigger set is the literal `{main, master}`, not the
+  `baseBranch` from `.claude/workflow.json` (so a `trunk` base is not guarded);
+- a **destination-refspec push from a feature branch** — `git push origin HEAD:main` writes to `main`
+  but only the *current* branch is checked, not the target ref;
+- **`env`-wrapped or nested-shell git** — `env git commit …` and `bash -lc "git commit …"` route around
+  the top-level-`git` parse.
+
+So the hook keeps you from *fat-fingering* a commit while sitting on `main`; it is not an adversarial
+sandbox. The real backstop is **server-side branch protection**. Covered by
+[`tests/guard_test.sh`](tests/guard_test.sh) (the gate).
 
 ## Deferring to a repo's native workflow
 Because the skills + hook install globally (`~/.claude`), they reach every repo. A repo that already

@@ -9,7 +9,7 @@ Step 1 of the lightweight Claude↔Codex review loop. Doctrine: `~/.claude/workf
 
 ## Hard constraints
 - Write NO product code before approval. The only files you may write before Thomas approves are the story file `reviews/<slug>.md` (including its design sketch) and the Codex design-review output `reviews/<slug>.design.json`. No product code.
-- Never work on the base branch. Create/use a `<branchPrefix><slug>` feature branch (the guard hook will block base-branch commits anyway).
+- Never work on the base branch. Create/use a `<branchPrefix><slug>` feature branch. (The guard hook is only a cooperative tripwire on `main`/`master`, not a guarantee — honor this rule regardless of what the hook catches.)
 - Do not expand scope beyond what Thomas states. Unknowns go in **Open questions**, never silent assumptions.
 - You build; Thomas approves. Never self-approve scope.
 
