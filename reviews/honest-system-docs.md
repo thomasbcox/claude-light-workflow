@@ -154,6 +154,11 @@ Thomas approved scope at the frame consult with all three recommendations:
   now binding on implementation.
 - **New narrative location → `ARCHITECTURE.md` at repo root**, linked from the README.
 
+## Decisions (2026-06-25)
+
+Both Codex passes (approach + correctness) returned empty findings on base `main` / HEAD `1b149a6`.
+No findings to fix, defer, reject, or answer. Awaiting Thomas's separate merge decision via `/close`.
+
 ## Codex review (2026-06-25, base main, HEAD 1b149a6)
 
 **Summary:** The diff matches the docs-only spec — hook executable logic unchanged; guard
