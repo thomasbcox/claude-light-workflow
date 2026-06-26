@@ -154,6 +154,17 @@ Thomas approved scope at the frame consult with all three recommendations:
   now binding on implementation.
 - **New narrative location → `ARCHITECTURE.md` at repo root**, linked from the README.
 
+## Build note (2026-06-25)
+
+AC → file map:
+- **AC-1** (README guard honesty) → `README.md` (Guardrail section).
+- **AC-2** (hook header comment, comment-only) → `.claude/hooks/block-main-writes.sh`.
+- **AC-3** (parent doc marked historical) → `ai-dev-workflow-architecture.md`.
+- **AC-4** (new light-workflow narrative + README link) → `ARCHITECTURE.md`, `README.md`.
+- **AC-5** (deployed contracts de-overclaimed) → `.claude/workflow-protocol.md` (rule 5),
+  `.claude/skills/frame/SKILL.md`, `.claude/skills/close/SKILL.md`.
+- **AC-6** (scope containment) → verification only (no file).
+
 ## Codex design review (2026-06-25)
 
 **Verdict:** The docs-only / no-hardening direction is sound and matches the repo's settled OPS-6
