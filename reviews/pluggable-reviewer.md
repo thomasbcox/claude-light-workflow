@@ -286,6 +286,13 @@ All 4 approved findings applied:
 
 Gate (`guard_test.sh && reviewer_test.sh`): green.
 
+## Build note (2026-06-27, re-review round)
+
+Correctness-only re-review of the approved fixes, base `0a48403` (last-reviewed SHA) → HEAD. Delta:
+- `.claude/skills/review/SKILL.md` — AC6 description neutralized; reviewer→pass example added (fixes 1, 3).
+- `tests/reviewer_test.sh` — per-block envelope helper, full documented-example coverage, self-limiting AC7 (fixes 2, 3, 4).
+- `reviews/pluggable-reviewer.md` — AC7 + test-note exemption recorded.
+
 ## Research notes
 
 `agy` install: `curl -fsSL https://antigravity.google/cli/install.sh | bash` → `~/.local/bin/agy`.
