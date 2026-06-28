@@ -2,7 +2,7 @@
 # ── Documentation-consistency linter for the pluggable-reviewer seam ──
 # THIS IS A LINTER, NOT A BEHAVIORAL GATE. Read this before adding to it.
 #
-# The reviewer seam (resolution, override parsing, dispatch, the agy-stop) is
+# The reviewer seam (resolution, override parsing, dispatch, the second-backend stop) is
 # *instructions Claude follows in Markdown skills*, not code. There is no
 # function to call, no exit code, no output — so there is NO oracle, and this
 # file CANNOT verify the seam's runtime behavior. All it can do is catch
@@ -17,7 +17,7 @@
 # whitelists, exhaustive example enumeration). That is theater: it adds machinery
 # and wording-coupling without adding an oracle. If you need a REAL gate, extract
 # the resolver/arg-parser/adapter into executable code (the heavy-seam follow-up,
-# which the agy backend will force anyway) and unit-test THAT.
+# which the llm backend will force anyway) and unit-test THAT.
 #
 # Exactly one check below is genuinely behavioral — the workflow.json value parse.
 # Everything else is drift detection. Keep it that way.
@@ -37,18 +37,18 @@ absent() { grep -qF -- "$3" "$2" && bad "$1 (should be gone: $3)" || ok "$1"; }
 
 echo "== behavioral: workflow.json reviewer parses to a valid backend =="
 rv=$(/usr/bin/env python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("reviewer",""))' "$WF" 2>/dev/null)
-case "$rv" in codex|agy) ok "reviewer='$rv' is valid";; *) bad "reviewer invalid/absent: '$rv'";; esac
+case "$rv" in codex|llm) ok "reviewer='$rv' is valid";; *) bad "reviewer invalid/absent: '$rv'";; esac
 
 echo "== drift: resolution rule + override are still documented =="
 has "missing/empty ⇒ codex"        "$REVIEW" "A missing or empty \`reviewer\` field ⇒ \`codex\`"
-has "value set {codex, agy}"        "$REVIEW" "one of \`{codex, agy}\`"
+has "value set {codex, llm}"        "$REVIEW" "one of \`{codex, llm}\`"
 has "precedence override>config>default" "$REVIEW" "**beats** the default \`codex\`"
 has "override documented"           "$REVIEW" "Reviewer override (bare arg, order-independent)"
 
-echo "== drift: agy is a loud stop, not a silent fallback =="
-has "agy stop message"              "$REVIEW" "selected but not wired yet"
+echo "== drift: the second backend (llm) is a loud stop, not a silent fallback =="
+has "llm stop message"              "$REVIEW" "selected but not wired yet"
 has "no codex fallback"             "$REVIEW" "Do **not** fall back to codex"
-has "frame routes agy to the stop"  "$FRAME"  "if it is \`agy\`, STOP per that section"
+has "frame routes non-codex to stop" "$FRAME"  "if it is \`llm\` (or any non-codex backend), STOP per that section"
 
 echo "== drift: codex command tokens still present (presence, not per-block) =="
 has "codex exec -s read-only"       "$REVIEW" "codex exec -s read-only"

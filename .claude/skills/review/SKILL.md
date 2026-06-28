@@ -16,11 +16,11 @@ Step 2 of the loop. The **independent reviewer** critiques and classifies; it ne
 
 The independent reviewer is **selectable**. This section is the canonical resolution rule; `/frame` and `/close` reference it.
 
-**Resolve the reviewer once (precedence):** a per-invocation **override** (this skill only — see step 5) **beats** `reviewer` in `.claude/workflow.json`, which **beats** the default `codex`. A missing or empty `reviewer` field ⇒ `codex` (back-compat for every existing repo). The value must be one of `{codex, agy}`; anything else is an error — say so and stop, do not guess.
+**Resolve the reviewer once (precedence):** a per-invocation **override** (this skill only — see step 5) **beats** `reviewer` in `.claude/workflow.json`, which **beats** the default `codex`. A missing or empty `reviewer` field ⇒ `codex` (back-compat for every existing repo). The value must be one of `{codex, llm}`; anything else is an error — say so and stop, do not guess. The set is **extensible**: add a backend by adding its name here and a dispatch block below.
 
 **Dispatch by backend** at each reviewer invocation (steps 6 and 8 here; the design review in `/frame`):
 - **`codex`** *(the only wired backend)* — run the `codex exec` command shown at that step, unchanged.
-- **`agy`** *(not yet wired)* — **STOP** with: *"The `agy` reviewer backend is selected but not wired yet (follow-up: reviews/pluggable-reviewer.md). Set `reviewer` to `codex` in .claude/workflow.json, or pass `/review codex`."* Do **not** fall back to codex, run a partial review, or write any `*.json` artifact. Wiring agy (non-interactive `agy -p`, read-only via a throwaway worktree, prose→schema-JSON normalization, PTY capture, auth) is the follow-up story's job; this seam only has to route to it.
+- **`llm`** *(the designated second source — not yet wired)* — **STOP** with: *"The `llm` reviewer backend is selected but not wired yet (follow-up story). Set `reviewer` to `codex` in .claude/workflow.json, or pass `/review codex`."* Do **not** fall back to codex, run a partial review, or write any `*.json` artifact. Wiring `llm` is a follow-up story: unlike codex it is **non-agentic** (it cannot run `git diff` or explore the repo itself), so the harness assembles the context — `git diff <base>...HEAD` + the spec — and pipes it to `llm --schema <finding-schema>`; in exchange it is **inherently read-only** (no file tools, so no sandbox/worktree needed) and emits schema-valid JSON natively. This seam only has to route to it.
 
 The reviewer **role contract** is `AGENTS.md` — tool-neutral and read automatically by whichever backend runs.
 
@@ -34,10 +34,10 @@ The reviewer **role contract** is `AGENTS.md` — tool-neutral and read automati
    - **First review of the branch** (base = `<baseBranch>`), or any round **following an accepted redesign**: run **both**, approach first.
    - **Re-review that only verifies approved fixes** (base = the last-reviewed SHA, no redesign last round): **correctness only.**
    - **Overrides (bare args):** `/review approach` forces the approach pass on; `/review correctness` forces it off (correctness only). An override beats the default.
-   - **Reviewer override (bare arg, order-independent):** a `codex` or `agy` token selects the reviewer backend for this run, beating `.claude/workflow.json` (see **Reviewer backend** above). It composes with the pass override — `/review approach agy` (pass→reviewer), `/review agy approach` (reviewer→pass), `/review agy`, and `/review correctness codex` all parse (pass token and reviewer token in either order). An unrecognized token, or a reviewer value outside `{codex, agy}`, is an error — report it and stop, don't silently ignore it.
+   - **Reviewer override (bare arg, order-independent):** a `codex` or `llm` token selects the reviewer backend for this run, beating `.claude/workflow.json` (see **Reviewer backend** above). It composes with the pass override — `/review approach llm` (pass→reviewer), `/review llm approach` (reviewer→pass), `/review llm`, and `/review correctness codex` all parse (pass token and reviewer token in either order). An unrecognized token, or a reviewer value outside `{codex, llm}`, is an error — report it and stop, don't silently ignore it.
 
    Choose the diff base as today: first review → `<baseBranch>`; re-review → the last-reviewed SHA recorded in the story file. (If step 5 selects correctness-only, skip steps 6–7 and go straight to step 8.)
-6. **Approach pass.** The reviewer judges the *shape*, licensed to go beyond the diff. **Dispatch by the resolved reviewer** (see **Reviewer backend**): if `agy`, STOP per that section; for `codex`, run — reads `AGENTS.md` automatically, read-only:
+6. **Approach pass.** The reviewer judges the *shape*, licensed to go beyond the diff. **Dispatch by the resolved reviewer** (see **Reviewer backend**): if `llm` (or any non-codex backend), STOP per that section; for `codex`, run — reads `AGENTS.md` automatically, read-only:
    ```bash
    codex exec -s read-only \
      --output-schema "$HOME/.claude/skills/review/design-review-schema.json" \
@@ -56,7 +56,7 @@ The reviewer **role contract** is `AGENTS.md` — tool-neutral and read automati
    - **If he rejects/defers all approach findings, or the approach pass was clean** (empty findings): the shape is **blessed** — continue to step 8 **in the same round.**
 
    **Invariant:** the correctness pass only ever runs on a shape that has cleared approach review.
-8. **Correctness pass.** The reviewer judges the *lines* against the spec. **Dispatch by the resolved reviewer** (see **Reviewer backend**): if `agy`, STOP per that section; for `codex`, run read-only (`-s read-only` — it cannot edit the repo):
+8. **Correctness pass.** The reviewer judges the *lines* against the spec. **Dispatch by the resolved reviewer** (see **Reviewer backend**): if `llm` (or any non-codex backend), STOP per that section; for `codex`, run read-only (`-s read-only` — it cannot edit the repo):
    ```bash
    codex exec -s read-only \
      --output-schema "$HOME/.claude/skills/review/finding-schema.json" \

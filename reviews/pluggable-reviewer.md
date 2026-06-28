@@ -360,6 +360,31 @@ resolver/arg-parser/adapter into code and unit-test *that*. The **agy backend fo
 - AC7 re-verified manually (`git diff --name-only main...HEAD` ⊆ enumerated files ∪ `reviews/pluggable-reviewer.*`): clean.
 - Test notes above rewritten to state what the linter does and does not prove.
 
+## Direction change (2026-06-27): second backend agy → llm
+
+Thomas: **"abandon agy entirely … switch to llm for now and keep it open for future expansion."**
+
+- **agy abandoned.** Empirically (this session): no read-only file sandbox, no `--output-schema`
+  (prose only), fragile non-TTY capture (two real review runs returned 0 bytes). And Google has folded
+  the headless **Gemini CLI into Antigravity** (`gemini` now refuses, citing deprecation), closing the
+  whole Google branch.
+- **`llm` ([llm.datasette.io](https://llm.datasette.io)) is the designated second source.** It differs
+  from codex for the *opposite* reason agy did: **non-agentic** (can't run `git diff`/explore — the
+  harness assembles the diff + spec and pipes it in), but **inherently read-only** (no file tools → no
+  worktree/PTY) and emits schema-valid JSON natively via `--schema`. Not installed here yet, so it
+  stays a recognized **loud-stop** backend until a follow-up wires it.
+- **Seam kept extensible.** Value set is now `{codex, llm}`, documented as extensible (add a name + a
+  dispatch block). Wherever the ACs/notes above say `agy`, read **the second backend (now `llm`)**.
+
+Applied this round (placeholder switch only — codex remains the only *wired* backend): updated the
+Reviewer-backend section, override examples, and dispatch in `review/SKILL.md` + `frame/SKILL.md`; the
+selector value set; the `llm` rationale in `ARCHITECTURE.md` (with an agy autopsy note), `README.md`,
+`.claude/workflow-protocol.md`; and the linter's drift greps. Gate green (25 lint checks).
+
+**Follow-up (the real option-B work):** install `llm`, build the non-agentic adapter (assemble
+context → `llm --schema <finding-schema>` → validate JSON, fail closed on unparseable output), and
+ship it with **executable** unit tests — the behavioral gate the linter can't be.
+
 ## Research notes
 
 `agy` install: `curl -fsSL https://antigravity.google/cli/install.sh | bash` → `~/.local/bin/agy`.

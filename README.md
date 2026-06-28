@@ -31,9 +31,10 @@ On a first review both passes run; scope it with **`/review approach`** (force t
 correctness-only by default.
 
 **The reviewer is selectable.** `.claude/workflow.json`'s `reviewer` field (default `codex`) — or a
-per-invocation override on `/review` (`/review agy`, `/review approach codex`) — picks the backend.
-**Codex is the only wired backend today;** selecting `agy` (antigravity) stops with a "not yet wired"
-message (a follow-up will wire it). The resolution rule and dispatch live in
+per-invocation override on `/review` (`/review llm`, `/review approach codex`) — picks the backend.
+**Codex is the only wired backend today;** selecting `llm` (the [`llm` CLI](https://llm.datasette.io),
+the designated second source) stops with a "not yet wired" message (a follow-up will wire it). The set
+is extensible to further backends. The resolution rule and dispatch live in
 [`review/SKILL.md`](.claude/skills/review/SKILL.md) → *Reviewer backend*; the role contract is the
 tool-neutral [`AGENTS.md`](AGENTS.md), read automatically by whichever backend runs.
 

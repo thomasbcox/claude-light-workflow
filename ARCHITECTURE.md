@@ -96,7 +96,7 @@ instruction — merges the feature branch and cleans up.
 ### 3.2 Reviewer invocation (and backend selection)
 
 The independent reviewer is a **selectable backend**, resolved per run as *override → config → default*:
-a per-invocation `/review` argument (`/review agy`) beats the `reviewer` field in
+a per-invocation `/review` argument (`/review llm`) beats the `reviewer` field in
 [`.claude/workflow.json`](.claude/workflow.json), which beats the default `codex`. The canonical
 resolution rule and per-backend dispatch live in [`review/SKILL.md`](.claude/skills/review/SKILL.md)
 (→ *Reviewer backend*); `/frame` and `/close`-time re-review use the config default (no override
@@ -105,13 +105,21 @@ whichever backend runs.
 
 **Codex is the only wired backend.** It is called directly through the `codex` CLI as a read-only
 `codex exec -s read-only` run with a structured-output JSON schema — no copy/paste; it never commits,
-and Claude captures its structured findings into the trail. Selecting **`agy`** (antigravity) is a
-recognized choice but **stops with a "not yet wired" message** — a deliberate seam, not a silent
-fallback. Wiring it is a follow-up, because `agy` is not a `codex exec` drop-in: it has no read-only
-file sandbox and no JSON-schema output mode (prose only), and its non-interactive `agy -p` needs a PTY
-to capture output — so a backend must *guarantee* read-only execution + schema-valid JSON however it
-can, rather than share codex's flags. This seam keeps codex byte-for-byte unchanged while making that
-future backend a contained, additive change.
+and Claude captures its structured findings into the trail. Selecting **`llm`** — the
+[`llm` CLI](https://llm.datasette.io), the designated second source — is a recognized choice but
+**stops with a "not yet wired" message**: a deliberate seam, not a silent fallback. Wiring it is a
+follow-up, and `llm` is not a `codex exec` drop-in either, but for the *opposite* reason agy wasn't:
+it is **non-agentic** — it cannot run `git diff` or explore the repo, so the harness must assemble the
+context (the diff + the spec) and pipe it in — though in exchange it is **inherently read-only** (no
+file tools, so no sandbox or worktree) and emits schema-valid JSON natively via `--schema`. Either way
+the lesson holds: a backend must *guarantee* read-only execution + schema-valid JSON however it can
+(codex via flags, `llm` via harness-fed context + `--schema`), rather than share codex's command shape.
+This seam keeps codex byte-for-byte unchanged while making that second backend a contained, additive
+change — and the set is extensible to further backends by the same pattern.
+
+(The earlier candidate, Google's Antigravity `agy`, was abandoned: no read-only file sandbox, no
+schema output, fragile non-TTY capture — and Google has since folded the headless Gemini CLI into
+Antigravity, closing that path. See the story trail for the autopsy.)
 
 ### 3.3 The artifact trail
 
