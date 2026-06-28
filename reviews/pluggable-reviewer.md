@@ -214,6 +214,18 @@ AC → files:
 - **AC6** (neutral role language): `.claude/skills/review/SKILL.md`, `.claude/skills/frame/SKILL.md`, `.claude/skills/close/SKILL.md`, `AGENTS.md`, `README.md`, `ARCHITECTURE.md`, `.claude/workflow-protocol.md`.
 - **AC7** (scope containment): verified — diff touches only the files above.
 
+## Codex approach review (2026-06-27, base main, HEAD 5ccbb28)
+
+**Verdict:** CLEAN — no approach-level concerns. *"I would satisfy the ACs with the ratified light
+seam: add `reviewer` to config, document one selector rule in `review/SKILL.md`, parse `/review`
+pass/reviewer bare args order-independently, branch at the existing reviewer call sites, preserve the
+codex command envelope, and make `agy` a loud stop until its backend can guarantee read-only and
+schema-valid output. That is the shape implemented here. It does not add a dispatcher, dependency, or
+new deployed script pattern, and the added test is aligned with this Markdown-skill repo's convention
+of guarding instruction fixtures rather than inventing runtime code."*
+
+Findings: none. Shape blessed → proceeded to the correctness pass in the same round.
+
 ## Research notes
 
 `agy` install: `curl -fsSL https://antigravity.google/cli/install.sh | bash` → `~/.local/bin/agy`.
