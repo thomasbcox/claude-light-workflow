@@ -1,6 +1,7 @@
 {
   "baseBranch": "main",
   "branchPrefix": "claude/",
-  "testCommand": "bash tests/guard_test.sh",
+  "testCommand": "bash tests/guard_test.sh && bash tests/reviewer_test.sh",
+  "reviewer": "codex",
   "codexModel": ""
 }

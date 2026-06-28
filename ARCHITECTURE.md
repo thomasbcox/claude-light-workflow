@@ -50,7 +50,7 @@ reviewed, tested, independently-critiqued change with a small, honest audit trai
 |---|---|---|
 | **Thomas** | Owner / decider | Speaks casually; makes every scope, design, and merge call |
 | **Claude** | Builder / scribe | Turns intent into spec + code + trail; never approves its own work |
-| **Codex** | Independent reviewer | Read-only critique; classifies findings; never fixes, never merges |
+| **The reviewer** | Independent reviewer (selectable backend; codex today) | Read-only critique; classifies findings; never fixes, never merges |
 | **The gate** | Non-LLM judge | `tests/guard_test.sh` (configurable); objective pass/fail |
 
 ### 2.2 Three skills, three human gates
@@ -59,7 +59,7 @@ The loop is three skills, each ending at a human decision:
 
 | Skill | Does | Human gate |
 |---|---|---|
-| [`/frame`](.claude/skills/frame/SKILL.md) | request → spec **+ design sketch** → Codex design-reviews the sketch → implement AC-by-AC | **approves scope + design** |
+| [`/frame`](.claude/skills/frame/SKILL.md) | request → spec **+ design sketch** → the reviewer design-reviews the sketch → implement AC-by-AC | **approves scope + design** |
 | [`/review`](.claude/skills/review/SKILL.md) | gate green → **approach pass** (shape) gates **correctness pass** (diff) → decision menu | **decides per finding** |
 | [`/close`](.claude/skills/close/SKILL.md) | apply approved fixes → re-review or merge → cleanup | **approves merge** |
 
@@ -68,7 +68,7 @@ The loop is three skills, each ending at a human decision:
 Not every decision should stop the loop. Blocking is gated by reversibility: **one-way-door**
 decisions (architecture, data model, a public contract, a new dependency, or a cross-cutting pattern
 future code will copy) require the human; **two-way** calls default to Claude and are logged for veto.
-Independently of reversibility, Codex **always** assesses each change against modern best practice and
+Independently of reversibility, the reviewer **always** assesses each change against modern best practice and
 may flag substandard choices — with guardrails (a concrete win, not novelty; internal consistency
 weighed; repo conventions are the local standard).
 
@@ -87,28 +87,41 @@ lying about what merged.
 
 Each skill is a Markdown "skill file" under [`.claude/skills/`](.claude/skills/) that Claude Code loads
 on demand and follows step-by-step. `/frame` produces `reviews/<slug>.md` (spec + design sketch),
-runs a Codex *design* review of the sketch before any code exists, stops for scope+design approval,
+runs a *design* review of the sketch (via the configured reviewer) before any code exists, stops for scope+design approval,
 then implements AC-by-AC on a feature branch. `/review` runs the gate, then an approach pass (shape vs.
-best practice) that gates a correctness pass (the diff), each via Codex, and presents a decision menu.
+best practice) that gates a correctness pass (the diff), each via the reviewer, and presents a decision menu.
 `/close` applies only human-approved fixes, re-runs the gate, and — on an explicit, in-session merge
 instruction — merges the feature branch and cleans up.
 
-### 3.2 Codex invocation
+### 3.2 Reviewer invocation (and backend selection)
 
-Codex is called directly through the `codex` CLI as a read-only `codex exec -s read-only` run with a
-structured-output JSON schema — no copy/paste. It reads [`AGENTS.md`](AGENTS.md) (its reviewer
-contract) automatically, never commits, and Claude captures its structured findings into the trail.
-The canonical command lives in [`review/SKILL.md`](.claude/skills/review/SKILL.md).
+The independent reviewer is a **selectable backend**, resolved per run as *override → config → default*:
+a per-invocation `/review` argument (`/review agy`) beats the `reviewer` field in
+[`.claude/workflow.json`](.claude/workflow.json), which beats the default `codex`. The canonical
+resolution rule and per-backend dispatch live in [`review/SKILL.md`](.claude/skills/review/SKILL.md)
+(→ *Reviewer backend*); `/frame` and `/close`-time re-review use the config default (no override
+surface). The role contract, [`AGENTS.md`](AGENTS.md), is tool-neutral and read automatically by
+whichever backend runs.
+
+**Codex is the only wired backend.** It is called directly through the `codex` CLI as a read-only
+`codex exec -s read-only` run with a structured-output JSON schema — no copy/paste; it never commits,
+and Claude captures its structured findings into the trail. Selecting **`agy`** (antigravity) is a
+recognized choice but **stops with a "not yet wired" message** — a deliberate seam, not a silent
+fallback. Wiring it is a follow-up, because `agy` is not a `codex exec` drop-in: it has no read-only
+file sandbox and no JSON-schema output mode (prose only), and its non-interactive `agy -p` needs a PTY
+to capture output — so a backend must *guarantee* read-only execution + schema-valid JSON however it
+can, rather than share codex's flags. This seam keeps codex byte-for-byte unchanged while making that
+future backend a contained, additive change.
 
 ### 3.3 The artifact trail
 
 - [`BACKLOG.md`](BACKLOG.md) — staging area in front of the loop: bugs (`BUG-`) and tooling
   improvements (`OPS-`), each graduating into a `reviews/<slug>.md` story.
-- `reviews/<slug>.md` — spec + design sketch → Codex findings → decisions, appended across rounds.
-- `reviews/<slug>.design.json` — frame-time Codex design-sketch review.
+- `reviews/<slug>.md` — spec + design sketch → reviewer findings → decisions, appended across rounds.
+- `reviews/<slug>.design.json` — frame-time design-sketch review.
 - `reviews/<slug>.approach.json` / `reviews/<slug>.codex.json` — review-time approach + correctness output.
 - [`.claude/workflow.json`](.claude/workflow.json) — per-repo config: `baseBranch`, `branchPrefix`,
-  `testCommand`, `codexModel`.
+  `testCommand`, `reviewer`, `codexModel`.
 
 ### 3.4 The one hook — and what it really enforces
 

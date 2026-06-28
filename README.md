@@ -14,7 +14,7 @@ For the full picture of *this* system — requirements through intended implemen
 
 | Skill | Does | Human gate |
 |---|---|---|
-| `/frame`  | request → spec **+ design sketch** → Codex design-reviews the sketch → implement AC-by-AC | **approves scope + design** |
+| `/frame`  | request → spec **+ design sketch** → the reviewer design-reviews the sketch → implement AC-by-AC | **approves scope + design** |
 | `/review` | gate green → **approach pass** (shape, best-practice) gates **correctness pass** (diff) → decision menu | **decides per finding** |
 | `/close`  | apply approved fixes → re-review or merge → cleanup | **approves merge** |
 
@@ -22,13 +22,20 @@ For the full picture of *this* system — requirements through intended implemen
 design** (the `/frame` design sketch), and **implementation tradeoffs** (the `/review` approach pass)
 — plus the merge. Blocking is gated by reversibility: only **one-way-door** decisions (architecture,
 data model, a new dependency, or a cross-cutting pattern future code will copy) stop you; reversible
-calls default to Claude, logged for veto. Independently, Codex **always** assesses each change against
+calls default to Claude, logged for veto. Independently, the reviewer **always** assesses each change against
 modern best practice and flags substandard choices — even reversible ones — with guardrails (a
 concrete win, not novelty). Full rules in [`.claude/workflow-protocol.md`](.claude/workflow-protocol.md).
 
 On a first review both passes run; scope it with **`/review approach`** (force the approach pass) or
 **`/review correctness`** (skip straight to the line-level pass). Re-reviews that only verify fixes are
 correctness-only by default.
+
+**The reviewer is selectable.** `.claude/workflow.json`'s `reviewer` field (default `codex`) — or a
+per-invocation override on `/review` (`/review agy`, `/review approach codex`) — picks the backend.
+**Codex is the only wired backend today;** selecting `agy` (antigravity) stops with a "not yet wired"
+message (a follow-up will wire it). The resolution rule and dispatch live in
+[`review/SKILL.md`](.claude/skills/review/SKILL.md) → *Reviewer backend*; the role contract is the
+tool-neutral [`AGENTS.md`](AGENTS.md), read automatically by whichever backend runs.
 
 Codex is called directly via the `codex` CLI — a read-only `codex exec -s read-only` run with a
 structured-output schema (the canonical command lives in [`review/SKILL.md`](.claude/skills/review/SKILL.md)),
@@ -40,8 +47,8 @@ no copy/paste. It runs read-only and never commits; Claude captures its structur
 - `reviews/<slug>.design.json` — frame-time Codex design-sketch review.
 - `reviews/<slug>.approach.json` — review-time approach-pass output.
 - `reviews/<slug>.codex.json` — review-time correctness output per round.
-- `.claude/workflow.json` — per-repo config: `baseBranch`, `branchPrefix`, `testCommand`, `codexModel`.
-- `AGENTS.md` — Codex's reviewer contract.
+- `.claude/workflow.json` — per-repo config: `baseBranch`, `branchPrefix`, `testCommand`, `reviewer`, `codexModel`.
+- `AGENTS.md` — the (tool-neutral) reviewer contract.
 
 The story header records only declared state (`proposed → approved`). Whether it shipped is owned by git — the `merge: <slug>` commit / PR-`MERGED` state — and read back by deriving (`git log <base> --grep "^merge: <slug>"`), never stored in the header.
 
