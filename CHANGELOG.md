@@ -5,6 +5,30 @@ All notable changes to this workflow are recorded here. The format follows
 
 ## [Unreleased]
 
+## [2026-06-27] — pluggable-reviewer (PR #21)
+
+### Added
+- **Selectable independent-reviewer backend.** New `reviewer` field in `.claude/workflow.json`
+  (default `codex`) plus a per-invocation `/review` override (`/review llm`, order-independent with
+  `approach`/`correctness`). The canonical resolution rule + per-backend dispatch live in
+  `review/SKILL.md` → *Reviewer backend*; the value set `{codex, llm}` is extensible. **Codex remains
+  the only wired backend** — its `codex exec` envelope is unchanged; selecting `llm` (the designated
+  second source) stops with a "not yet wired" message rather than falling back.
+- **`tests/reviewer_test.sh`** — a labeled documentation-consistency linter for the seam (drift
+  detection only; explicitly *not* a behavioral gate — the seam is Markdown instructions, so real
+  verification is the independent diff review + a human read).
+
+### Changed
+- **Reviewer role language is now tool-neutral** ("the independent reviewer") across the skills and
+  docs; `AGENTS.md` is the tool-neutral reviewer contract. Literal `codex` is retained only where the
+  concrete CLI / `codexModel` key / `.codex.json` artifact is meant; the "Claude↔Codex" brand stays.
+
+### Notes
+- Google's Antigravity (`agy`) was evaluated as the second backend and **abandoned**: no read-only
+  sandbox, no schema output, fragile non-TTY capture; the headless Gemini CLI has since folded into
+  Antigravity. `llm` is the designated second source — wiring it (non-agentic adapter + executable
+  tests) is a deferred follow-up. See `reviews/pluggable-reviewer.md` for the trail.
+
 ## [2026-06-25] — honest-system-docs (PR #20)
 
 ### Added
