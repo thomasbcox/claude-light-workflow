@@ -194,6 +194,46 @@ AC → file map:
   `tests/dev_audit_test.sh` (drift linter), `README.md`, `ARCHITECTURE.md`, `BACKLOG.md`
   (system-map coherence, AC8 amended)
 
+## Codex approach review (2026-06-28, base main, HEAD 711b41f)
+Verdict: **would not quite build it this way yet.** Direction fits the repo (Markdown-only skill,
+frontmatter-only, no new dependency, stand-down, declarative intent, drift-only linting, installer +
+docs wiring). Three shape issues remain — all in the *central invariants the skill teaches future
+audits to copy*.
+
+**BLOCKER — Tool table doesn't encode safe read-only invocations** · one-way · kludgy ·
+`SKILL.md` Table A / step 4
+- *Claim:* Table A maps ecosystems → tool *names*; step 4 says `command -v` then "run it read-only",
+  leaving the actual invocation to per-run judgment — even for formatters (prettier, black, rustfmt)
+  whose naive command **mutates** the target repo. In a Markdown skill the declarative table is the
+  only durable place to centralize the non-destructive invariant (AC7).
+- *Alternative:* Make Table A a **command-template** table — detection marker · probe binary ·
+  read-only/check command (e.g. `black --check`, `rustfmt --check`) · rationale · recommend-if-absent;
+  keep the arch-review lens as a non-command entry step 4 doesn't treat as a binary.
+- *Win:* Prevents accidental target-repo writes; removes ad-hoc per-ecosystem command selection;
+  gives the linter a stable anchor for the read-only contract.
+
+**IMPORTANT — `AUDIT-` items introduced without updating the `/close` lifecycle** · one-way ·
+nonstandard · `close/SKILL.md:57`
+- *Claim:* BACKLOG/ARCHITECTURE now say `AUDIT-` flows through `/frame → /review → /close` like any
+  line, but `/close` step still only moves a tracked **`BUG-`/`OPS-`** item to Done — so an `AUDIT-`
+  finding can graduate in but be *stranded at close*. (Verified: `close/SKILL.md:57`.)
+- *Alternative:* Make `/close` generic over any tracked backlog item (preferred — future kinds need
+  no further edit), or explicitly add `AUDIT-` alongside `BUG-`/`OPS-`.
+- *Win:* One lifecycle rule covers all inflows; the promised path actually completes; taxonomy stops
+  being duplicated across docs vs. skill procedure.
+
+**IMPORTANT — Maturity + risk still split between table and prose** · one-way · kludgy ·
+`SKILL.md` Table B
+- *Claim:* Table B maps each safeguard → absent-flag, but the maturity *tier* and *risk level* are
+  derived in prose bullets below, with extra high-risk triggers (audit hits, security-sensitive
+  domain) living outside the table — partially reintroducing the ad-hoc classification the rubric was
+  meant to remove.
+- *Alternative:* Replace Table B with a condition matrix: condition/priority → maturity tier · risk
+  level · required flags · rationale, with secret hits / vuln deps / CI-tests-pinning / sensitive
+  domain all in that one table.
+- *Win:* Centralizes the classification invariant; removes duplicate prose rules; the drift linter
+  protects the actual tier/risk mapping, not just a heading.
+
 ## Codex design review (2026-06-28)
 Verdict: **would not ship the sketch as-is.** Core shape is aligned with the repo (Markdown skill,
 frontmatter-only, declarative ecosystem→tool table, `command -v`-gated optional tools, drift-only
