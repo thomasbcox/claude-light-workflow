@@ -13,9 +13,11 @@ to **Done** and reference it as `PR #N / merge: <slug>` (never a raw SHA — der
 land with the story they describe; open a follow-up only for a real defect or a new decision,
 never solely to reconcile a previous story's records.
 
-Two kinds of item, tracked separately:
+Three kinds of item, tracked separately:
 - **BUG-** — skill-behavior / workflow-correctness defects (change what the skills *do*).
 - **OPS-** — deployment, drift, and tooling ergonomics (change how the skills are *shipped*).
+- **AUDIT-** — findings graduated from a `/dev-audit` run (missing safeguards, best-practice gaps).
+  Added only on an explicit instruction; the item text carries its `from /dev-audit <date>` provenance.
 
 ---
 

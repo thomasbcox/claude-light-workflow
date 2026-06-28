@@ -30,6 +30,16 @@ On a first review both passes run; scope it with **`/review approach`** (force t
 **`/review correctness`** (skip straight to the line-level pass). Re-reviews that only verify fixes are
 correctness-only by default.
 
+### Before the loop: `/dev-audit`
+`/dev-audit [path]` is a standalone **pre-loop recon** step. It inspects a repo's languages,
+frameworks, manifests, tests, CI, and secret-handling; classifies its type and maturity tier;
+selects analysis tools that fit *that* repo (via a declarative ecosystem→tool table, **with
+rationale**); runs a zero-dependency core plus any heavier tools already installed (it installs
+nothing); and returns a brief report — findings, **risk level**, best-practice gaps, and prioritized
+next steps — flagging missing safeguards (CI, tests, pinned deps, secret handling). It is read-only
+and **report-first**: it graduates findings into [`BACKLOG.md`](BACKLOG.md) as `AUDIT-` items only on
+an explicit instruction, and honors the same `docs/ai-protocol.md` stand-down as the loop skills.
+
 **The reviewer is selectable.** `.claude/workflow.json`'s `reviewer` field (default `codex`) — or a
 per-invocation override on `/review` (`/review llm`, `/review approach codex`) — picks the backend.
 **Codex is the only wired backend today;** selecting `llm` (the [`llm` CLI](https://llm.datasette.io),
