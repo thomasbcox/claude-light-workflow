@@ -226,6 +226,27 @@ of guarding instruction fixtures rather than inventing runtime code."*
 
 Findings: none. Shape blessed → proceeded to the correctness pass in the same round.
 
+## Codex review (2026-06-27, base main, HEAD 0a48403)
+
+**Summary:** The reviewer commands keep the codex envelope, but the branch has residual Codex role
+language and the new gate has false-green gaps around AC1/AC2/AC4/AC7. (`tests/reviewer_test.sh` passes;
+the full configured gate couldn't run in the read-only sandbox because `guard_test.sh` makes temp repos.)
+
+**IMPORTANT findings (4):**
+1. **AC6 — residual role language in `review/SKILL.md:3`** (the `description:` frontmatter still says
+   "have Codex independently review the feature branch"). Role language, not a tool/CLI/file reference.
+   *Fix:* neutralize the phrase (keep `codex exec`/`codexModel`/`.codex.json` and the brand); broaden the
+   AC6 test beyond the exact `You are Codex` string.
+2. **AC4 — `tests/reviewer_test.sh` false-green** (file-wide greps): the envelope check passes even if one
+   command block drops `-s read-only` / `${codexModel:+…}` / `</dev/null` while another block still has the
+   substring. *Fix:* assert the envelope **per command block** (approach, correctness, frame-design).
+3. **AC1/AC2 — fixtures not exercised**: the test reads the live `workflow.json` and greps prose; it never
+   asserts missing⇒codex, `agy`⇒agy, invalid⇒stop, override precedence, both token orders, or invalid
+   override. *Fix:* add explicit assertions for each documented example.
+4. **AC7 — scope whitelist untested**, and the branch diff includes `reviews/<slug>.*` story artifacts not
+   in the enumerated list. *Fix:* add an AC7 check comparing `git diff --name-only main...HEAD` to the
+   whitelist, exempting the workflow's own `reviews/<slug>.*` trail artifacts.
+
 ## Research notes
 
 `agy` install: `curl -fsSL https://antigravity.google/cli/install.sh | bash` → `~/.local/bin/agy`.
