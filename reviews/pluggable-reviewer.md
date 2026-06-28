@@ -307,6 +307,18 @@ a whitelist gate.
   `origin/<base>`; if the story file is in the diff but no base ref resolves, **fail loudly** instead of
   counting the check as ok.
 
+## Decisions (2026-06-27, re-review round)
+
+Thomas: **fix** the 1 IMPORTANT AC7-guard finding. → resolve base from `baseBranch` (accept `<base>` or
+`origin/<base>`); refuse to false-green when no base ref resolves.
+
+## Fixes (2026-06-27, re-review round)
+
+AC7 guard hardened in `tests/reviewer_test.sh`: base ref is now read from `.claude/workflow.json`
+(`baseBranch`) and resolved as `<base>` **or** `origin/<base>`; if no base ref resolves the check
+**fails loudly** (`bad`) instead of taking a silent skip-as-pass path. Enforcement and the
+"not-this-branch" skip are unchanged.
+
 ## Research notes
 
 `agy` install: `curl -fsSL https://antigravity.google/cli/install.sh | bash` → `~/.local/bin/agy`.

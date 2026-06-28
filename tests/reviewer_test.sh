@@ -95,15 +95,25 @@ echo "== AC7: scope containment (self-limiting — only on this story's branch) 
 # Runs the whitelist only when the pluggable-reviewer story file is in the diff, so
 # this permanent gate is a no-op on every OTHER branch and after merge. The workflow's
 # own reviews/pluggable-reviewer.* trail artifacts are exempt (they are written by the
-# loop, not enumerated as product files).
-if git -C "$ROOT" rev-parse --verify -q main >/dev/null 2>&1 \
-   && git -C "$ROOT" diff --name-only main...HEAD 2>/dev/null | grep -qx "reviews/pluggable-reviewer.md"; then
-  WL='^(\.claude/skills/(frame|review|close)/SKILL\.md|\.claude/workflow\.json|\.claude/workflow-protocol\.md|AGENTS\.md|ARCHITECTURE\.md|README\.md|tests/reviewer_test\.sh|reviews/pluggable-reviewer\..*)$'
-  extra=$(git -C "$ROOT" diff --name-only main...HEAD | grep -vE "$WL" || true)
-  if [ -z "$extra" ]; then ok "diff ⊆ whitelist ∪ reviews/pluggable-reviewer.*"; else bad "AC7 out-of-scope files:
-$extra"; fi
+# loop, not enumerated as product files). Base ref is resolved from baseBranch and
+# accepts <base> OR origin/<base>; if NEITHER resolves we refuse to false-green.
+base=$(/usr/bin/env python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("baseBranch","main"))' "$WF" 2>/dev/null); base=${base:-main}
+base_ref=""
+for cand in "$base" "origin/$base"; do
+  if git -C "$ROOT" rev-parse --verify -q "$cand" >/dev/null 2>&1; then base_ref="$cand"; break; fi
+done
+if [ -z "$base_ref" ]; then
+  bad "AC7 cannot resolve base ref ('$base' or 'origin/$base') — scope unverifiable, refusing to skip-as-pass"
 else
-  ok "AC7 scope check skipped (not the pluggable-reviewer branch, or no main ref)"
+  changed=$(git -C "$ROOT" diff --name-only "$base_ref"...HEAD 2>/dev/null)
+  if printf '%s\n' "$changed" | grep -qx "reviews/pluggable-reviewer.md"; then
+    WL='^(\.claude/skills/(frame|review|close)/SKILL\.md|\.claude/workflow\.json|\.claude/workflow-protocol\.md|AGENTS\.md|ARCHITECTURE\.md|README\.md|tests/reviewer_test\.sh|reviews/pluggable-reviewer\..*)$'
+    extra=$(printf '%s\n' "$changed" | grep -vE "$WL" || true)
+    if [ -z "$extra" ]; then ok "diff ⊆ whitelist ∪ reviews/pluggable-reviewer.* (base $base_ref)"; else bad "AC7 out-of-scope files:
+$extra"; fi
+  else
+    ok "AC7 scope check skipped (not the pluggable-reviewer branch)"
+  fi
 fi
 
 echo
