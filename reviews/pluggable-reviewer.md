@@ -203,6 +203,17 @@ on implementation.
 - **"Claude↔Codex" branding** → **leave the headline brand**; neutralize only role prose.
 - **Override surface** → **`/review` only**; `/frame` and `/close`-time re-review use the config default.
 
+## Build note (2026-06-27)
+
+AC → files:
+- **AC1** (config `reviewer` + missing⇒codex rule): `.claude/workflow.json`, `.claude/skills/review/SKILL.md` (*Reviewer backend*), `tests/reviewer_test.sh`.
+- **AC2** (`/review` override, composes/order-independent/invalid-errors): `.claude/skills/review/SKILL.md` (step 5).
+- **AC3** (three call sites dispatch by backend): `.claude/skills/frame/SKILL.md` (step 6), `.claude/skills/review/SKILL.md` (steps 6, 8).
+- **AC4** (codex envelope preserved): `.claude/skills/review/SKILL.md`, `.claude/skills/frame/SKILL.md` (commands unchanged but for the neutralized prompt body).
+- **AC5** (agy loud stop, no fallback/artifact): `.claude/skills/review/SKILL.md` (*Reviewer backend*), `.claude/skills/frame/SKILL.md` (step 6).
+- **AC6** (neutral role language): `.claude/skills/review/SKILL.md`, `.claude/skills/frame/SKILL.md`, `.claude/skills/close/SKILL.md`, `AGENTS.md`, `README.md`, `ARCHITECTURE.md`, `.claude/workflow-protocol.md`.
+- **AC7** (scope containment): verified — diff touches only the files above.
+
 ## Research notes
 
 `agy` install: `curl -fsSL https://antigravity.google/cli/install.sh | bash` → `~/.local/bin/agy`.
