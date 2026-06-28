@@ -293,6 +293,20 @@ Correctness-only re-review of the approved fixes, base `0a48403` (last-reviewed 
 - `tests/reviewer_test.sh` — per-block envelope helper, full documented-example coverage, self-limiting AC7 (fixes 2, 3, 4).
 - `reviews/pluggable-reviewer.md` — AC7 + test-note exemption recorded.
 
+## Codex review (2026-06-27, re-review, base 0a48403, HEAD 803783e)
+
+**Summary:** The four promised fixes are substantively present and the gate passes, but the new AC7
+guard can **false-green in checkouts without a local `main` ref**.
+
+**IMPORTANT — AC7 whitelist silently skips when local `main` is absent** (`tests/reviewer_test.sh`):
+the guard enforces only if `git rev-parse --verify -q main` succeeds; otherwise it takes the skip path
+and reports OK. On a story-branch checkout with only `origin/main` (or a configured non-`main` base),
+the scope check passes without comparing the diff — out-of-scope files could slip despite AC7 promising
+a whitelist gate.
+- *Suggestion:* resolve the base ref from `.claude/workflow.json` (`baseBranch`), accept `<base>` or
+  `origin/<base>`; if the story file is in the diff but no base ref resolves, **fail loudly** instead of
+  counting the check as ok.
+
 ## Research notes
 
 `agy` install: `curl -fsSL https://antigravity.google/cli/install.sh | bash` → `~/.local/bin/agy`.
