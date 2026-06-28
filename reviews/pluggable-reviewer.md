@@ -81,22 +81,27 @@ output. Sources captured in `## Research notes` below.
 
 ## Test notes
 
-- **AC1:** gate asserts **observable** resolution against fixtures — a `workflow.json` with no
-  `reviewer` resolves to `codex`; `"agy"` resolves to `agy`; an invalid value errors. The seam stays in
-  the skills (no deployed resolver helper); the gate proves the *rule*, not an internal unit.
-- **AC2:** gate asserts override precedence (`/review agy` over a `codex` config) and arg composition
-  (`approach agy` parses to {pass: approach, reviewer: agy}), order-independent; invalid override rejected.
-- **AC3/AC4:** confirm the codex command **envelope** in `review/SKILL.md` is unchanged — the flags,
-  the absolute-schema / repo-relative-`-o` split, `${codexModel:+…}`, the artifact names, and `</dev/null`
-  all still present and unaltered. The prompt body is *not* part of this compare (AC6 changes its wording).
-- **AC5:** with `reviewer=agy`, the resolver/guard returns the "not wired" stop; assert no `*.json`
-  artifact is created on that path.
-- **AC6:** grep the prompt preambles and docs — role mentions are neutral; remaining literal "codex"
-  occurrences are tool-specific (the CLI command, the `codexModel` key, the `.codex.json` filename).
-- **AC7:** `git diff --name-only main...HEAD` shows nothing beyond the Design-sketch file list plus the
-  `reviews/pluggable-reviewer.*` trail artifacts. The gate enforces this whitelist, **self-limited** to
-  this story's branch (it only runs when the story file is in the diff), so it is a no-op on other
-  branches and after merge — a permanent gate can't carry a per-story whitelist otherwise.
+**Honest framing (decided 2026-06-27 — see `## Test-strategy correction`).** The seam is Markdown
+instructions, not code: there is no resolver function, no exit code, no oracle, so an automated test
+*cannot* verify the seam's runtime behavior. `tests/reviewer_test.sh` is therefore a **documentation
+linter** — it catches wording/typo drift only. The ACs below are really verified by **(a)** the
+independent reviewer's diff review (codex reads the actual change) and **(b)** a human reading the
+skills. The one genuinely behavioral check in the linter is the `workflow.json` value parse.
+
+- **AC1/AC2** (resolution + override): linter checks the rule and the override are still *documented*
+  (missing⇒codex, `{codex,agy}`, precedence, override line). Actual precedence/parse correctness is a
+  review + human-read concern, not gated.
+- **AC3/AC4** (codex envelope): linter checks the key tokens are still *present* (`-s read-only`, both
+  absolute schema paths, repo-relative `-o`, `${codexModel:+…}`, `</dev/null`). That the command is
+  semantically intact and unchanged is confirmed by the **diff review**, not by substring presence.
+- **AC5** (agy loud stop): linter checks the stop message + "no fallback" text are present; the actual
+  stop behavior is a review/human concern.
+- **AC6** (neutral role language): linter greps for the neutral preambles and the absence of `You are
+  Codex` / `have Codex`.
+- **AC7** (scope containment): verified the **frame-standard way** — run `git diff --name-only
+  main...HEAD` and confirm nothing beyond the Design-sketch file list plus the `reviews/pluggable-reviewer.*`
+  trail artifacts. This is a one-time review-time check, **not** baked into the permanent gate (a
+  permanent gate can't carry a per-story whitelist without false-greens — that machinery was removed).
 
 ## Open questions
 
@@ -318,6 +323,42 @@ AC7 guard hardened in `tests/reviewer_test.sh`: base ref is now read from `.clau
 (`baseBranch`) and resolved as `<base>` **or** `origin/<base>`; if no base ref resolves the check
 **fails loudly** (`bad`) instead of taking a silent skip-as-pass path. Enforcement and the
 "not-this-branch" skip are unchanged.
+
+## Test-strategy correction (2026-06-27)
+
+After the AC7-guard finding, Thomas asked to step back and analyze the larger class. Conclusion (his
+call: **option A**): `tests/reviewer_test.sh` had become **grep-theater** — an elaborate suite (per-block
+`awk` parser, self-limiting `git diff` whitelist, exhaustive example enumeration) asserting on the
+*wording* of Markdown instructions. The seam is instructions, not code: no function, no exit code, **no
+oracle**, so the suite could not verify behavior and grew more wording-coupled with each "fix." It was
+also self-grading (the same actor wrote the prose and the greps), the very thing the loop forbids one
+level up.
+
+**Class identified:**
+1. *Skip-as-pass* — a conditional check that reports `ok` when it can't run (the AC7 guard). A check that
+   cannot run must report "not run," never "passed."
+2. *Grep-of-prose as behavioral coverage* — asserts text exists, not that behavior is correct; brittle,
+   tautological, no oracle.
+3. *Category error* — the light seam has no executable behavior, so it is intrinsically not
+   behaviorally testable; elaborate tests are theater.
+4. *Process* — each correctness finding pushed **more** theater, manufacturing motion that looked like rigor.
+
+**Correction applied (A):** trimmed `reviewer_test.sh` to a labeled **documentation-consistency linter**
+(drift detection only; one genuinely behavioral check — the `workflow.json` parse). Removed the `awk`
+per-block parser and the AC7 `git diff` machinery. Real verification = the independent diff review + a
+human read; AC7 is a one-time review-time `git diff` check (done this round: scope clean).
+
+**Deferred (B), the real gate:** a behavioral test needs executable behavior — extract the
+resolver/arg-parser/adapter into code and unit-test *that*. The **agy backend forces this anyway**
+(see `## Why agy is not codex`), so (B) lands with agy, not as speculative work now.
+
+## Fixes (2026-06-27, test-strategy correction)
+
+- `tests/reviewer_test.sh` rewritten as a doc linter (113 → 79 lines): honest header stating it is NOT a
+  behavioral gate, `awk` block-parser and AC7 git-diff whitelist removed, example enumeration reduced to
+  representative drift checks. Gate green (25 lint checks).
+- AC7 re-verified manually (`git diff --name-only main...HEAD` ⊆ enumerated files ∪ `reviews/pluggable-reviewer.*`): clean.
+- Test notes above rewritten to state what the linter does and does not prove.
 
 ## Research notes
 
