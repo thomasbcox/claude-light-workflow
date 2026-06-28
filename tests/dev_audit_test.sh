@@ -23,6 +23,7 @@ SKILL="$ROOT/.claude/skills/dev-audit/SKILL.md"
 INSTALL="$ROOT/install.sh"
 README="$ROOT/README.md"
 BACKLOG="$ROOT/BACKLOG.md"
+ARCH="$ROOT/ARCHITECTURE.md"
 WF="$ROOT/.claude/workflow.json"
 
 pass=0 fail=0
@@ -73,8 +74,13 @@ has "only on explicit instruction"   "$SKILL" "only on an explicit instruction"
 echo "== AC8: deploy + gate + docs wiring =="
 has "install.sh ships the skill"     "$INSTALL" ".claude/skills/dev-audit::skills/dev-audit"
 has "gate runs this linter"          "$WF"      "tests/dev_audit_test.sh"
+
+echo "== AC8 (amended): system-map docs reflect the skill =="
 has "README mentions /dev-audit"     "$README"  "/dev-audit"
 has "BACKLOG documents AUDIT- kind"  "$BACKLOG" "AUDIT-"
+has "BACKLOG names dev-audit inflow" "$BACKLOG" "dev-audit"
+has "ARCHITECTURE maps /dev-audit"   "$ARCH"    "/dev-audit"
+has "ARCHITECTURE: AUDIT- in trail"  "$ARCH"    "AUDIT-"
 
 echo
 echo "passed=$pass failed=$fail"

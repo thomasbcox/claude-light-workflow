@@ -1,11 +1,13 @@
 # Backlog
 
-Outstanding work for the light workflow skills (`frame`, `review`, `close`) and their
-deployment tooling. One line per item with a stable id so story files, commits, and
-`reviews/<slug>.md` trails can reference it.
+Outstanding work for the light workflow skills (`frame`, `review`, `close`, plus the pre-loop
+recon skill `dev-audit`) and their deployment tooling. One line per item with a stable id so story
+files, commits, and `reviews/<slug>.md` trails can reference it.
 
-**Lifecycle:** a line here → `/frame` writes `reviews/<slug>.md` (spec + audit trail) →
-`/review` → `/close`. As part of the merge, `/close` moves the item to **Done** here and
+**Inflows:** items reach this staging area two ways — **hand-authored** here, or **graduated from a
+`/dev-audit` run** as `AUDIT-` findings (only on an explicit instruction). Either way, once a line
+is here it flows out the same path. **Lifecycle:** a line here → `/frame` writes
+`reviews/<slug>.md` (spec + audit trail) → `/review` → `/close`. As part of the merge, `/close` moves the item to **Done** here and
 adds the `CHANGELOG.md` entry *on the feature branch*, so both ride in on the merge commit.
 The backlog is the staging area in front of the loop; don't delete a landed item — move it
 to **Done** and reference it as `PR #N / merge: <slug>` (never a raw SHA — derive it with

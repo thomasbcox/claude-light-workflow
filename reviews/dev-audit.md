@@ -87,7 +87,11 @@ prioritized findings into `BACKLOG.md` (report-first, human-gated) so they flow 
    exists there, STOP before any write and point at that repo's native workflow (the same
    stand-down every global skill + the guard hook honor).
 8. **Deploy + gate + docs.** The skill is listed in `install.sh` ARTIFACTS; `tests/dev_audit_test.sh`
-   exists as a drift linter and runs as part of the gate; `README.md` mentions `/dev-audit`.
+   exists as a drift linter and runs as part of the gate; the **system-map docs reflect the new
+   skill** — `README.md`, `ARCHITECTURE.md` (recon skill placed in the map; the now-stale artifact-
+   trail / stand-down / deploy mentions corrected), and `BACKLOG.md` (opening + lifecycle name the
+   two inflows). *(Amended 2026-06-28 — see Scope decision; the original AC8 required only a README
+   mention, which left the canonical system map describing three skills.)*
 
 ## Test notes
 - **AC1–AC3, AC5–AC7** are properties of *instructions* (Markdown a human/Claude follows), with no
@@ -103,8 +107,8 @@ prioritized findings into `BACKLOG.md` (report-first, human-gated) so they flow 
   `tests/dev_audit_test.sh`; `bash tests/dev_audit_test.sh` exits 0; `/dev-audit` named in README.
 - **Scope containment:** run `git diff --name-only main...HEAD` and verify no files appear beyond
   those these ACs enumerate (`.claude/skills/dev-audit/SKILL.md`, `tests/dev_audit_test.sh`,
-  `install.sh`, `.claude/workflow.json`, `README.md`, `BACKLOG.md` — the one-line `AUDIT-` taxonomy
-  entry, a consequence of the ratified `AUDIT-` decision — and this story file).
+  `install.sh`, `.claude/workflow.json`, `README.md`, `BACKLOG.md`, `ARCHITECTURE.md` — the
+  system-map docs reflecting the new skill (AC8, amended) — and this story file).
 - Full gate: `bash tests/guard_test.sh && bash tests/reviewer_test.sh && bash tests/dev_audit_test.sh`.
 
 ## Open questions
@@ -160,6 +164,14 @@ _All three resolved at the frame consult (2026-06-28) — see **Design decisions
 Thomas: **"Approve as written"** — the 8 ACs and non-goals are the binding boundary. Frame consult
 answered in one pass: scope approved as written; **fix both** one-way design findings; backlog
 namespace = **new `AUDIT-` prefix**.
+
+**Amendment (2026-06-28, post-implementation):** Thomas — *"The scope is too small if we're going
+to add a skill to the repo but the docs in the repo don't reflect it."* AC8 widened from "README
+mention" to **system-map coherence**: `ARCHITECTURE.md` (the canonical fit doc) and `BACKLOG.md`
+(opening + lifecycle inflows) join scope. Deliberately excluded, with reasons:
+`ai-dev-workflow-architecture.md` (frozen historical parent doc), `CHANGELOG.md` (owned by `/close`
+at merge), `.claude/workflow-protocol.md` (normative *loop* rules — dev-audit is a standalone
+non-loop skill).
 
 ## Design decisions (2026-06-28)
 Disposition per Codex design finding (the approved shape, now binding on implementation):
