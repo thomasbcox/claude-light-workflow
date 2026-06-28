@@ -1,6 +1,6 @@
 ---
 name: review
-description: Step 2 of the lightweight Claude↔Codex review loop. Run the test gate, then have Codex independently review the feature branch via read-only `codex exec` — an approach pass (the shape, vs. best practice) gating a correctness pass (the diff) — with structured-output schemas, capture the findings, and present a decision menu for Thomas. Use after code is implemented and committed on the feature branch.
+description: Step 2 of the lightweight Claude↔Codex review loop. Run the test gate, then have the configured independent reviewer review the feature branch read-only (codex backend → `codex exec`) — an approach pass (the shape, vs. best practice) gating a correctness pass (the diff) — with structured-output schemas, capture the findings, and present a decision menu for Thomas. Use after code is implemented and committed on the feature branch.
 ---
 
 # /review — independent critique
@@ -34,7 +34,7 @@ The reviewer **role contract** is `AGENTS.md` — tool-neutral and read automati
    - **First review of the branch** (base = `<baseBranch>`), or any round **following an accepted redesign**: run **both**, approach first.
    - **Re-review that only verifies approved fixes** (base = the last-reviewed SHA, no redesign last round): **correctness only.**
    - **Overrides (bare args):** `/review approach` forces the approach pass on; `/review correctness` forces it off (correctness only). An override beats the default.
-   - **Reviewer override (bare arg, order-independent):** a `codex` or `agy` token selects the reviewer backend for this run, beating `.claude/workflow.json` (see **Reviewer backend** above). It composes with the pass override — `/review approach agy`, `/review agy`, `/review correctness codex` all parse (pass token and reviewer token in either order). An unrecognized token, or a reviewer value outside `{codex, agy}`, is an error — report it and stop, don't silently ignore it.
+   - **Reviewer override (bare arg, order-independent):** a `codex` or `agy` token selects the reviewer backend for this run, beating `.claude/workflow.json` (see **Reviewer backend** above). It composes with the pass override — `/review approach agy` (pass→reviewer), `/review agy approach` (reviewer→pass), `/review agy`, and `/review correctness codex` all parse (pass token and reviewer token in either order). An unrecognized token, or a reviewer value outside `{codex, agy}`, is an error — report it and stop, don't silently ignore it.
 
    Choose the diff base as today: first review → `<baseBranch>`; re-review → the last-reviewed SHA recorded in the story file. (If step 5 selects correctness-only, skip steps 6–7 and go straight to step 8.)
 6. **Approach pass.** The reviewer judges the *shape*, licensed to go beyond the diff. **Dispatch by the resolved reviewer** (see **Reviewer backend**): if `agy`, STOP per that section; for `codex`, run — reads `AGENTS.md` automatically, read-only:

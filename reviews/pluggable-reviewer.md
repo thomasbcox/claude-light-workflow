@@ -75,7 +75,9 @@ output. Sources captured in `## Research notes` below.
    and the docs (`ARCHITECTURE.md`, `README.md`, `.claude/workflow-protocol.md`, `AGENTS.md`) describe the
    role neutrally, retaining "codex" only where the concrete tool/CLI is meant. The "Claude↔Codex"
    branding decision is recorded (see Open questions), not silently changed.
-7. **Scope containment:** the diff touches only the files this story enumerates.
+7. **Scope containment:** the diff touches only the files this story enumerates, **plus** the workflow's
+   own `reviews/pluggable-reviewer.*` trail artifacts (the story file + the design/approach/correctness
+   JSON the loop writes), which are exempt — they are produced by `/frame` and `/review`, not product code.
 
 ## Test notes
 
@@ -91,8 +93,10 @@ output. Sources captured in `## Research notes` below.
   artifact is created on that path.
 - **AC6:** grep the prompt preambles and docs — role mentions are neutral; remaining literal "codex"
   occurrences are tool-specific (the CLI command, the `codexModel` key, the `.codex.json` filename).
-- **AC7:** run `git diff --name-only main...HEAD` and verify no files appear beyond those enumerated in
-  the Design sketch's file list.
+- **AC7:** `git diff --name-only main...HEAD` shows nothing beyond the Design-sketch file list plus the
+  `reviews/pluggable-reviewer.*` trail artifacts. The gate enforces this whitelist, **self-limited** to
+  this story's branch (it only runs when the story file is in the diff), so it is a no-op on other
+  branches and after merge — a permanent gate can't carry a per-story whitelist otherwise.
 
 ## Open questions
 
@@ -261,6 +265,26 @@ Approach pass: clean (no findings). Correctness pass — Thomas: **"fix all"** (
    exempting the workflow's own `reviews/<slug>.*` artifacts; record that exemption in AC7.
 
 Routed to `/close` to apply these fixes. (Not a merge decision — `/close` stops at its own merge fork.)
+
+## Fixes (2026-06-27)
+
+All 4 approved findings applied:
+1. **AC6** — `review/SKILL.md:3` description neutralized: "have Codex independently review" → "have the
+   configured independent reviewer review … (codex backend → `codex exec`)" (brand + CLI kept). Test
+   broadened: now also asserts absence of "have Codex" and "Codex independently review".
+2. **AC4** — `tests/reviewer_test.sh` now asserts the envelope **per fenced command block** via a
+   `block_has` helper (approach / correctness / frame-design each checked for `-s read-only`, the right
+   absolute schema, repo-relative `-o`, `${codexModel:+…}`, `</dev/null`). A flag dropped from one block
+   can no longer be masked by another block's substring.
+3. **AC1/AC2** — added an explicit reviewer→pass example (`/review agy approach`) to `review/SKILL.md`,
+   and the test now asserts every documented example: missing⇒codex, value-set, invalid-config⇒stop,
+   both precedence rungs, both token orders, reviewer-only, invalid-override-errors, and the agy STOP
+   dispatch. (Still grep-of-documented-rule — no runtime resolver, per design finding 1.)
+4. **AC7** — added a **self-limiting** scope-whitelist block to the gate: it runs only when the story
+   file is in `git diff main...HEAD` (no-op on other branches / after merge) and exempts the
+   `reviews/pluggable-reviewer.*` trail artifacts. AC7 + its test note updated to record the exemption.
+
+Gate (`guard_test.sh && reviewer_test.sh`): green.
 
 ## Research notes
 
