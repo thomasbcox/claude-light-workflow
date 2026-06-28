@@ -247,6 +247,21 @@ the full configured gate couldn't run in the read-only sandbox because `guard_te
    in the enumerated list. *Fix:* add an AC7 check comparing `git diff --name-only main...HEAD` to the
    whitelist, exempting the workflow's own `reviews/<slug>.*` trail artifacts.
 
+## Decisions (2026-06-27)
+
+Approach pass: clean (no findings). Correctness pass — Thomas: **"fix all"** (all 4 IMPORTANT):
+1. **AC6 residual role language** (`review/SKILL.md:3` description) → **FIX**: neutralize the role phrase
+   (keep the `Claude↔Codex` brand + `codex exec`/`codexModel`/`.codex.json`); broaden the AC6 test.
+2. **AC4 per-block envelope** → **FIX**: assert `-s read-only` / abs schema / repo-rel `-o` /
+   `${codexModel:+…}` / `</dev/null` for each of the approach, correctness, and frame-design blocks.
+3. **AC1/AC2 documented-example coverage** → **FIX**: assert each documented example (missing⇒codex,
+   agy⇒agy, invalid⇒stop, override precedence, both token orders, invalid override). Stays grep-of-rule —
+   no runtime resolver (honors design finding 1: don't build a deployed/test-only resolver unit).
+4. **AC7 whitelist + trail exemption** → **FIX**: add a `git diff --name-only main...HEAD` whitelist check
+   exempting the workflow's own `reviews/<slug>.*` artifacts; record that exemption in AC7.
+
+Routed to `/close` to apply these fixes. (Not a merge decision — `/close` stops at its own merge fork.)
+
 ## Research notes
 
 `agy` install: `curl -fsSL https://antigravity.google/cli/install.sh | bash` → `~/.local/bin/agy`.
