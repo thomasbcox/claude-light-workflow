@@ -185,6 +185,15 @@ Disposition per Codex design finding (the approved shape, now binding on impleme
   and `BACKLOG.md` joins the enumerated scope. The "report first, don't create `BACKLOG.md`
   unprompted in a target repo" half of the finding is also adopted.
 
+## Build note (2026-06-28)
+AC → file map:
+- AC1 detection + maturity rubric · AC2 tool-selection table · AC3 hybrid core/`command -v` ·
+  AC4 report + artifact · AC5 safeguard flags · AC6 `AUDIT-` backlog hand-off · AC7 non-destructive
+  + step-0 stand-down → `.claude/skills/dev-audit/SKILL.md`
+- AC8 deploy + gate + docs → `install.sh` (ARTIFACTS), `.claude/workflow.json` (gate),
+  `tests/dev_audit_test.sh` (drift linter), `README.md`, `ARCHITECTURE.md`, `BACKLOG.md`
+  (system-map coherence, AC8 amended)
+
 ## Codex design review (2026-06-28)
 Verdict: **would not ship the sketch as-is.** Core shape is aligned with the repo (Markdown skill,
 frontmatter-only, declarative ecosystem→tool table, `command -v`-gated optional tools, drift-only
