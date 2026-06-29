@@ -194,6 +194,19 @@ AC → file map:
   `tests/dev_audit_test.sh` (drift linter), `README.md`, `ARCHITECTURE.md`, `BACKLOG.md`
   (system-map coherence, AC8 amended)
 
+## Decisions (2026-06-28 — approach pass, base main, HEAD 711b41f)
+Thomas decided per approach finding (all three approved as shape-changing **fixes** → correctness
+pass short-circuited this round; redesign applied via `/close`, then a fresh approach review):
+- **F1 BLOCKER (read-only invocation) → FIX (lightweight).** Add a read-only/check-mode column +
+  step-4 rule so Table A tools are always invoked in check/dry-run mode (`black --check`,
+  `rustfmt --check`; never `--write`/`--fix`). No full command-template restructure.
+- **F2 IMPORTANT (`AUDIT-` stranded at close) → FIX (make `/close` generic).** Reword
+  `close/SKILL.md` to move *any* tracked backlog item (`BUG-`/`OPS-`/`AUDIT-`) to Done, so future
+  kinds need no further edit. **Scope amendment:** `close/SKILL.md` joins scope (recorded here).
+- **F3 IMPORTANT (maturity/risk prose) → FIX (one condition matrix).** Replace Table B with a
+  condition → {tier, risk, required flags} matrix; fold secret hits / vuln deps / sensitive-domain
+  triggers into that table. Drift linter updated to anchor the matrix.
+
 ## Codex approach review (2026-06-28, base main, HEAD 711b41f)
 Verdict: **would not quite build it this way yet.** Direction fits the repo (Markdown-only skill,
 frontmatter-only, no new dependency, stand-down, declarative intent, drift-only linting, installer +
