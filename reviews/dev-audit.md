@@ -209,6 +209,13 @@ AC → file map:
 - Drift linter extended to anchor the new column, the matrix, the AC7 rule, and the generic `/close`
   (`tests/dev_audit_test.sh`); full gate green (35 checks).
 
+## Decisions (2026-06-28 — approach pass round 2, base 711b41f, HEAD 2be75ad)
+Thomas: **F4 BLOCKER (secret redaction) → FIX.** Add a hard evidence-handling rule so secret hits
+report only detector/type · path · count · remediation — never the value; raw grep/scanner output
+treated as sensitive (summarized, not pasted); `BACKLOG.md` items value-free. Approach fix →
+correctness pass short-circuited again; applied via `/close`, then a fresh approach re-review.
+(Prior F1/F2/F3 confirmed held — not re-raised.)
+
 ## Codex approach review — round 2 (2026-06-28, base 711b41f, HEAD 2be75ad)
 Verdict: **would not ship the new shape as-is** — but the three round-1 redesigns **held** and were
 not re-raised: read-only formatter invocations are table-backed (F1), `/close` is generic over
