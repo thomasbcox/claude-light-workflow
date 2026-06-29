@@ -209,6 +209,25 @@ AC → file map:
 - Drift linter extended to anchor the new column, the matrix, the AC7 rule, and the generic `/close`
   (`tests/dev_audit_test.sh`); full gate green (35 checks).
 
+## Codex approach review — round 2 (2026-06-28, base 711b41f, HEAD 2be75ad)
+Verdict: **would not ship the new shape as-is** — but the three round-1 redesigns **held** and were
+not re-raised: read-only formatter invocations are table-backed (F1), `/close` is generic over
+backlog kinds (F2), maturity/risk use one matrix (F3). One **new** issue remains. *(Codex ran
+`dev_audit_test.sh` green; it couldn't run the full gate in its read-only sandbox — `guard_test.sh`
+needs `mktemp`/`mkdir` for temp repos. Full gate verified green locally.)*
+
+**BLOCKER — Secret findings need a redaction invariant before reports are written** · one-way ·
+nonstandard · `SKILL.md` steps 3, 6, 7
+- *Claim:* The skill greps for secret patterns, then writes findings to chat, `reviews/audit-<date>.md`,
+  and optionally `BACKLOG.md` — but never tells Claude to **redact** matched secret values or raw
+  scanner output. Copying a discovered credential into a permanent report/backlog item compounds the
+  incident and violates the expected handling pattern for secret-scan evidence.
+- *Alternative:* Add a hard evidence-handling rule — for secret hits, **never quote or persist the
+  secret value**; report only detector/type, path/location, count, and remediation. Treat raw
+  grep/scanner output as sensitive (summarize, don't paste); keep `BACKLOG.md` items value-free.
+- *Win:* Prevents the audit artifact from becoming a *second* leak; centralizes a security invariant
+  future audits will copy; removes a high-impact error path with no new machinery/dependencies.
+
 ## Decisions (2026-06-28 — approach pass, base main, HEAD 711b41f)
 Thomas decided per approach finding (all three approved as shape-changing **fixes** → correctness
 pass short-circuited this round; redesign applied via `/close`, then a fresh approach review):
