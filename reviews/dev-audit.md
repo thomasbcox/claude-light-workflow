@@ -194,6 +194,21 @@ AC → file map:
   `tests/dev_audit_test.sh` (drift linter), `README.md`, `ARCHITECTURE.md`, `BACKLOG.md`
   (system-map coherence, AC8 amended)
 
+## Fixes (2026-06-28 — applied the 3 approved approach-pass redesigns)
+- **F1** — Table A gained a **Read-only / check mode** column pinning the non-destructive
+  invocation per ecosystem (`black --check`, `cargo fmt --check`, `prettier --check`, no
+  `--fix`/`-a`/`-w`/`-F`), and step 4 gained a hard **"Read-only rule (AC7)"** forbidding any
+  write/fix mode. The architecture-review row is marked a non-command entry (skips the `command -v`
+  gate). `.claude/skills/dev-audit/SKILL.md`.
+- **F2** — `/close` step 5(b) made **generic over any tracked backlog item** (`BUG-`/`OPS-`/`AUDIT-`
+  or any later prefix), so audit findings are no longer stranded at close.
+  `.claude/skills/close/SKILL.md` (scope amendment, per the Decisions block).
+- **F3** — Table B replaced with **one classification matrix**: condition → risk · maturity ceiling ·
+  flag, with secret hits / vuln deps / sensitive-domain / CI / tests / pinning all in the table, plus
+  explicit roll-up rules. No more prose-derived tiers. `.claude/skills/dev-audit/SKILL.md`.
+- Drift linter extended to anchor the new column, the matrix, the AC7 rule, and the generic `/close`
+  (`tests/dev_audit_test.sh`); full gate green (35 checks).
+
 ## Decisions (2026-06-28 — approach pass, base main, HEAD 711b41f)
 Thomas decided per approach finding (all three approved as shape-changing **fixes** → correctness
 pass short-circuited this round; redesign applied via `/close`, then a fresh approach review):

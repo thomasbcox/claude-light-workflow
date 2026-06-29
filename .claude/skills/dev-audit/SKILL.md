@@ -50,23 +50,27 @@ Inspect by **filename**, not guesswork. Gather:
 Look the detected ecosystem(s) up in **Table A**. For every tool you choose, the report must say
 **why** it fits (which detected marker selected it). Choose, don't run, here.
 
-**Table A — ecosystem (detection marker) → toolset**
+**Table A — ecosystem (detection marker) → toolset.** The **Read-only / check mode** column pins
+the *non-destructive invocation* for the linter/format tools (the ones whose naive command would
+rewrite the target) — it is the durable home of the AC7 invariant, not per-run judgment. Step 4
+enforces it.
 
-| Ecosystem (detection marker) | Linter / format | Dependency scan | Security / SAST | Test runner |
-|---|---|---|---|---|
-| JS/TS — `package.json` | eslint, prettier, `tsc --noEmit` | `npm/pnpm/yarn audit`, osv-scanner | semgrep | jest / vitest / playwright |
-| Python — `pyproject.toml`, `requirements.txt` | ruff, black, mypy | pip-audit, osv-scanner | bandit, semgrep | pytest |
-| Go — `go.mod` | golangci-lint, `go vet` | govulncheck, osv-scanner | gosec, semgrep | `go test ./...` |
-| Rust — `Cargo.toml` | clippy, rustfmt | cargo-audit, cargo-deny | semgrep | `cargo test` |
-| Ruby — `Gemfile` | rubocop | bundler-audit, osv-scanner | brakeman, semgrep | rspec |
-| Java/Kotlin — `pom.xml`, `build.gradle` | spotless / checkstyle, ktlint | OWASP dependency-check, osv-scanner | spotbugs, semgrep | junit / gradle test |
-| PHP — `composer.json` | php-cs-fixer, phpstan | `composer audit` | psalm, semgrep | phpunit |
-| Container / IaC — `Dockerfile`, `*.tf`, k8s yaml | hadolint, tflint | trivy (image/fs) | checkov, trivy, semgrep | — |
-| Any / cross-cutting | — | osv-scanner | **secrets:** gitleaks / trufflehog · **SAST:** semgrep | — |
-| **Architecture review** (all repos) | — | — | reuse the design-review lens: `AGENTS.md` + `design-review-schema.json` (escalate to `/review approach`) | — |
+| Ecosystem (detection marker) | Linter / format | Read-only / check mode | Dependency scan | Security / SAST | Test runner |
+|---|---|---|---|---|---|
+| JS/TS — `package.json` | eslint, prettier, `tsc --noEmit` | `eslint` (no `--fix`), `prettier --check`, `tsc --noEmit` | `npm/pnpm/yarn audit`, osv-scanner | semgrep | jest / vitest / playwright |
+| Python — `pyproject.toml`, `requirements.txt` | ruff, black, mypy | `ruff check`, `ruff format --check`, `black --check`, `mypy` | pip-audit, osv-scanner | bandit, semgrep | pytest |
+| Go — `go.mod` | golangci-lint, `go vet` | `golangci-lint run` (no `--fix`), `gofmt -l`, `go vet` | govulncheck, osv-scanner | gosec, semgrep | `go test ./...` |
+| Rust — `Cargo.toml` | clippy, rustfmt | `cargo clippy` (no `--fix`), `cargo fmt --check` | cargo-audit, cargo-deny | semgrep | `cargo test` |
+| Ruby — `Gemfile` | rubocop | `rubocop` (no `-a`/`-A`) | bundler-audit, osv-scanner | brakeman, semgrep | rspec |
+| Java/Kotlin — `pom.xml`, `build.gradle` | spotless / checkstyle, ktlint | `spotless:check`, `checkstyle`, `ktlint` (no `-F`) | OWASP dependency-check, osv-scanner | spotbugs, semgrep | junit / gradle test |
+| PHP — `composer.json` | php-cs-fixer, phpstan | `php-cs-fixer fix --dry-run`, `phpstan analyse` | `composer audit` | psalm, semgrep | phpunit |
+| Container / IaC — `Dockerfile`, `*.tf`, k8s yaml | hadolint, tflint | `hadolint`, `tflint` (both read-only) | trivy (image/fs) | checkov, trivy, semgrep | — |
+| Any / cross-cutting | — | — | osv-scanner | **secrets:** gitleaks / trufflehog · **SAST:** semgrep | — |
+| **Architecture review** (all repos) | reuse the design-review lens: `AGENTS.md` + `design-review-schema.json` (escalate to `/review approach`) | not a binary — skip the step-4 `command -v` gate | — | — | — |
 
 The architecture-review row deliberately **reuses the existing design-review contract** rather
-than inventing a parallel prompt set.
+than inventing a parallel prompt set, and is a **non-command** entry — step 4 does not treat it as
+a binary to probe with `command -v`.
 
 ### 3. Run the zero-dependency **core** (always)
 These use only already-assumed tooling (`git`, `grep`, manifest reads, `python3`/`jq`) so they run
@@ -80,33 +84,40 @@ on every repo regardless of what's installed:
 - **Git hygiene** — `.gitignore` present, no obviously committed build/secret artifacts.
 
 ### 4. Run heavier tools **only if present** (hybrid)
-For each tool chosen in step 2, gate on availability: `command -v <tool>`. If present, run it
-(read-only, against the target) and fold its output into findings. If absent, list it as
-**recommended (not installed)** with the one-line rationale — do **not** install it.
+For each *command* tool chosen in step 2 (skip the non-command architecture-review entry), gate on
+availability: `command -v <tool>`. If present, run it and fold its output into findings; if absent,
+list it as **recommended (not installed)** with the one-line rationale — do **not** install it.
+
+**Read-only rule (AC7 — non-negotiable):** invoke every tool in its **read-only / check / dry-run
+mode** exactly as the *Read-only / check mode* column of Table A specifies. **Never** a write/fix
+mode — no `--write`, `--fix`, `-a`/`-A`, `-w`, `-F`, or `fix`/`format` without `--check`. A
+formatter run naively (`black`, `rustfmt`, `prettier --write`) would rewrite the target repo and
+break the non-destructive guarantee; the column exists so this is never a per-run judgment call.
 
 ### 5. Classify maturity + risk (Table B)
-Derive the maturity *tier* and *risk level* from the safeguard signals — declaratively, via
-**Table B**, so the same profile classifies the same way every run (no ad-hoc prose).
+Derive the maturity *tier*, *risk level*, and *safeguard flags* from **one declarative matrix**, so
+the same profile classifies the same way every run — every trigger lives in the table, none in prose.
 
-**Table B — safeguard signals → maturity tier + risk**
+**Table B — classification matrix.** Evaluate **every** row against the repo; a row "matches" when
+its condition holds.
 
-| Safeguard signal | Present | Absent → flag |
-|---|---|---|
-| CI configured | ✓ | "no CI" |
-| Automated tests | ✓ | "no/weak tests" |
-| Dependencies pinned (lockfile / exact versions) | ✓ | "unpinned dependencies" |
-| Secret handling (no tracked/committed secrets, `.env` ignored, secret-scan clean) | ✓ | "weak secret handling" |
-| Docs (README) + license | ✓ | "missing docs/license" |
+| Condition | Risk | Maturity ceiling | Flag raised |
+|---|---|---|---|
+| Tracked/committed secret, or secret-scan hit | high | prototype | "weak secret handling" |
+| Known-vulnerable dependency (audit / SCA hit) | high | developing | "vulnerable dependency" |
+| Security-sensitive domain (auth/payments/PII) **and** no/weak tests | high | prototype | "no/weak tests" |
+| No CI **and** no tests | medium | prototype | "no CI", "no/weak tests" |
+| Dependencies unpinned (no lockfile / floating ranges) | medium | developing | "unpinned dependencies" |
+| CI absent (tests present) | medium | developing | "no CI" |
+| Tests thin/absent (CI present) | medium | developing | "no/weak tests" |
+| Missing README **or** license | low | developing | "missing docs/license" |
+| CI **and** tests **and** pinned deps **and** clean secret handling all present, no row above matched | low | mature | — |
 
-- **Maturity tier:**
-  - **mature** — CI **and** tests **and** pinned deps **and** clean secret handling all present.
-  - **developing** — at least one of {CI, tests} present, but ≥1 core safeguard missing.
-  - **prototype** — none of {CI, tests} present, or secrets tracked, or deps unpinned with no lockfile.
-- **Risk level:**
-  - **high** — any tracked/committed secret or secret-scan hit, **or** a known-vulnerable dependency
-    (audit hit), **or** no tests in a security-sensitive domain (auth/payments/PII).
-  - **medium** — missing CI, unpinned deps, or thin tests, with no high-severity finding.
-  - **low** — core safeguards present and no high/critical findings.
+**Roll-up rules** (apply after evaluating all rows):
+- **Risk level** = the most severe risk among matched rows (`high` > `medium` > `low`); `low` if none above `low` matched.
+- **Maturity tier** = the **lowest** ceiling any matched row imposes; `mature` only when the final
+  row matches and no row above it did (`prototype` < `developing` < `mature`).
+- **Safeguard flags** = every flag raised by a matched row (deduplicated).
 
 ### 6. Report
 Print a brief report to chat **and** write it to `reviews/audit-<YYYY-MM-DD>.md` at the target

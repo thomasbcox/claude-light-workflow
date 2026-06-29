@@ -24,6 +24,7 @@ INSTALL="$ROOT/install.sh"
 README="$ROOT/README.md"
 BACKLOG="$ROOT/BACKLOG.md"
 ARCH="$ROOT/ARCHITECTURE.md"
+CLOSE="$ROOT/.claude/skills/close/SKILL.md"
 WF="$ROOT/.claude/workflow.json"
 
 pass=0 fail=0
@@ -45,18 +46,21 @@ has "detects secret patterns"        "$SKILL" "Secret patterns"
 has "detects test setup"             "$SKILL" "Test setup"
 
 echo "== AC2: declarative tool-selection table (ecosystem -> toolset) =="
-has "Table A header"                 "$SKILL" "Table A — ecosystem (detection marker) → toolset"
+has "Table A present"                "$SKILL" "Table A — ecosystem (detection marker) → toolset"
 has "arch review reuses design lens" "$SKILL" "design-review-schema.json"
+has "read-only/check-mode column"    "$SKILL" "Read-only / check mode"
 
-echo "== AC1/AC4: declarative maturity+risk rubric (the ratified IMPORTANT fix) =="
-has "Table B header"                 "$SKILL" "Table B — safeguard signals → maturity tier + risk"
+echo "== AC1/AC4: declarative classification matrix (tier+risk+flags in one table) =="
+has "Table B classification matrix"  "$SKILL" "Table B — classification matrix"
+has "matrix roll-up: maturity tier"  "$SKILL" "Maturity tier"
 has "tier: prototype"                "$SKILL" "prototype"
 has "tier: developing"               "$SKILL" "developing"
 has "tier: mature"                   "$SKILL" "mature"
 
-echo "== AC3: hybrid core-vs-recommend split =="
+echo "== AC3/AC7: hybrid split + read-only invocation rule =="
 has "command -v gate"                "$SKILL" "command -v"
 has "recommended (not installed)"    "$SKILL" "recommended (not installed)"
+has "read-only rule (AC7)"           "$SKILL" "Read-only rule (AC7"
 
 echo "== AC4: fixed report sections + artifact path =="
 has "section: Detected profile"      "$SKILL" "Detected profile"
@@ -81,6 +85,7 @@ has "BACKLOG documents AUDIT- kind"  "$BACKLOG" "AUDIT-"
 has "BACKLOG names dev-audit inflow" "$BACKLOG" "dev-audit"
 has "ARCHITECTURE maps /dev-audit"   "$ARCH"    "/dev-audit"
 has "ARCHITECTURE: AUDIT- in trail"  "$ARCH"    "AUDIT-"
+has "/close lifecycle covers AUDIT-" "$CLOSE"   "AUDIT-"
 
 echo
 echo "passed=$pass failed=$fail"
