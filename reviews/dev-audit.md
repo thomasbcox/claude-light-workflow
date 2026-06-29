@@ -194,6 +194,15 @@ AC → file map:
   `tests/dev_audit_test.sh` (drift linter), `README.md`, `ARCHITECTURE.md`, `BACKLOG.md`
   (system-map coherence, AC8 amended)
 
+## Fixes (2026-06-28 — round 2: F4 secret-redaction invariant)
+- **F4** — added a hard **"Redact secret evidence (never write a secret value)"** constraint and
+  reinforced it at point-of-use: step 3 secret check records detector/type · path:line · count
+  (never the value or raw grep output); step 6 notes the report is a persisted file so redaction
+  applies to every channel; step 7 keeps `BACKLOG.md` `AUDIT-` items value-free. Prevents the audit
+  artifact from becoming a second leak. `.claude/skills/dev-audit/SKILL.md`.
+- Drift linter anchors the redaction constraint + value-free backlog rule
+  (`tests/dev_audit_test.sh`); full gate green (38 checks).
+
 ## Fixes (2026-06-28 — applied the 3 approved approach-pass redesigns)
 - **F1** — Table A gained a **Read-only / check mode** column pinning the non-destructive
   invocation per ecosystem (`black --check`, `cargo fmt --check`, `prettier --check`, no

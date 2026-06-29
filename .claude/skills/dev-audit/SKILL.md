@@ -19,6 +19,11 @@ Invoked `/dev-audit [path]`. The target is `[path]` if given, else the current r
   human go-ahead (step 7).
 - **Recommend, don't install.** Heavier tools run only if already present; otherwise they are
   listed as *recommended (not installed)* with the rationale. Never `pip install` / `npm i -g` / etc.
+- **Redact secret evidence (never write a secret value).** A discovered credential must never be
+  quoted or persisted — not in chat, not in `reviews/audit-<date>.md`, not in `BACKLOG.md`. For any
+  secret hit, report **only** detector/type · path:line · count · remediation. Treat raw grep /
+  secret-scanner output as sensitive: summarize it, never paste it. Otherwise the audit artifact
+  becomes a *second* leak. (Applies to steps 3, 6, and 7.)
 
 ## Steps
 
@@ -80,7 +85,8 @@ on every repo regardless of what's installed:
 - **CI presence** — any CI config from step 1 present? If none, that's a safeguard gap.
 - **Test presence** — any tests / a runnable test script? Thin-or-absent is a gap.
 - **Secret handling** — grep for the patterns in step 1; check `.env*` is git-ignored; spot-check
-  history. Any hit is a high-signal finding.
+  history. Any hit is a high-signal finding — but **redact it** (Hard constraints): record
+  detector/type · path:line · count, never the matched value or raw grep output.
 - **Git hygiene** — `.gitignore` present, no obviously committed build/secret artifacts.
 
 ### 4. Run heavier tools **only if present** (hybrid)
@@ -122,7 +128,9 @@ its condition holds.
 ### 6. Report
 Print a brief report to chat **and** write it to `reviews/audit-<YYYY-MM-DD>.md` at the target
 root (create `reviews/` if absent — the step-0 stand-down has already cleared the repo for writes).
-Use these fixed sections, in order:
+**Redaction applies to every channel** (Hard constraints): the report is a persisted file — secret
+findings name detector/type · path:line · count · remediation only, never the value. Use these fixed
+sections, in order:
 
 - **Detected profile** — type, ecosystem(s), domain, maturity tier.
 - **Tools chosen — and why** — each selected tool with the detected marker that justified it, and
@@ -137,5 +145,7 @@ Use these fixed sections, in order:
 After presenting the report, **offer** to graduate selected findings into `BACKLOG.md`. Append
 **only on an explicit instruction** — never automatically. Audit-sourced items use the **`AUDIT-`**
 id prefix (e.g. `AUDIT-1 — <finding> (from /dev-audit <date>)`), so their provenance is legible
-alongside `BUG-`/`OPS-`. If the target repo has **no `BACKLOG.md`**, report the suggested entries
-and require an explicit instruction before creating the file.
+alongside `BUG-`/`OPS-`. **Backlog items stay value-free** (Hard constraints): a secret-related
+`AUDIT-` item names the type · path:line · remediation, never the credential. If the target repo has
+**no `BACKLOG.md`**, report the suggested entries and require an explicit instruction before creating
+the file.

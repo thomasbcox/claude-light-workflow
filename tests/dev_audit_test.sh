@@ -45,6 +45,11 @@ has "detects CI config"              "$SKILL" "CI config"
 has "detects secret patterns"        "$SKILL" "Secret patterns"
 has "detects test setup"             "$SKILL" "Test setup"
 
+echo "== AC7: secret-evidence redaction invariant (round-2 BLOCKER fix) =="
+has "redaction hard constraint"      "$SKILL" "Redact secret evidence (never write a secret value)"
+has "never quote/persist value"      "$SKILL" "quoted or persisted"
+has "backlog items value-free"       "$SKILL" "value-free"
+
 echo "== AC2: declarative tool-selection table (ecosystem -> toolset) =="
 has "Table A present"                "$SKILL" "Table A — ecosystem (detection marker) → toolset"
 has "arch review reuses design lens" "$SKILL" "design-review-schema.json"
