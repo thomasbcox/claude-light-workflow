@@ -1,11 +1,13 @@
 # Backlog
 
-Outstanding work for the light workflow skills (`frame`, `review`, `close`) and their
-deployment tooling. One line per item with a stable id so story files, commits, and
-`reviews/<slug>.md` trails can reference it.
+Outstanding work for the light workflow skills (`frame`, `review`, `close`, plus the pre-loop
+recon skill `dev-audit`) and their deployment tooling. One line per item with a stable id so story
+files, commits, and `reviews/<slug>.md` trails can reference it.
 
-**Lifecycle:** a line here → `/frame` writes `reviews/<slug>.md` (spec + audit trail) →
-`/review` → `/close`. As part of the merge, `/close` moves the item to **Done** here and
+**Inflows:** items reach this staging area two ways — **hand-authored** here, or **graduated from a
+`/dev-audit` run** as `AUDIT-` findings (only on an explicit instruction). Either way, once a line
+is here it flows out the same path. **Lifecycle:** a line here → `/frame` writes
+`reviews/<slug>.md` (spec + audit trail) → `/review` → `/close`. As part of the merge, `/close` moves the item to **Done** here and
 adds the `CHANGELOG.md` entry *on the feature branch*, so both ride in on the merge commit.
 The backlog is the staging area in front of the loop; don't delete a landed item — move it
 to **Done** and reference it as `PR #N / merge: <slug>` (never a raw SHA — derive it with
@@ -13,9 +15,11 @@ to **Done** and reference it as `PR #N / merge: <slug>` (never a raw SHA — der
 land with the story they describe; open a follow-up only for a real defect or a new decision,
 never solely to reconcile a previous story's records.
 
-Two kinds of item, tracked separately:
+Three kinds of item, tracked separately:
 - **BUG-** — skill-behavior / workflow-correctness defects (change what the skills *do*).
 - **OPS-** — deployment, drift, and tooling ergonomics (change how the skills are *shipped*).
+- **AUDIT-** — findings graduated from a `/dev-audit` run (missing safeguards, best-practice gaps).
+  Added only on an explicit instruction; the item text carries its `from /dev-audit <date>` provenance.
 
 ---
 
@@ -35,11 +39,11 @@ Not yet storied — smaller, may not each warrant a full `reviews/<slug>.md` sto
 OPS-8 is tracked separately as a spawned task chip. Everything else here has resolved:
 OPS-1/2/3 shipped (see [Done](#done)); OPS-6 was [decided against](#decided-against).
 
-OPS-9 — Evaluate whether the three skills (`frame`, `review`, `close`) need any YAML
-frontmatter beyond the current `name` + `description` — e.g. `allowed-tools` to scope tool
-permissions, or other recognized skill keys. As of 2026-06-12 all three carry only
-`name` + `description`; nothing is strictly missing, so this is an evaluate-and-decide
-item, not a known gap. (Logged 2026-06-12 alongside BUG-4.)
+OPS-9 — Evaluate whether the workflow skills (`frame`, `review`, `close`, and `dev-audit`) need
+any YAML frontmatter beyond the current `name` + `description` — e.g. `allowed-tools` to scope tool
+permissions, or other recognized skill keys. As of 2026-06-12 all carry only
+`name` + `description` (`dev-audit` followed the same convention when added); nothing is strictly
+missing, so this is an evaluate-and-decide item, not a known gap. (Logged 2026-06-12 alongside BUG-4.)
 
 ---
 

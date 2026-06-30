@@ -5,6 +5,31 @@ All notable changes to this workflow are recorded here. The format follows
 
 ## [Unreleased]
 
+## [2026-06-30] — dev-audit (PR #22)
+
+### Added
+- **`/dev-audit` — a pre-loop repo-recon skill** (standalone from `frame`/`review`/`close`).
+  Pointed at a repo, it detects type + maturity and selects analysis tools that fit *that* repo,
+  with rationale, then reports findings + risk + prioritized next steps. Key shapes:
+  - **Declarative tool selection** — one ecosystem→toolset table (Table A) with a **read-only /
+    check mode** column that pins the non-destructive invocation per tool (the AC7 invariant lives
+    in the table, not per-run judgment; `--check`/`--dry-run`/omit-`--fix`, never a write mode).
+  - **Declarative classification** — one matrix (Table B) maps safeguard conditions → maturity tier
+    (`prototype`/`developing`/`mature`) · risk level · safeguard flags (no CI / weak tests /
+    unpinned deps / weak secret handling).
+  - **Hybrid execution** — a zero-dependency core always runs; heavier tools are `command -v`-gated
+    (run if present, else *recommended (not installed)*). Installs nothing.
+  - **Secret-redaction invariant** — secret hits report detector/type · path:line · count ·
+    remediation, never the value, so the audit artifact never becomes a second leak.
+  - **Report-first, human-gated hand-off** — graduates findings into `BACKLOG.md` as `AUDIT-`
+    items only on an explicit instruction; honors the `docs/ai-protocol.md` stand-down.
+- Wired into `install.sh`, the gate (`tests/dev_audit_test.sh`, a drift-only linter), and the
+  system-map docs (`README.md`, `ARCHITECTURE.md`, `BACKLOG.md`).
+
+### Changed
+- **`/close` is now generic over any tracked backlog item** (`BUG-`/`OPS-`/`AUDIT-`/future), so
+  audit-sourced findings complete the loop instead of being stranded at close.
+
 ## [2026-06-27] — pluggable-reviewer (PR #21)
 
 ### Added

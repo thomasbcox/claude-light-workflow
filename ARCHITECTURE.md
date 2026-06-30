@@ -63,6 +63,18 @@ The loop is three skills, each ending at a human decision:
 | [`/review`](.claude/skills/review/SKILL.md) | gate green → **approach pass** (shape) gates **correctness pass** (diff) → decision menu | **decides per finding** |
 | [`/close`](.claude/skills/close/SKILL.md) | apply approved fixes → re-review or merge → cleanup | **approves merge** |
 
+### 2.2a Before the loop: `/dev-audit` (recon)
+
+The three skills above act on *one stated change*. A separate, standalone skill,
+[`/dev-audit`](.claude/skills/dev-audit/SKILL.md), acts *before* there is a change: pointed at a
+repo, it detects type + maturity, selects analysis tools that fit (with rationale), runs a
+zero-dependency core plus any installed heavier tools (installing nothing), and reports findings +
+risk + prioritized next steps. It is **not a loop step** and has no merge gate — it is read-only
+and report-first. Its single seam to the loop is the backlog: on an explicit instruction it
+graduates findings into [`BACKLOG.md`](BACKLOG.md) as `AUDIT-` items, which then flow through
+`/frame → /review → /close` like any other line. It honors the same `docs/ai-protocol.md`
+stand-down (§3.5) as the loop skills.
+
 ### 2.3 Reversibility-gated blocking
 
 Not every decision should stop the loop. Blocking is gated by reversibility: **one-way-door**
@@ -123,8 +135,10 @@ Antigravity, closing that path. See the story trail for the autopsy.)
 
 ### 3.3 The artifact trail
 
-- [`BACKLOG.md`](BACKLOG.md) — staging area in front of the loop: bugs (`BUG-`) and tooling
-  improvements (`OPS-`), each graduating into a `reviews/<slug>.md` story.
+- [`BACKLOG.md`](BACKLOG.md) — staging area in front of the loop: bugs (`BUG-`), tooling
+  improvements (`OPS-`), and recon findings (`AUDIT-`, from `/dev-audit`), each graduating into a
+  `reviews/<slug>.md` story.
+- `reviews/audit-<YYYY-MM-DD>.md` — a `/dev-audit` recon report (standalone; not a loop story).
 - `reviews/<slug>.md` — spec + design sketch → reviewer findings → decisions, appended across rounds.
 - `reviews/<slug>.design.json` — frame-time design-sketch review.
 - `reviews/<slug>.approach.json` / `reviews/<slug>.codex.json` — review-time approach + correctness output.
@@ -158,13 +172,16 @@ mechanically catches.
 
 Because everything installs globally, a repo that runs its own heavier workflow opts out by placing a
 **`docs/ai-protocol.md`** marker at its root. When present, the hook becomes a no-op (the repo's own
-hooks govern) and `/frame`, `/review`, `/close` stop and point at the native skills.
+hooks govern) and `/frame`, `/review`, `/close` — and `/dev-audit`, before it reads or writes
+anything — stop and point at the native skills.
 
 ### 3.6 Test here, deploy everywhere
 
-The skills + hook are project-local under `.claude/` so they can be exercised here with a real
-`/frame → /review → /close`. [`install.sh`](install.sh) then copies them to `~/.claude/` and wires the
-hook into `~/.claude/settings.json` (idempotent, backs up first); `./install.sh --check` reports drift.
+The skills (the three loop skills plus `/dev-audit`) + hook are project-local under `.claude/` so they
+can be exercised here with a real `/frame → /review → /close`. [`install.sh`](install.sh) then copies
+them — its `ARTIFACTS` set is the single source of truth for the deployed files — to `~/.claude/` and
+wires the hook into `~/.claude/settings.json` (idempotent, backs up first); `./install.sh --check`
+reports drift.
 In each app, the first `/frame` bootstraps that repo's `.claude/workflow.json` + `AGENTS.md`.
 
 ### 3.7 Requirements (tooling)

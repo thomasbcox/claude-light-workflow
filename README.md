@@ -30,6 +30,16 @@ On a first review both passes run; scope it with **`/review approach`** (force t
 **`/review correctness`** (skip straight to the line-level pass). Re-reviews that only verify fixes are
 correctness-only by default.
 
+### Before the loop: `/dev-audit`
+`/dev-audit [path]` is a standalone **pre-loop recon** step. It inspects a repo's languages,
+frameworks, manifests, tests, CI, and secret-handling; classifies its type and maturity tier;
+selects analysis tools that fit *that* repo (via a declarative ecosystem→tool table, **with
+rationale**); runs a zero-dependency core plus any heavier tools already installed (it installs
+nothing); and returns a brief report — findings, **risk level**, best-practice gaps, and prioritized
+next steps — flagging missing safeguards (CI, tests, pinned deps, secret handling). It is read-only
+and **report-first**: it graduates findings into [`BACKLOG.md`](BACKLOG.md) as `AUDIT-` items only on
+an explicit instruction, and honors the same `docs/ai-protocol.md` stand-down as the loop skills.
+
 **The reviewer is selectable.** `.claude/workflow.json`'s `reviewer` field (default `codex`) — or a
 per-invocation override on `/review` (`/review llm`, `/review approach codex`) — picks the backend.
 **Codex is the only wired backend today;** selecting `llm` (the [`llm` CLI](https://llm.datasette.io),
@@ -43,7 +53,8 @@ structured-output schema (the canonical command lives in [`review/SKILL.md`](.cl
 no copy/paste. It runs read-only and never commits; Claude captures its structured findings and commits the trail.
 
 ## Artifacts (the audit trail)
-- [`BACKLOG.md`](BACKLOG.md) — staging area in front of the loop: outstanding bugs (`BUG-`) and tooling improvements (`OPS-`), each graduating to a `reviews/<slug>.md` story.
+- [`BACKLOG.md`](BACKLOG.md) — staging area in front of the loop: bugs (`BUG-`), tooling improvements (`OPS-`), and recon findings (`AUDIT-`, from `/dev-audit`), each graduating to a `reviews/<slug>.md` story.
+- `reviews/audit-<YYYY-MM-DD>.md` — a `/dev-audit` recon report (standalone; not a loop story).
 - `reviews/<slug>.md` — spec + design sketch → Codex findings → decisions, appended across rounds.
 - `reviews/<slug>.design.json` — frame-time Codex design-sketch review.
 - `reviews/<slug>.approach.json` — review-time approach-pass output.
@@ -77,7 +88,7 @@ sandbox. The real backstop is **server-side branch protection**. Covered by
 Because the skills + hook install globally (`~/.claude`), they reach every repo. A repo that already
 runs a heavier/native workflow signals it with a **`docs/ai-protocol.md`** marker at its root. When
 that marker is present, the light workflow **stands down**: the guard hook becomes a no-op (the
-repo's own hooks govern) and `/frame`, `/review`, `/close` stop and point you at the native skills.
+repo's own hooks govern) and `/frame`, `/review`, `/close` — and `/dev-audit`, before it reads or writes anything — stop and point you at the native skills.
 Repos without the marker are governed by the light workflow as normal.
 
 ## Test here, then deploy everywhere
