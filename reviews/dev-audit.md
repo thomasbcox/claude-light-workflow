@@ -246,6 +246,15 @@ re-review-or-merge fork):
   stand-down (L90: add `/dev-audit`); anchor both new tokens in the linter.
 - **C3 → FIX.** Reword `BACKLOG.md` OPS-9 to include `dev-audit` in the frontmatter-eval scope.
 
+## Decisions (2026-06-30 — round 4, base 925c3ad, HEAD f120cca)
+**Both passes clean — nothing to decide.** Approach re-review: zero findings ("converged"); correctness
+re-review (verifying C1/C2/C3): zero findings. Shape blessed and the fixes verified. No fixes to apply
+→ `/close` goes straight to the re-review-or-merge fork.
+
+## Codex review (2026-06-30, base 925c3ad, HEAD f120cca) — correctness pass (re-review) — CLEAN
+Summary: **clean.** Verified `git diff 925c3ad...HEAD`, the log, and the spec; C1/C2/C3 are correctly
+reflected; `dev_audit_test.sh` (42 checks) and `git diff --check` pass. **Zero findings.**
+
 ## Codex approach review — round 4 (2026-06-30, base 925c3ad, HEAD f120cca) — CLEAN
 Verdict: **"I would build it this way" — converged.** C1 broadens the read-only invariant without
 changing the approved table-driven shape; C2 re-aligns README/system-map wording and strengthens the
