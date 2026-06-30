@@ -225,6 +225,16 @@ treated as sensitive (summarized, not pasted); `BACKLOG.md` items value-free. Ap
 correctness pass short-circuited again; applied via `/close`, then a fresh approach re-review.
 (Prior F1/F2/F3 confirmed held — not re-raised.)
 
+## Decisions (2026-06-29 — correctness pass, base main, HEAD 925c3ad)
+Round-3 approach pass was **clean** (shape blessed); correctness ran in the same round. All three
+correctness findings approved as **fix** (line-level, not redesigns → `/close` reaches the
+re-review-or-merge fork):
+- **C1 → FIX.** Broaden the step-4 read-only rule to accept `--dry-run` alongside `--check`
+  (resolves the `php-cs-fixer fix --dry-run` contradiction); add a drift assertion.
+- **C2 → FIX.** Update README artifact-trail (L56: add `AUDIT-` + `reviews/audit-<date>.md`) and
+  stand-down (L90: add `/dev-audit`); anchor both new tokens in the linter.
+- **C3 → FIX.** Reword `BACKLOG.md` OPS-9 to include `dev-audit` in the frontmatter-eval scope.
+
 ## Codex review (2026-06-29, base main, HEAD 925c3ad) — correctness pass
 Summary: first line-level pass on the full feature (shape cleared approach review). Two substantive
 issues + one nit. *(Codex ran `dev_audit_test.sh` + `reviewer_test.sh` green; full gate needs
