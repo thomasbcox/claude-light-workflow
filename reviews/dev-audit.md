@@ -225,6 +225,27 @@ treated as sensitive (summarized, not pasted); `BACKLOG.md` items value-free. Ap
 correctness pass short-circuited again; applied via `/close`, then a fresh approach re-review.
 (Prior F1/F2/F3 confirmed held — not re-raised.)
 
+## Codex review (2026-06-29, base main, HEAD 925c3ad) — correctness pass
+Summary: first line-level pass on the full feature (shape cleared approach review). Two substantive
+issues + one nit. *(Codex ran `dev_audit_test.sh` + `reviewer_test.sh` green; full gate needs
+`guard_test.sh`'s temp-repo creation, unavailable in its sandbox — verified green locally.)*
+
+**IMPORTANT — C1 · `SKILL.md` (PHP read-only command vs AC7 rule).** Table A's PHP row runs
+`php-cs-fixer fix --dry-run` (genuinely non-writing), but the step-4 rule forbids `fix`/`format`
+"without `--check`" — an internal contradiction, since `php-cs-fixer` has no `--check` (its
+read-only mode *is* `fix --dry-run`). *Suggest:* broaden the rule to accept `--dry-run` as an
+equivalent read-only flag; add a drift assertion.
+
+**IMPORTANT — C2 · `README.md` (stale pre-dev-audit system-map text).** The artifact-trail line
+(L56) still lists only `BUG-`/`OPS-` graduating to `reviews/<slug>.md` — omitting `AUDIT-` and the
+`reviews/audit-<date>.md` artifact; the stand-down line (L90) still names only `/frame`,`/review`,
+`/close`, contradicting the new `/dev-audit` section. The linter only greps README for `/dev-audit`,
+so the drift passed. *Suggest:* update both README sections; anchor the new tokens in the linter.
+
+**NIT — C3 · `BACKLOG.md` (OPS-9 scopes frontmatter review to three skills).** OPS-9 still says it
+evaluates frontmatter for `frame`/`review`/`close`; `dev-audit` now shares that convention. *Suggest:*
+reword OPS-9 to include `dev-audit` (or state it's intentionally excluded).
+
 ## Codex approach review — round 3 (2026-06-29, base 2be75ad, HEAD 925c3ad) — CLEAN
 Verdict: **"I would build it this way."** The F4 delta is the right shape — a single hard
 secret-redaction invariant reinforced at the secret-scan, persisted-report, and backlog write
