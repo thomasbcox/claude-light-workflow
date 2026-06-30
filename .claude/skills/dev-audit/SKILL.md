@@ -95,10 +95,13 @@ availability: `command -v <tool>`. If present, run it and fold its output into f
 list it as **recommended (not installed)** with the one-line rationale — do **not** install it.
 
 **Read-only rule (AC7 — non-negotiable):** invoke every tool in its **read-only / check / dry-run
-mode** exactly as the *Read-only / check mode* column of Table A specifies. **Never** a write/fix
-mode — no `--write`, `--fix`, `-a`/`-A`, `-w`, `-F`, or `fix`/`format` without `--check`. A
-formatter run naively (`black`, `rustfmt`, `prettier --write`) would rewrite the target repo and
-break the non-destructive guarantee; the column exists so this is never a per-run judgment call.
+mode** exactly as the *Read-only / check mode* column of Table A specifies. The non-writing flag
+varies by tool — `--check` (black, prettier, rustfmt), `--dry-run` (php-cs-fixer, which has no
+`--check`), `-l`/list (gofmt), or simply omitting `--fix`. **Never** a write/fix mode — no
+`--write`, `--fix`, `-a`/`-A`, `-w`, `-F`, nor `fix`/`format` *unless* paired with a non-writing
+flag like `--check` or `--dry-run`. A formatter run naively (`black`, `rustfmt`, `prettier --write`)
+would rewrite the target repo and break the non-destructive guarantee; the column exists so this is
+never a per-run judgment call.
 
 ### 5. Classify maturity + risk (Table B)
 Derive the maturity *tier*, *risk level*, and *safeguard flags* from **one declarative matrix**, so

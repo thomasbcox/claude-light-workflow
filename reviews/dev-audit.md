@@ -194,6 +194,17 @@ AC → file map:
   `tests/dev_audit_test.sh` (drift linter), `README.md`, `ARCHITECTURE.md`, `BACKLOG.md`
   (system-map coherence, AC8 amended)
 
+## Fixes (2026-06-29 — round 3: C1/C2/C3 correctness fixes)
+- **C1** — step-4 read-only rule broadened: the non-writing flag varies by tool (`--check`,
+  `--dry-run`, `-l`, or omitting `--fix`); `fix`/`format` allowed *only* when paired with a
+  non-writing flag like `--check`/`--dry-run`. Resolves the `php-cs-fixer fix --dry-run`
+  contradiction. `.claude/skills/dev-audit/SKILL.md`.
+- **C2** — README de-stale: artifact-trail line now lists `AUDIT-` + the `reviews/audit-<date>.md`
+  report; stand-down line now includes `/dev-audit`. Linter strengthened to anchor all three README
+  tokens (was only grepping `/dev-audit`). `README.md`, `tests/dev_audit_test.sh`.
+- **C3** — `BACKLOG.md` OPS-9 reworded to cover the workflow skills *including* `dev-audit`.
+- Linter also anchors the C1 `--dry-run` allowance; full gate green (42 dev-audit checks).
+
 ## Fixes (2026-06-28 — round 2: F4 secret-redaction invariant)
 - **F4** — added a hard **"Redact secret evidence (never write a secret value)"** constraint and
   reinforced it at point-of-use: step 3 secret check records detector/type · path:line · count

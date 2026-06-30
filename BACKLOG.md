@@ -39,11 +39,11 @@ Not yet storied — smaller, may not each warrant a full `reviews/<slug>.md` sto
 OPS-8 is tracked separately as a spawned task chip. Everything else here has resolved:
 OPS-1/2/3 shipped (see [Done](#done)); OPS-6 was [decided against](#decided-against).
 
-OPS-9 — Evaluate whether the three skills (`frame`, `review`, `close`) need any YAML
-frontmatter beyond the current `name` + `description` — e.g. `allowed-tools` to scope tool
-permissions, or other recognized skill keys. As of 2026-06-12 all three carry only
-`name` + `description`; nothing is strictly missing, so this is an evaluate-and-decide
-item, not a known gap. (Logged 2026-06-12 alongside BUG-4.)
+OPS-9 — Evaluate whether the workflow skills (`frame`, `review`, `close`, and `dev-audit`) need
+any YAML frontmatter beyond the current `name` + `description` — e.g. `allowed-tools` to scope tool
+permissions, or other recognized skill keys. As of 2026-06-12 all carry only
+`name` + `description` (`dev-audit` followed the same convention when added); nothing is strictly
+missing, so this is an evaluate-and-decide item, not a known gap. (Logged 2026-06-12 alongside BUG-4.)
 
 ---
 
