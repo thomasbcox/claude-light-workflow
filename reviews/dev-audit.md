@@ -246,6 +246,12 @@ re-review-or-merge fork):
   stand-down (L90: add `/dev-audit`); anchor both new tokens in the linter.
 - **C3 → FIX.** Reword `BACKLOG.md` OPS-9 to include `dev-audit` in the frontmatter-eval scope.
 
+## Codex approach review — round 4 (2026-06-30, base 925c3ad, HEAD f120cca) — CLEAN
+Verdict: **"I would build it this way" — converged.** C1 broadens the read-only invariant without
+changing the approved table-driven shape; C2 re-aligns README/system-map wording and strengthens the
+linter; C3 updates the backlog taxonomy wording. F1–F4 intact. **Zero findings** — shape blessed;
+correctness pass proceeds this round (Thomas requested both in sequence).
+
 ## Codex review (2026-06-29, base main, HEAD 925c3ad) — correctness pass
 Summary: first line-level pass on the full feature (shape cleared approach review). Two substantive
 issues + one nit. *(Codex ran `dev_audit_test.sh` + `reviewer_test.sh` green; full gate needs
