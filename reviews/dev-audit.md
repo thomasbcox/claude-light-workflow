@@ -225,6 +225,13 @@ treated as sensitive (summarized, not pasted); `BACKLOG.md` items value-free. Ap
 correctness pass short-circuited again; applied via `/close`, then a fresh approach re-review.
 (Prior F1/F2/F3 confirmed held — not re-raised.)
 
+## Codex approach review — round 3 (2026-06-29, base 2be75ad, HEAD 925c3ad) — CLEAN
+Verdict: **"I would build it this way."** The F4 delta is the right shape — a single hard
+secret-redaction invariant reinforced at the secret-scan, persisted-report, and backlog write
+points, with the linter anchoring the wording without becoming a pseudo-behavioral test. F1–F3
+remain intact; no new dependency or executable abstraction. **Zero findings** — shape blessed; the
+correctness pass proceeds this round.
+
 ## Codex approach review — round 2 (2026-06-28, base 711b41f, HEAD 2be75ad)
 Verdict: **would not ship the new shape as-is** — but the three round-1 redesigns **held** and were
 not re-raised: read-only formatter invocations are table-backed (F1), `/close` is generic over
