@@ -86,6 +86,17 @@ reformat, no Markdown row, no README/ARCHITECTURE requirements edit.
 - **Gate wiring:** *deferred to a CI follow-up* (OQ1) — no `tests/shell_lint.sh`, no
   `testCommand` change in this story.
 
+## Decisions (2026-07-01, base main, HEAD e3a8a77)
+**Both passes clean — nothing to decide.** Approach: 0 findings (shape blessed). Correctness: 0
+findings (AC1/AC2/AC3 all confirmed). No fixes → `/close` goes straight to the re-review-or-merge fork.
+
+## Codex review (2026-07-01, base main, HEAD e3a8a77) — correctness pass — CLEAN
+Summary: **no diff-grounded issues.** AC1 satisfied (`status` removed; `shellcheck` + `bash -n`
+clean); AC2 Shell row column-consistent with correct read-only invocations; AC3 drift-linter
+anchors match the row text. `dev_audit_test.sh` + `git diff --check` pass. **Zero findings.**
+(`./install.sh --check` not fully exercised in Codex's sandbox — `mktemp` blocked — unrelated to the
+one-word edit; verified locally earlier.)
+
 ## Codex approach review (2026-07-01, base main, HEAD e3a8a77) — CLEAN
 Verdict: **"I would build this the same way."** The minimal shape is sound: remove the dead
 `install.sh` local, add Shell as one more declarative Table A row, anchor it with the drift-only
