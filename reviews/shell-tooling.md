@@ -86,6 +86,13 @@ reformat, no Markdown row, no README/ARCHITECTURE requirements edit.
 - **Gate wiring:** *deferred to a CI follow-up* (OQ1) — no `tests/shell_lint.sh`, no
   `testCommand` change in this story.
 
+## Build note (2026-07-01)
+AC → file map:
+- AC1 (remove unused `status` local) → `install.sh`
+- AC2 (Table A Shell row, closes OPS-10) → `.claude/skills/dev-audit/SKILL.md`
+- AC3 (drift-linter anchor for the Shell row) → `tests/dev_audit_test.sh`
+- OPS-10 tracked item → `BACKLOG.md`
+
 ## Codex design review (2026-07-01)
 Verdict: **core sketch is sound** — fixing the dead variable, adding Shell as a first-class Table A
 row, and anchoring it with the existing drift-linter pattern all match this repo's Markdown-skill /
