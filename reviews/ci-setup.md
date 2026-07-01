@@ -125,7 +125,25 @@ Disposition per Codex design finding (now binding):
   is the *future* real backstop" to "CI enforces the gate; `main` is branch-protected; `/close`
   merges via auto-merge." Small, keeps the system map honest (the lesson from the dev-audit story).
 
-## Build note (2026-07-01)
+## Codex approach review (2026-07-01, base main, HEAD d43aa40)
+Verdict: **shape mostly sound.** Workflows match the minimal-gate + CI-layering intent, permissions
+minimal, full-history checkout, PR gitleaks `base..head` range correct, two-phase protection coherent
+(Phase 2 uses the observed `gate` context). Codex verified runner assumptions vs GitHub docs
+(ubuntu-24.04 ships `jq` + `shellcheck`; hosted Linux runners have passwordless sudo). One CI-shape
+footgun. *(Live proof: PR #24's `gate` check passed in 7s — the observed required context is `gate`.)*
+
+**IMPORTANT — Gitleaks install is global and runs even when the scan is skipped** · two-way · kludgy
+- *Claim:* The checksum-pinned download is the right *security* shape, but the install into
+  `/usr/local/bin` runs **unconditionally**, while the gitleaks *scan* only runs on `pull_request`.
+  So the required push-to-`main` CI path does a global write + external download that produces no scan
+  on that event — `main` could go red from PR-only tool setup rather than the gate/shellcheck/an actual
+  secret finding.
+- *Alternative:* Install into a job-local dir (`$RUNNER_TEMP/bin` via `GITHUB_PATH`) or invoke the
+  extracted binary directly; make install+scan **one `pull_request`-scoped block**. If push-scanning is
+  wanted, add an explicit `before..after` push diff scan instead of a skipped scan behind an
+  unconditional install.
+- *Win:* Removes the runner global-path assumption and an unnecessary network failure path from
+  push-to-`main` CI; keeps the required check focused on checks that actually run for that event.
 AC → file map:
 - AC1 (PR CI: gate + shellcheck + gitleaks diff; SHA-pinned, checksum-verified, minimal perms) → `.github/workflows/ci.yml`
 - AC2 (weekly full-history gitleaks) → `.github/workflows/scheduled.yml`
