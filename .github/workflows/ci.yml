@@ -25,20 +25,18 @@ jobs:
       - name: ShellCheck (tracked *.sh; preinstalled on ubuntu runners)
         run: shellcheck --severity=warning $(git ls-files '*.sh')
 
-      - name: Install gitleaks (pinned version, checksum-verified)
+      # Install + scan in one PR-scoped block: the install only happens when the scan will run
+      # (push-to-main skips it entirely), and the binary lives in the job-local temp dir — no
+      # global runner write, no download/failure path on events that don't scan.
+      - name: gitleaks — install (pinned, checksum-verified) and scan the PR's new commits (redacted)
+        if: github.event_name == 'pull_request'
         run: |
           set -euo pipefail
           ver=8.30.1
           sha=551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
           url="https://github.com/gitleaks/gitleaks/releases/download/v${ver}/gitleaks_${ver}_linux_x64.tar.gz"
-          curl -fsSL "$url" -o gitleaks.tgz
-          echo "${sha}  gitleaks.tgz" | sha256sum -c -
-          tar -xzf gitleaks.tgz gitleaks
-          install -m 0755 gitleaks /usr/local/bin/gitleaks
-          rm -f gitleaks.tgz gitleaks
-
-      - name: gitleaks — scan the PR's new commits (redacted)
-        if: github.event_name == 'pull_request'
-        run: |
-          gitleaks git --redact --no-banner \
+          curl -fsSL "$url" -o "$RUNNER_TEMP/gitleaks.tgz"
+          echo "${sha}  $RUNNER_TEMP/gitleaks.tgz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/gitleaks.tgz" -C "$RUNNER_TEMP" gitleaks
+          "$RUNNER_TEMP/gitleaks" git --redact --no-banner \
             --log-opts="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"

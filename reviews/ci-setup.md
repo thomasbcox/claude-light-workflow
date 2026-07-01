@@ -125,6 +125,14 @@ Disposition per Codex design finding (now binding):
   is the *future* real backstop" to "CI enforces the gate; `main` is branch-protected; `/close`
   merges via auto-merge." Small, keeps the system map honest (the lesson from the dev-audit story).
 
+## Fixes (2026-07-01)
+- **Approach fix** — `ci.yml`: merged the gitleaks install + scan into **one `pull_request`-scoped
+  step** using a job-local `$RUNNER_TEMP` dir (binary invoked by full path). Push-to-`main` no longer
+  installs gitleaks for nothing; no global runner write.
+- **Correctness fix** — `README.md` + `ARCHITECTURE.md` reworded: branch protection is described as
+  **established by `/close` as part of the merge flow** (reads the observed check context, applies via
+  `gh api`, then merges), not asserted as already-active. True at every point.
+
 ## Decisions (2026-07-01, base main, HEAD d1b0445)
 Both passes ran (approach was a minor two-way finding → not a redesign → correctness proceeded).
 Two approved fixes for `/close`:
