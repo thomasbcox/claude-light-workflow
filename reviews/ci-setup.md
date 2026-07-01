@@ -125,6 +125,15 @@ Disposition per Codex design finding (now binding):
   is the *future* real backstop" to "CI enforces the gate; `main` is branch-protected; `/close`
   merges via auto-merge." Small, keeps the system map honest (the lesson from the dev-audit story).
 
+## Build note (2026-07-01)
+AC → file map:
+- AC1 (PR CI: gate + shellcheck + gitleaks diff; SHA-pinned, checksum-verified, minimal perms) → `.github/workflows/ci.yml`
+- AC2 (weekly full-history gitleaks) → `.github/workflows/scheduled.yml`
+- AC3 (secret scanning + push protection + Dependabot alerts) → `gh api` settings (read-back)
+- AC5 (`allow_auto_merge=true`) → `gh api` setting (read-back)
+- AC6 (docs: active backstop + auto-merge) → `README.md`, `ARCHITECTURE.md`
+- AC4 (branch protection, `enforce_admins=true`) → **Phase 2** `gh api` (after CI check name observed)
+
 ## Codex design review (2026-07-01)
 Verdict: **sound as one story, not a split** — the workflows, branch protection, `allow_auto_merge`,
 and docs are coupled by `/close`'s MODE logic, and `gh api` read-back is a reasonable way to verify
