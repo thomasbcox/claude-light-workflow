@@ -45,6 +45,13 @@ permissions, or other recognized skill keys. As of 2026-06-12 all carry only
 `name` + `description` (`dev-audit` followed the same convention when added); nothing is strictly
 missing, so this is an evaluate-and-decide item, not a known gap. (Logged 2026-06-12 alongside BUG-4.)
 
+OPS-10 — `/dev-audit` Table A (ecosystem→toolset) has **no Shell/Bash row** (`shellcheck`, `shfmt`).
+A shell-heavy repo — including *this* one (`install.sh`, the guard hook, the bash test suites) —
+gets no first-class tool selection and falls through to the generic "Any / cross-cutting" row,
+missing the tools it most needs. Surfaced by dogfooding `/dev-audit` on this repo (self-audit,
+2026-06-30). Fix: add a Shell row (marker: `*.sh` / shebang) with read-only invocations
+(`shellcheck`, `shfmt -d`). Consider a Markdown/docs row too (secondary). (Logged 2026-06-30.)
+
 ---
 
 ## Done
