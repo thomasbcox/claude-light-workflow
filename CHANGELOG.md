@@ -5,6 +5,18 @@ All notable changes to this workflow are recorded here. The format follows
 
 ## [Unreleased]
 
+## [2026-07-01] — shell-tooling (PR #23)
+
+### Fixed
+- `install.sh`: removed a dead `status` local variable (shellcheck SC2034).
+
+### Added
+- **`/dev-audit` Table A now has a Shell row** (marker `*.sh` / shebang → `shellcheck`, `shfmt -d`
+  read-only) so shell-heavy repos get first-class tool selection instead of falling through to the
+  generic cross-cutting row (**OPS-10**). Surfaced by dogfooding `/dev-audit` on this repo.
+  Wiring `shellcheck` into the gate was deferred to a CI follow-up to preserve the minimal gate
+  contract (`bash`/`git`/`python3`/`jq`).
+
 ## [2026-06-30] — dev-audit (PR #22)
 
 ### Added

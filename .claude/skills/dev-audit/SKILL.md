@@ -69,6 +69,7 @@ enforces it.
 | Ruby — `Gemfile` | rubocop | `rubocop` (no `-a`/`-A`) | bundler-audit, osv-scanner | brakeman, semgrep | rspec |
 | Java/Kotlin — `pom.xml`, `build.gradle` | spotless / checkstyle, ktlint | `spotless:check`, `checkstyle`, `ktlint` (no `-F`) | OWASP dependency-check, osv-scanner | spotbugs, semgrep | junit / gradle test |
 | PHP — `composer.json` | php-cs-fixer, phpstan | `php-cs-fixer fix --dry-run`, `phpstan analyse` | `composer audit` | psalm, semgrep | phpunit |
+| Shell — `*.sh` / shebang (`#!/…sh`, `#!/…bash`) | shellcheck, shfmt | `shellcheck`, `shfmt -d` | — | semgrep (shell rules) | bats / shell test scripts |
 | Container / IaC — `Dockerfile`, `*.tf`, k8s yaml | hadolint, tflint | `hadolint`, `tflint` (both read-only) | trivy (image/fs) | checkov, trivy, semgrep | — |
 | Any / cross-cutting | — | — | osv-scanner | **secrets:** gitleaks / trufflehog · **SAST:** semgrep | — |
 | **Architecture review** (all repos) | reuse the design-review lens: `AGENTS.md` + `design-review-schema.json` (escalate to `/review approach`) | not a binary — skip the step-4 `command -v` gate | — | — | — |

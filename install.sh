@@ -86,7 +86,7 @@ scan() {
   else
     echo "  provenance: no manifest at $MANIFEST (pre-OPS-2 deployment) — cannot determine source commit"
   fi
-  local entry srcrel destpath status cls
+  local entry srcrel destpath cls
   for entry in "${ARTIFACTS[@]}"; do
     srcrel="${entry%%::*}"; destpath="${entry##*::}"
     if [ ! -e "$DEST/$destpath" ]; then
