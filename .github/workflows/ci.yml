@@ -1,0 +1,44 @@
+name: CI
+
+# PR gate — the authoritative server-side check (branch protection requires the `gate` job).
+# Runs the same test suites as the local gate, plus shellcheck and a gitleaks diff scan.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history — gate + gitleaks need it)
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Gate (workflow test suites)
+        run: bash tests/guard_test.sh && bash tests/reviewer_test.sh && bash tests/dev_audit_test.sh
+
+      - name: ShellCheck (tracked *.sh; preinstalled on ubuntu runners)
+        run: shellcheck --severity=warning $(git ls-files '*.sh')
+
+      - name: Install gitleaks (pinned version, checksum-verified)
+        run: |
+          set -euo pipefail
+          ver=8.30.1
+          sha=551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+          url="https://github.com/gitleaks/gitleaks/releases/download/v${ver}/gitleaks_${ver}_linux_x64.tar.gz"
+          curl -fsSL "$url" -o gitleaks.tgz
+          echo "${sha}  gitleaks.tgz" | sha256sum -c -
+          tar -xzf gitleaks.tgz gitleaks
+          install -m 0755 gitleaks /usr/local/bin/gitleaks
+          rm -f gitleaks.tgz gitleaks
+
+      - name: gitleaks — scan the PR's new commits (redacted)
+        if: github.event_name == 'pull_request'
+        run: |
+          gitleaks git --redact --no-banner \
+            --log-opts="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"

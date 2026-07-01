@@ -81,8 +81,19 @@ design it does **not** catch:
   the top-level-`git` parse.
 
 So the hook keeps you from *fat-fingering* a commit while sitting on `main`; it is not an adversarial
-sandbox. The real backstop is **server-side branch protection**. Covered by
-[`tests/guard_test.sh`](tests/guard_test.sh) (the gate).
+sandbox. The real backstop is **server-side branch protection**, which is now **active**: `main`
+requires the CI `gate` check to pass, requires a PR to merge, and enforces this for admins too
+(`enforce_admins`) — so the gaps the cooperative hook can't cover are closed server-side. The hook's
+own behavior is still pinned by [`tests/guard_test.sh`](tests/guard_test.sh) (the gate).
+
+## Continuous integration
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs the **gate** (the three test suites) plus
+`shellcheck` and a **gitleaks** diff scan on every PR and push to `main`; it is the required status
+check enforced by branch protection. [`.github/workflows/scheduled.yml`](.github/workflows/scheduled.yml)
+re-scans the **full history** for secrets weekly (drift check). GitHub-native **secret scanning +
+push protection** are enabled as a continuous first line. External actions are pinned to full commit
+SHAs and the gitleaks binary is checksum-verified. Because `main` now has a required check, `/close`
+merges via **auto-merge** (`allow_auto_merge`) — GitHub waits for the check, then merges.
 
 ## Deferring to a repo's native workflow
 Because the skills + hook install globally (`~/.claude`), they reach every repo. A repo that already
