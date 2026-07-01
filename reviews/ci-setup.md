@@ -125,6 +125,17 @@ Disposition per Codex design finding (now binding):
   is the *future* real backstop" to "CI enforces the gate; `main` is branch-protected; `/close`
   merges via auto-merge." Small, keeps the system map honest (the lesson from the dev-audit story).
 
+## Decisions (2026-07-01 — correctness re-review, base d1b0445, HEAD 89c9402)
+**Clean — nothing to decide.** Correctness-only re-review (no redesign last round) verified both
+approved fixes complete and correct; **0 findings**. Live: PR #24's `gate` check passed in 11s on the
+reworked `ci.yml`. → `/close` re-review-or-merge fork.
+
+## Codex review (2026-07-01, base d1b0445, HEAD 89c9402) — correctness re-review — CLEAN
+Summary: both fixes complete — gitleaks install+scan is one `pull_request`-scoped step using
+`$RUNNER_TEMP` with checksum verification preserved and no `/usr/local/bin` write; docs tie branch
+protection to the `/close` merge flow rather than the prior already-active wording. **No new
+correctness issues.**
+
 ## Fixes (2026-07-01)
 - **Approach fix** — `ci.yml`: merged the gitleaks install + scan into **one `pull_request`-scoped
   step** using a job-local `$RUNNER_TEMP` dir (binary invoked by full path). Push-to-`main` no longer
