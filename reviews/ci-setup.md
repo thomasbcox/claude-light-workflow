@@ -125,7 +125,23 @@ Disposition per Codex design finding (now binding):
   is the *future* real backstop" to "CI enforces the gate; `main` is branch-protected; `/close`
   merges via auto-merge." Small, keeps the system map honest (the lesson from the dev-audit story).
 
-## Codex approach review (2026-07-01, base main, HEAD d43aa40)
+## Codex review (2026-07-01, base main, HEAD d1b0445) — correctness pass
+Summary: workflows structurally aligned (triggers, minimal permissions, full-SHA checkout pin, PR
+`base..head` gitleaks range, weekly cron; checksum-verify logic present — Codex couldn't recompute the
+hash offline). **Two findings, one root issue:** the docs overclaim Phase-2 branch protection as
+already active.
+
+**IMPORTANT — README overclaims Phase 2 branch protection as active** · `README.md` L84
+- *Claim:* README says server-side branch protection is "now active" and `main` already requires the
+  `gate` check / PR / admin enforcement — but AC4 is Phase 2 (applied at `/close`, not yet). The docs
+  assert a backstop not yet in place.
+- *Suggest:* State that CI + the verified settings are in place and branch protection is applied in
+  Phase 2 (the close/merge flow); only claim `main` is protected once AC4 is applied + read-back verified.
+
+**IMPORTANT — ARCHITECTURE overclaims required branch protection** · `ARCHITECTURE.md` L166 (+ §3.4a)
+- *Claim:* Same issue — "now active" + `enforce_admins=true` stated as current-state before Phase 2.
+- *Suggest:* Reword to "CI exists; branch protection is configured in Phase 2 after the observed check
+  context," moving the required-check / enforce_admins claims to post-AC4 wording.
 Verdict: **shape mostly sound.** Workflows match the minimal-gate + CI-layering intent, permissions
 minimal, full-history checkout, PR gitleaks `base..head` range correct, two-phase protection coherent
 (Phase 2 uses the observed `gate` context). Codex verified runner assumptions vs GitHub docs
