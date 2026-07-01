@@ -125,6 +125,20 @@ Disposition per Codex design finding (now binding):
   is the *future* real backstop" to "CI enforces the gate; `main` is branch-protected; `/close`
   merges via auto-merge." Small, keeps the system map honest (the lesson from the dev-audit story).
 
+## Decisions (2026-07-01, base main, HEAD d1b0445)
+Both passes ran (approach was a minor two-way finding → not a redesign → correctness proceeded).
+Two approved fixes for `/close`:
+- **Approach (gitleaks install scoping) → FIX.** Scope install+scan into one `pull_request`-only
+  block; use a job-local bin (`$RUNNER_TEMP/bin` via `GITHUB_PATH`) instead of a global
+  `/usr/local/bin` write. Removes the spurious download/failure path on push-to-`main`.
+- **Correctness (docs overclaim Phase-2 protection) → FIX.** Reword `README.md` + `ARCHITECTURE.md`
+  so branch protection is described as applied via the `/close` merge flow (Phase 2), not asserted as
+  already-live. `/close` applies Phase-2 protection before the merge, so the reworded docs are true on
+  `main`.
+Both are line-level (not redesigns) → `/close` applies them, re-gates, and reaches the
+re-review-or-merge fork. `/close` also performs **Phase 2**: set branch protection with the observed
+`gate` context (+ `enforce_admins=true`, 0-review PR) before the auto-merge.
+
 ## Codex review (2026-07-01, base main, HEAD d1b0445) — correctness pass
 Summary: workflows structurally aligned (triggers, minimal permissions, full-SHA checkout pin, PR
 `base..head` gitleaks range, weekly cron; checksum-verify logic present — Codex couldn't recompute the
