@@ -86,6 +86,13 @@ reformat, no Markdown row, no README/ARCHITECTURE requirements edit.
 - **Gate wiring:** *deferred to a CI follow-up* (OQ1) — no `tests/shell_lint.sh`, no
   `testCommand` change in this story.
 
+## Codex approach review (2026-07-01, base main, HEAD e3a8a77) — CLEAN
+Verdict: **"I would build this the same way."** The minimal shape is sound: remove the dead
+`install.sh` local, add Shell as one more declarative Table A row, anchor it with the drift-only
+linter. The Shell row matches the six-column convention including the F1 read-only column
+(`shellcheck`, `shfmt -d`), with no gate wiring or test machinery. Deferred CI/gate wiring not
+re-raised. **Zero findings** — shape blessed; correctness pass proceeds this round.
+
 ## Build note (2026-07-01)
 AC → file map:
 - AC1 (remove unused `status` local) → `install.sh`
