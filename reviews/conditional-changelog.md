@@ -67,6 +67,16 @@ ever wanted.
    Part 1 becomes the estate-wide behavior once redeployed. That's intended (every repo respects its
    own convention). Flagging it, not questioning it.
 
+## Codex approach review (2026-07-02, base main, HEAD f8584e6) — CLEAN
+Verdict: **approach is sound.** Coherent declarative record set — `CHANGELOG.md` gated by root
+file-presence, `BACKLOG.md` by a tracked item, commit only when ≥1 record edit exists; the zero-record
+path is first-class ("no record commit, proceed on the already-gated HEAD"). `BACKLOG.md` +
+`workflow-protocol.md` agree — no live doc outside `reviews/` still claims an always-write; both keep
+"records ride with the merge" while allowing no record commit. `CHANGELOG.md` deleted; `AUDIT-` anchor
+preserved; no new config/dependency. **Zero findings** (a minor note that 5(c)/5(d) wording is slightly
+imprecise, "not a merge-shape footgun" — no finding). Correctness proceeds.
+*(Live: PR #26's `gate` passed in 8s.)*
+
 ## Build note (2026-07-02)
 AC → file map:
 - AC1 (conditional CHANGELOG + declarative record set / no empty commit) → `.claude/skills/close/SKILL.md`
