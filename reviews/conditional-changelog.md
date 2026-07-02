@@ -67,6 +67,13 @@ ever wanted.
    Part 1 becomes the estate-wide behavior once redeployed. That's intended (every repo respects its
    own convention). Flagging it, not questioning it.
 
+## Build note (2026-07-02)
+AC → file map:
+- AC1 (conditional CHANGELOG + declarative record set / no empty commit) → `.claude/skills/close/SKILL.md`
+- AC2 (retire this repo's changelog) → `CHANGELOG.md` (deleted)
+- AC3 (docs coherent — changelog optional) → `BACKLOG.md`, `.claude/workflow-protocol.md`
+- AC4 (gate green; `AUDIT-` anchor holds) → verified, no file
+
 ## Scope decision (2026-07-01)
 Thomas: **approve + fix the finding.** Scope = Part 1 (conditional CHANGELOG via file-presence) +
 Part 2 (retire this repo's `CHANGELOG.md` + update `BACKLOG.md`/`workflow-protocol.md`), **plus**
