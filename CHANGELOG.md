@@ -5,6 +5,26 @@ All notable changes to this workflow are recorded here. The format follows
 
 ## [Unreleased]
 
+## [2026-07-01] — ci-setup (PR #24)
+
+### Added
+- **First CI, now that the repo is public.** Two GitHub Actions workflows under `.github/workflows/`:
+  - `ci.yml` — on every PR / push to `main`, runs the **gate** (the three test suites) + `shellcheck`
+    + a **gitleaks diff** scan (install + scan in one `pull_request`-scoped step, job-local dir).
+    The `gate` job is the **required status check**.
+  - `scheduled.yml` — weekly, re-scans the **full history** for secrets (advisory drift check).
+  - External actions pinned to full commit SHAs; the gitleaks binary is checksum-verified; workflows
+    run with minimal `permissions: contents: read`.
+- **Server-side backstop is now real.** `main` is branch-protected (required `gate` check,
+  PR-before-merge, `enforce_admins=true`, `required_approving_review_count=0`), established by `/close`
+  as part of the merge flow. GitHub-native **secret scanning + push protection** and **Dependabot
+  alerts** enabled. `allow_auto_merge=true`, so `/close` merges via **`MODE=auto`** (the OPS-4/5
+  auto-merge path — this PR is its first real use).
+
+### Changed
+- README + `ARCHITECTURE.md` (§3.4a) document the CI + active server-side backstop and the auto-merge
+  path.
+
 ## [2026-07-01] — shell-tooling (PR #23)
 
 ### Fixed

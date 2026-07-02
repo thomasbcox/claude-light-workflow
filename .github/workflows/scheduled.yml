@@ -1,0 +1,36 @@
+name: Scheduled scan
+
+# Weekly drift check: re-scan the FULL history for secrets. Catches leaks that a per-PR diff scan
+# wouldn't (new gitleaks rules, history touched outside the PR path). Advisory — a failed run
+# alerts; it blocks nothing.
+on:
+  schedule:
+    - cron: '17 8 * * 1' # Mondays 08:17 UTC (off the top of the hour, per GitHub guidance)
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  secrets-full-history:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history)
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Install gitleaks (pinned version, checksum-verified)
+        run: |
+          set -euo pipefail
+          ver=8.30.1
+          sha=551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+          url="https://github.com/gitleaks/gitleaks/releases/download/v${ver}/gitleaks_${ver}_linux_x64.tar.gz"
+          curl -fsSL "$url" -o gitleaks.tgz
+          echo "${sha}  gitleaks.tgz" | sha256sum -c -
+          tar -xzf gitleaks.tgz gitleaks
+          install -m 0755 gitleaks /usr/local/bin/gitleaks
+          rm -f gitleaks.tgz gitleaks
+
+      - name: gitleaks — full history (redacted)
+        run: gitleaks git --redact --no-banner

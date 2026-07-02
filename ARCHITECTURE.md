@@ -163,10 +163,31 @@ trips when the **current branch is literally `main` or `master`** and the comman
 - **`env`-wrapped or nested-shell git** (`env git commit …`, `bash -lc "git commit …"`).
 
 The point is to stop a fat-fingered commit while sitting on `main`, not to be an adversarial sandbox.
-The real backstop is **server-side branch protection**; the hook's behavior is pinned by
-[`tests/guard_test.sh`](tests/guard_test.sh), the gate. The `/frame`, `/review`, `/close` rules say
-"never commit/push to base directly" as a rule Claude follows *regardless* of what the hook
+The real backstop is **server-side branch protection** (§3.4a); the hook's behavior is
+pinned by [`tests/guard_test.sh`](tests/guard_test.sh), the gate. The `/frame`, `/review`, `/close`
+rules say "never commit/push to base directly" as a rule Claude follows *regardless* of what the hook
 mechanically catches.
+
+### 3.4a CI and the server-side backstop
+
+The cooperative hook is now backed by an authoritative server-side gate. Two workflows under
+[`.github/workflows/`](.github/workflows/):
+- **`ci.yml`** — on every PR / push to `main`, runs the **gate** (the three test suites) + `shellcheck`
+  + a **gitleaks diff** scan. The `gate` job is a **required status check** on `main`.
+- **`scheduled.yml`** — weekly, re-scans the **full history** for secrets (a drift check for new rules
+  / out-of-band history changes). Advisory.
+
+Branch protection on `main` requires that check, requires a PR to merge, and sets `enforce_admins=true`
+so the operator's own token can't bypass it — closing the local-hook gaps (non-standard base,
+destination-refspec push, `env`-wrapped git) server-side. Approval stays in the loop, not GitHub
+(`required_approving_review_count=0`). `/close` **establishes** this protection as part of the merge
+flow — it reads the CI check's actual context name, applies the protection via `gh api`, then merges.
+Consequently `/close` merges via **auto-merge** (`allow_auto_merge=true`): its preflight resolves to
+`MODE=auto`, and GitHub performs the merge once the required check is green (the OPS-4/5 auto-merge
+path, now the normal route). Supply-chain posture:
+external actions are pinned to full commit SHAs and the gitleaks binary is checksum-verified; workflows
+run with minimal `permissions: contents: read`. GitHub-native **secret scanning + push protection** run
+continuously as a zero-maintenance first line.
 
 ### 3.5 Deferring to a repo's native workflow
 
