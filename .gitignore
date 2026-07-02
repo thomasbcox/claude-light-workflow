@@ -1,2 +1,7 @@
 # Machine-local Claude Code settings (permissions, etc.) — not shared
 .claude/settings.local.json
+
+# Untracked local artifacts — not part of the audit trail:
+#   /dev-audit reports (reviews/audit-<date>.md) + reviewer scratch logs
+reviews/audit-*.md
+reviews/.pluggable-reviewer.*.log
