@@ -67,6 +67,13 @@ ever wanted.
    Part 1 becomes the estate-wide behavior once redeployed. That's intended (every repo respects its
    own convention). Flagging it, not questioning it.
 
+## Fixes (2026-07-02)
+- **5(c)/(d) wording → generalized around the merge candidate.** `close/SKILL.md`: (c) "Re-gate HEAD"
+  (was "Re-gate the record commit"; notes "whether or not a record commit was made"); (d) "Merge the
+  gated HEAD" (was "gated record HEAD"); the two remote-path comments now read "gated HEAD (reviewed/
+  fixed + any release records)" / "approved fixes + any release records". The zero-record path is now
+  consistent end-to-end.
+
 ## Decisions (2026-07-02, base main, HEAD f8584e6)
 Approach clean; one correctness finding approved as **fix** (line-level wording, not a redesign →
 `/close` applies it, then re-review-or-merge fork):

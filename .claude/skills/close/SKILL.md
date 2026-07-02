@@ -59,13 +59,13 @@ Step 3 of the loop. Doctrine: `~/.claude/workflow-protocol.md`.
    - **Commit the record edits — but only if there are any.** If the set above is non-empty, commit it on the feature branch. This record-keeping is **mechanical and rides post-review by design** — it does NOT need its own review round or a separate bookkeeping story (see doctrine: no bookkeeping-only stories). **If the set is empty** (no `CHANGELOG.md` *and* no tracked backlog item), **make no record commit** — proceed to (c)/(d) on the already-gated HEAD; the merge commit + story file are the ship record. (Never create an empty bookkeeping commit.)
    - **Do NOT touch the story header** — it stays `approved`. Declared state only; whether it shipped stays owned by git (the merge commit / PR-`MERGED`), never written into the header. The header is never set to `merged`.
 
-   **(c) Re-gate the record commit.** Re-run `testCommand` against this HEAD; it must be green before push/merge, so the commit `--match-head-commit` ships is the gated one. (Mechanical record edits still get the gate; this needs no new *review* round.)
+   **(c) Re-gate HEAD.** Re-run `testCommand` against this HEAD (whether or not a record commit was made in (b)); it must be green before push/merge, so the commit `--match-head-commit` ships is the gated one. (Any mechanical record edits still get the gate; this needs no new *review* round.)
 
-   **(d) Merge** the gated record HEAD by **dispatching the `MODE` decided in (a)** — no recomputation, no second copy of the policy. The **merge commit** (`merge: <slug>`, with a `Story:` trailer) / the PR's `MERGED` state is the atomic shipped fact and the only ship record — there is no separate tag to write or repair.
+   **(d) Merge** the gated HEAD by **dispatching the `MODE` decided in (a)** — no recomputation, no second copy of the policy. The **merge commit** (`merge: <slug>`, with a `Story:` trailer) / the PR's `MERGED` state is the atomic shipped fact and the only ship record — there is no separate tag to write or repair.
    - **Remote + `gh`:** push, then run the single `gh pr merge` command for `MODE` (the only difference is the `--auto` flag), then poll for `MERGED`:
      ```bash
-     localSha=$(git rev-parse HEAD)                            # the gated record HEAD (reviewed/fixed + release records)
-     git push origin HEAD                                      # PR head = approved fixes + records
+     localSha=$(git rev-parse HEAD)                            # the gated HEAD (reviewed/fixed + any release records)
+     git push origin HEAD                                      # PR head = approved fixes + any release records
      # Run EXACTLY the command for the MODE printed by (a) (--match-head-commit refuses if HEAD
      # drifted from the gated SHA). (a) already aborted every non-mergeable case, so there is no
      # strategy decision here — just dispatch:
