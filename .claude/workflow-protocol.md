@@ -16,7 +16,7 @@ A small, human-controlled development loop. One idea above all:
 ## The loop
 1. **`/frame`** — Thomas states a need → Claude drafts a spec **and a design sketch** on a feature branch → the reviewer design-reviews the sketch (best-practice lens, always-on) → **one consult: Thomas approves scope, ratifies one-way-door decisions, decides best-practice flags** → Claude implements AC-by-AC.
 2. **`/review`** — gate goes green → the **approach pass** (the shape, best-practice lens) gates the **correctness pass** (the diff): one-way-door / major-violation findings block (→ redesign + re-review); minor two-way kludges are advisory; correctness runs only on a shape that cleared approach review → Claude presents the decision menu → **Thomas decides per finding**.
-3. **`/close`** — Claude applies only approved fixes → gate green → re-review (Thomas's call; an accepted redesign always re-reviews) or **Thomas approves merge** → record the release on the branch (CHANGELOG + BACKLOG-Done) → merge + cleanup.
+3. **`/close`** — Claude applies only approved fixes → gate green → re-review (Thomas's call; an accepted redesign always re-reviews) or **Thomas approves merge** → record the release on the branch (CHANGELOG if the repo keeps one, BACKLOG-Done if a tracked item — else nothing beyond the merge commit) → merge + cleanup.
 
 Loop 2 ↔ 3 as many rounds as needed.
 
@@ -36,9 +36,11 @@ This replaces "decide twice." The human is consulted at three design altitudes �
 
 Disposition follows the two tags (reversibility × standing): **one-way door OR a major best-practice violation → block/consult; two-way + minor → advisory/log.** The builder is still never the approver (rule 4) — adding altitudes changes how many altitudes get a decision, never who decides.
 
-> **Records ride with the merge, not after it.** `/close` writes the `CHANGELOG.md` entry and the
-> `BACKLOG.md` Done-move on the feature branch *after* the merge instruction, so they arrive on the
-> base branch as part of the merge commit — never a separate post-merge base write, never speculative
+> **Records ride with the merge, not after it.** `/close` writes any release records — the
+> `CHANGELOG.md` entry *if the repo keeps a changelog*, the `BACKLOG.md` Done-move *if a tracked item
+> was resolved* — on the feature branch *after* the merge instruction, so they arrive on the base
+> branch as part of the merge commit. When neither applies, there is **no record commit** (the merge
+> commit + story file are the ship record). Never a separate post-merge base write, never speculative
 > (a re-review choice never reaches them; the story header is never set to `merged`).
 > **No bookkeeping-only stories:** open a follow-up only for a real defect or a new decision, never
 > solely to reconcile a previous story's records.

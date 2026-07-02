@@ -7,8 +7,10 @@ files, commits, and `reviews/<slug>.md` trails can reference it.
 **Inflows:** items reach this staging area two ways — **hand-authored** here, or **graduated from a
 `/dev-audit` run** as `AUDIT-` findings (only on an explicit instruction). Either way, once a line
 is here it flows out the same path. **Lifecycle:** a line here → `/frame` writes
-`reviews/<slug>.md` (spec + audit trail) → `/review` → `/close`. As part of the merge, `/close` moves the item to **Done** here and
-adds the `CHANGELOG.md` entry *on the feature branch*, so both ride in on the merge commit.
+`reviews/<slug>.md` (spec + audit trail) → `/review` → `/close`. As part of the merge, `/close` moves the item to **Done** here
+*on the feature branch*, so it rides in on the merge commit. (This repo keeps **no `CHANGELOG.md`** —
+the `merge: <slug>` commit + the story file are the ship record; a hand-maintained changelog would be
+a third, drifting copy. `/close` writes a changelog only in repos that keep one.)
 The backlog is the staging area in front of the loop; don't delete a landed item — move it
 to **Done** and reference it as `PR #N / merge: <slug>` (never a raw SHA — derive it with
 `git log <base> --oneline --grep "^merge: <slug>"`). **No bookkeeping-only stories:** records
