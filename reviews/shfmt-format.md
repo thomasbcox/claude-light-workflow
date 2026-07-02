@@ -57,6 +57,14 @@ change and a CI check over all `*.sh` passes once the four are reformatted.
 2. **shfmt install in CI** — pinned checksum-verified **binary** (mirrors gitleaks; smallest trust
    surface) vs a pinned third-party action. **Recommend the binary.**
 
+## Codex approach review (2026-07-01, base main, HEAD 626ed2d) — CLEAN
+Verdict: **sound shape.** The CI addition follows the ratified estate-wide standard — shfmt as a
+pinned, checksum-verified binary (like gitleaks), `-d -i 2 -ci` matching the reformat, running on PR +
+push (not the minimal local gate). No flag-drift concern (centralizing into a script/config would add
+surface without a concrete win); the one-liner reflow is exactly the amended, approved adoption. Codex
+verified `shfmt -d -i 2 -ci` exits clean + `bash -n` clean. **Zero findings** — correctness proceeds.
+*(Live: PR #25's `gate` check passed in 7s — the CI shfmt check validated the reformatted files.)*
+
 ## Build note (2026-07-01)
 AC → file map:
 - AC1 (reformat, `shfmt -w -i 2 -ci`) → `install.sh`, `tests/guard_test.sh`, `tests/reviewer_test.sh`, `tests/dev_audit_test.sh`
