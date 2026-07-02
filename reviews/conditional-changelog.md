@@ -67,6 +67,13 @@ ever wanted.
    Part 1 becomes the estate-wide behavior once redeployed. That's intended (every repo respects its
    own convention). Flagging it, not questioning it.
 
+## Decisions (2026-07-02, base main, HEAD f8584e6)
+Approach clean; one correctness finding approved as **fix** (line-level wording, not a redesign →
+`/close` applies it, then re-review-or-merge fork):
+- **Zero-record path wording (5(c)/(d)) → FIX.** Generalize `close/SKILL.md` step 5(c)/(d) around the
+  merge candidate ("Re-gate HEAD" / "Merge the gated HEAD"; "approved fixes + any release records") so
+  the no-record-commit path is consistent end-to-end — completing the AC1 fix.
+
 ## Codex review (2026-07-02, base main, HEAD f8584e6) — correctness pass
 Summary: file-presence gate ✓, `CHANGELOG.md` deleted ✓, `BACKLOG.md`/`workflow-protocol.md` coherent
 ✓, `AUDIT-` anchor preserved ✓. **One finding** — the zero-record path is only half-worded.
