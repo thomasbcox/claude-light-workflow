@@ -30,44 +30,50 @@ AGENTS="$ROOT/AGENTS.md"
 WF="$ROOT/.claude/workflow.json"
 
 pass=0 fail=0
-ok()   { pass=$((pass+1)); printf '  ok   %s\n' "$1"; }
-bad()  { fail=$((fail+1)); printf 'FAIL  %s\n' "$1"; }
-has()  { grep -qF -- "$3" "$2" && ok "$1" || bad "$1 (missing: $3)"; }
+ok() {
+  pass=$((pass + 1))
+  printf '  ok   %s\n' "$1"
+}
+bad() {
+  fail=$((fail + 1))
+  printf 'FAIL  %s\n' "$1"
+}
+has() { grep -qF -- "$3" "$2" && ok "$1" || bad "$1 (missing: $3)"; }
 absent() { grep -qF -- "$3" "$2" && bad "$1 (should be gone: $3)" || ok "$1"; }
 
 echo "== behavioral: workflow.json reviewer parses to a valid backend =="
 rv=$(/usr/bin/env python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("reviewer",""))' "$WF" 2>/dev/null)
-case "$rv" in codex|llm) ok "reviewer='$rv' is valid";; *) bad "reviewer invalid/absent: '$rv'";; esac
+case "$rv" in codex | llm) ok "reviewer='$rv' is valid" ;; *) bad "reviewer invalid/absent: '$rv'" ;; esac
 
 echo "== drift: resolution rule + override are still documented =="
-has "missing/empty ⇒ codex"        "$REVIEW" "A missing or empty \`reviewer\` field ⇒ \`codex\`"
-has "value set {codex, llm}"        "$REVIEW" "one of \`{codex, llm}\`"
+has "missing/empty ⇒ codex" "$REVIEW" "A missing or empty \`reviewer\` field ⇒ \`codex\`"
+has "value set {codex, llm}" "$REVIEW" "one of \`{codex, llm}\`"
 has "precedence override>config>default" "$REVIEW" "**beats** the default \`codex\`"
-has "override documented"           "$REVIEW" "Reviewer override (bare arg, order-independent)"
+has "override documented" "$REVIEW" "Reviewer override (bare arg, order-independent)"
 
 echo "== drift: the second backend (llm) is a loud stop, not a silent fallback =="
-has "llm stop message"              "$REVIEW" "selected but not wired yet"
-has "no codex fallback"             "$REVIEW" "Do **not** fall back to codex"
-has "frame routes non-codex to stop" "$FRAME"  "if it is \`llm\` (or any non-codex backend), STOP per that section"
+has "llm stop message" "$REVIEW" "selected but not wired yet"
+has "no codex fallback" "$REVIEW" "Do **not** fall back to codex"
+has "frame routes non-codex to stop" "$FRAME" "if it is \`llm\` (or any non-codex backend), STOP per that section"
 
 echo "== drift: codex command tokens still present (presence, not per-block) =="
-has "codex exec -s read-only"       "$REVIEW" "codex exec -s read-only"
-has "approach schema abs path"      "$REVIEW" '--output-schema "$HOME/.claude/skills/review/design-review-schema.json"'
-has "correctness schema abs path"   "$REVIEW" '--output-schema "$HOME/.claude/skills/review/finding-schema.json"'
-has "approach -o repo-relative"     "$REVIEW" "-o reviews/<slug>.approach.json"
-has "correctness -o repo-relative"  "$REVIEW" "-o reviews/<slug>.codex.json"
-has "codexModel passthrough"        "$REVIEW" '${codexModel:+-m "$codexModel"}'
-has "stdin guard </dev/null"        "$REVIEW" "</dev/null"
-has "frame design -o + schema"      "$FRAME"  "-o reviews/<slug>.design.json"
+has "codex exec -s read-only" "$REVIEW" "codex exec -s read-only"
+has "approach schema abs path" "$REVIEW" '--output-schema "$HOME/.claude/skills/review/design-review-schema.json"'
+has "correctness schema abs path" "$REVIEW" '--output-schema "$HOME/.claude/skills/review/finding-schema.json"'
+has "approach -o repo-relative" "$REVIEW" "-o reviews/<slug>.approach.json"
+has "correctness -o repo-relative" "$REVIEW" "-o reviews/<slug>.codex.json"
+has "codexModel passthrough" "$REVIEW" '${codexModel:+-m "$codexModel"}'
+has "stdin guard </dev/null" "$REVIEW" "</dev/null"
+has "frame design -o + schema" "$FRAME" "-o reviews/<slug>.design.json"
 
 echo "== drift: reviewer role language stays tool-neutral =="
-has "approach prompt neutral"       "$REVIEW" "You are the independent reviewer doing an APPROACH review"
-has "correctness prompt neutral"    "$REVIEW" "You are the independent reviewer defined in AGENTS.md"
-has "design prompt neutral"         "$FRAME"  "You are the independent reviewer doing a DESIGN review"
-absent "no 'You are Codex' (review)"  "$REVIEW" "You are Codex"
-absent "no 'You are Codex' (frame)"   "$FRAME"  "You are Codex"
-absent "no 'have Codex' role phrase"  "$REVIEW" "have Codex"
-has "AGENTS.md neutral title"       "$AGENTS" "independent reviewer contract"
+has "approach prompt neutral" "$REVIEW" "You are the independent reviewer doing an APPROACH review"
+has "correctness prompt neutral" "$REVIEW" "You are the independent reviewer defined in AGENTS.md"
+has "design prompt neutral" "$FRAME" "You are the independent reviewer doing a DESIGN review"
+absent "no 'You are Codex' (review)" "$REVIEW" "You are Codex"
+absent "no 'You are Codex' (frame)" "$FRAME" "You are Codex"
+absent "no 'have Codex' role phrase" "$REVIEW" "have Codex"
+has "AGENTS.md neutral title" "$AGENTS" "independent reviewer contract"
 absent "AGENTS.md drops 'You are Codex'" "$AGENTS" "You are **Codex**"
 
 echo "== drift: frame bootstrap seeds the reviewer field =="

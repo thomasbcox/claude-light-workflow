@@ -29,7 +29,7 @@ ARTIFACTS=(
 )
 
 src_commit() { git -C "$SRC" rev-parse HEAD 2>/dev/null || echo "unknown"; }
-src_dirty()  {
+src_dirty() {
   if git -C "$SRC" rev-parse --git-dir >/dev/null 2>&1; then
     [ -n "$(git -C "$SRC" status --porcelain 2>/dev/null)" ] && echo true || echo false
   else
@@ -43,18 +43,26 @@ src_dirty()  {
 #   HAND-EDITED — matches neither current repo nor the manifest commit (local edits a
 #                 re-install would destroy).
 #   UNCLASSIFIED — no usable recorded commit.
-classify_drift() {  # args: <src-rel> <dest-path> <commit>
+classify_drift() { # args: <src-rel> <dest-path> <commit>
   local srcrel="$1" destpath="$2" commit="$3" tmp
-  if [ -z "$commit" ] || [ "$commit" = "unknown" ]; then echo "UNCLASSIFIED"; return; fi
+  if [ -z "$commit" ] || [ "$commit" = "unknown" ]; then
+    echo "UNCLASSIFIED"
+    return
+  fi
   # The recorded commit must be resolvable in THIS checkout, else we can't compare the deployed
   # copy against it — report UNCLASSIFIED rather than guessing HAND-EDITED (a false "you'll lose
   # local edits" alarm). This covers a SHA absent from this clone (e.g. another machine's commit).
-  if ! git -C "$SRC" cat-file -e "$commit^{tree}" 2>/dev/null; then echo "UNCLASSIFIED"; return; fi
+  if ! git -C "$SRC" cat-file -e "$commit^{tree}" 2>/dev/null; then
+    echo "UNCLASSIFIED"
+    return
+  fi
   tmp="$(mktemp -d)"
   # If the recorded commit resolves but its archive/extract for this path fails, we still have no
   # ground truth to compare against — UNCLASSIFIED, not HAND-EDITED.
   if ! git -C "$SRC" archive "$commit" -- "$srcrel" 2>/dev/null | tar -x -C "$tmp" 2>/dev/null; then
-    rm -rf "$tmp"; echo "UNCLASSIFIED"; return
+    rm -rf "$tmp"
+    echo "UNCLASSIFIED"
+    return
   fi
   if diff -rq "$DEST/$destpath" "$tmp/$srcrel" >/dev/null 2>&1; then
     echo "STALE"
@@ -70,13 +78,15 @@ DRIFT_COUNT=0
 HANDEDIT_COUNT=0
 scan() {
   local show_insync="$1" rec_commit="" rec_dirty="" rec_time="" cur
-  DRIFT_COUNT=0; HANDEDIT_COUNT=0
+  DRIFT_COUNT=0
+  HANDEDIT_COUNT=0
   cur="$(src_commit)"
   if [ -f "$MANIFEST" ]; then
     rec_commit="$(jq -r '.sourceCommit // "unknown"' "$MANIFEST" 2>/dev/null || echo unknown)"
-    rec_dirty="$(jq -r '.dirty // false'        "$MANIFEST" 2>/dev/null || echo false)"
-    rec_time="$(jq -r '.installedAt // "?"'     "$MANIFEST" 2>/dev/null || echo '?')"
-    local dnote=""; [ "$rec_dirty" = "true" ] && dnote=" (dirty tree)"
+    rec_dirty="$(jq -r '.dirty // false' "$MANIFEST" 2>/dev/null || echo false)"
+    rec_time="$(jq -r '.installedAt // "?"' "$MANIFEST" 2>/dev/null || echo '?')"
+    local dnote=""
+    [ "$rec_dirty" = "true" ] && dnote=" (dirty tree)"
     echo "  provenance: deployed from ${rec_commit}${dnote} at ${rec_time}"
     if [ "$rec_commit" = "$cur" ]; then
       echo "              ↳ matches repo HEAD (${cur})"
@@ -88,10 +98,12 @@ scan() {
   fi
   local entry srcrel destpath cls
   for entry in "${ARTIFACTS[@]}"; do
-    srcrel="${entry%%::*}"; destpath="${entry##*::}"
+    srcrel="${entry%%::*}"
+    destpath="${entry##*::}"
     if [ ! -e "$DEST/$destpath" ]; then
       echo "  DRIFT  $destpath — MISSING from deployment"
-      DRIFT_COUNT=$((DRIFT_COUNT+1)); continue
+      DRIFT_COUNT=$((DRIFT_COUNT + 1))
+      continue
     fi
     if diff -rq "$SRC/$srcrel" "$DEST/$destpath" >/dev/null 2>&1; then
       [ "$show_insync" = "1" ] && echo "  IN SYNC  $destpath"
@@ -102,11 +114,11 @@ scan() {
       else
         echo "  DRIFT  $destpath — $cls"
       fi
-      DRIFT_COUNT=$((DRIFT_COUNT+1))
-      [ "$cls" = "HAND-EDITED" ] && HANDEDIT_COUNT=$((HANDEDIT_COUNT+1))
+      DRIFT_COUNT=$((DRIFT_COUNT + 1))
+      [ "$cls" = "HAND-EDITED" ] && HANDEDIT_COUNT=$((HANDEDIT_COUNT + 1))
     fi
   done
-  return 0   # status comes from DRIFT_COUNT, never the loop's last short-circuited test
+  return 0 # status comes from DRIFT_COUNT, never the loop's last short-circuited test
 }
 
 do_check() {
@@ -123,11 +135,15 @@ do_check() {
 
 write_manifest() {
   local commit dirty ts arts artjson
-  commit="$(src_commit)"; dirty="$(src_dirty)"; ts="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-  arts=(); local entry; for entry in "${ARTIFACTS[@]}"; do arts+=("${entry##*::}"); done
+  commit="$(src_commit)"
+  dirty="$(src_dirty)"
+  ts="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  arts=()
+  local entry
+  for entry in "${ARTIFACTS[@]}"; do arts+=("${entry##*::}"); done
   artjson="$(printf '%s\n' "${arts[@]}" | jq -R . | jq -s .)"
   jq -n --arg c "$commit" --argjson d "$dirty" --arg t "$ts" --argjson a "$artjson" \
-    '{sourceCommit: $c, dirty: $d, installedAt: $t, artifacts: $a}' > "$MANIFEST"
+    '{sourceCommit: $c, dirty: $d, installedAt: $t, artifacts: $a}' >"$MANIFEST"
   echo "→ manifest stamped: $commit$([ "$dirty" = true ] && echo ' (dirty)') @ $ts"
 }
 
@@ -150,7 +166,8 @@ do_install() {
   echo "→ deploying ${#ARTIFACTS[@]} artifacts (hard-overwrite)"
   local entry srcrel destpath
   for entry in "${ARTIFACTS[@]}"; do
-    srcrel="${entry%%::*}"; destpath="${entry##*::}"
+    srcrel="${entry%%::*}"
+    destpath="${entry##*::}"
     mkdir -p "$(dirname "$DEST/$destpath")"
     rm -rf "${DEST:?}/$destpath"
     cp -R "$SRC/$srcrel" "$DEST/$destpath"
@@ -159,7 +176,7 @@ do_install() {
 
   echo "→ wiring guard hook into $DEST/settings.json (merge, idempotent)"
   local HOOK_CMD="$DEST/hooks/block-main-writes.sh" tmp
-  [ -f "$DEST/settings.json" ] || echo '{}' > "$DEST/settings.json"
+  [ -f "$DEST/settings.json" ] || echo '{}' >"$DEST/settings.json"
   # Back up once per run, then merge the hook entry only if absent.
   cp "$DEST/settings.json" "$DEST/settings.json.bak"
   tmp="$(mktemp)"
@@ -169,7 +186,7 @@ do_install() {
     then .
     else .hooks.PreToolUse += [{ "matcher": "Bash", "hooks": [{ "type": "command", "command": $cmd }] }]
     end
-  ' "$DEST/settings.json" > "$tmp" && mv "$tmp" "$DEST/settings.json"
+  ' "$DEST/settings.json" >"$tmp" && mv "$tmp" "$DEST/settings.json"
 
   write_manifest
 
@@ -181,6 +198,9 @@ do_install() {
 
 case "${1:-}" in
   --check) do_check ;;
-  "")      do_install ;;
-  *)       echo "usage: $0 [--check]" >&2; exit 2 ;;
+  "") do_install ;;
+  *)
+    echo "usage: $0 [--check]" >&2
+    exit 2
+    ;;
 esac

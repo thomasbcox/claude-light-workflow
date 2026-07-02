@@ -25,6 +25,20 @@ jobs:
       - name: ShellCheck (tracked *.sh; preinstalled on ubuntu runners)
         run: shellcheck --severity=warning $(git ls-files '*.sh')
 
+      # Format check. Runs on every event (unlike the gitleaks step) — formatting is cheap and
+      # meaningful on both PR and push. shfmt isn't on the runner image, so install it pinned +
+      # checksum-verified into the job-local temp dir. FLAGS MUST MATCH the one-time reformat: -i 2 -ci.
+      - name: shfmt (format check — tracked *.sh)
+        run: |
+          set -euo pipefail
+          ver=v3.13.1
+          sha=fb096c5d1ac6beabbdbaa2874d025badb03ee07929f0c9ff67563ce8c75398b1
+          url="https://github.com/mvdan/sh/releases/download/${ver}/shfmt_${ver}_linux_amd64"
+          curl -fsSL "$url" -o "$RUNNER_TEMP/shfmt"
+          echo "${sha}  $RUNNER_TEMP/shfmt" | sha256sum -c -
+          chmod +x "$RUNNER_TEMP/shfmt"
+          "$RUNNER_TEMP/shfmt" -d -i 2 -ci $(git ls-files '*.sh')
+
       # Install + scan in one PR-scoped block: the install only happens when the scan will run
       # (push-to-main skips it entirely), and the binary lives in the job-local temp dir — no
       # global runner write, no download/failure path on events that don't scan.

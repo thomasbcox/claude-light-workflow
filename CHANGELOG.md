@@ -5,6 +5,17 @@ All notable changes to this workflow are recorded here. The format follows
 
 ## [Unreleased]
 
+## [2026-07-01] — shfmt-format (PR #25)
+
+### Added
+- **`shfmt` format enforcement in CI.** The four tracked shell files are reformatted to canonical
+  `shfmt -i 2 -ci` (semantics-preserving — `bash -n` clean, gate green), and `ci.yml` gains a
+  `shfmt -d -i 2 -ci` check over tracked `*.sh` (pinned `v3.13.1` binary, checksum-verified,
+  job-local temp, runs every event). shfmt stays in CI, not the minimal local gate — consistent with
+  `shellcheck`.
+- Part of an **estate-wide shell standard** (recorded in Thomas's global config): `shellcheck` for
+  correctness + `shfmt -i 2 -ci` for format, both CI-enforced, across all his repos.
+
 ## [2026-07-01] — ci-setup (PR #24)
 
 ### Added
