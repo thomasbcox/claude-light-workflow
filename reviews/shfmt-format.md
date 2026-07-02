@@ -57,6 +57,12 @@ change and a CI check over all `*.sh` passes once the four are reformatted.
 2. **shfmt install in CI** — pinned checksum-verified **binary** (mirrors gitleaks; smallest trust
    surface) vs a pinned third-party action. **Recommend the binary.**
 
+## Build note (2026-07-01)
+AC → file map:
+- AC1 (reformat, `shfmt -w -i 2 -ci`) → `install.sh`, `tests/guard_test.sh`, `tests/reviewer_test.sh`, `tests/dev_audit_test.sh`
+- AC3 (CI `shfmt -d -i 2 -ci` step, pinned+checksum) → `.github/workflows/ci.yml`
+- AC4 (local gate untouched) → verified by `.claude/workflow.json` unchanged (no file in diff)
+
 ## Scope decision (2026-07-01)
 Thomas: **approve with recommended defaults** — scope as written; flags **`-i 2 -ci`**; shfmt in CI
 as a **pinned, checksum-verified binary** (mirrors gitleaks). Clean design pass (no Codex findings,
