@@ -67,6 +67,19 @@ ever wanted.
    Part 1 becomes the estate-wide behavior once redeployed. That's intended (every repo respects its
    own convention). Flagging it, not questioning it.
 
+## Codex review (2026-07-02, base main, HEAD f8584e6) — correctness pass
+Summary: file-presence gate ✓, `CHANGELOG.md` deleted ✓, `BACKLOG.md`/`workflow-protocol.md` coherent
+✓, `AUDIT-` anchor preserved ✓. **One finding** — the zero-record path is only half-worded.
+
+**IMPORTANT — Zero-record path still assumes a record commit in later step wording** ·
+`close/SKILL.md` step 5(c)/(d)
+- *Claim:* Step 5(b) now correctly makes **no** record commit when there's no `CHANGELOG.md` and no
+  tracked item, but step 5(c) still says "Re-gate **the record commit**" and 5(d) calls the merge
+  target the "**gated record HEAD**" / "approved fixes **+ records**". In the zero-record case that HEAD
+  contains no release records — internally inconsistent on the exact edge AC1 introduced.
+- *Suggest:* Generalize 5(c)/(d) around the merge candidate: "Re-gate **HEAD**" / "Merge the **gated
+  HEAD**"; change the remote comments to "approved fixes **+ any release records**".
+
 ## Codex approach review (2026-07-02, base main, HEAD f8584e6) — CLEAN
 Verdict: **approach is sound.** Coherent declarative record set — `CHANGELOG.md` gated by root
 file-presence, `BACKLOG.md` by a tracked item, commit only when ≥1 record edit exists; the zero-record
