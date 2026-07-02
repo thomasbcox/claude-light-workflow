@@ -57,6 +57,17 @@ change and a CI check over all `*.sh` passes once the four are reformatted.
 2. **shfmt install in CI** — pinned checksum-verified **binary** (mirrors gitleaks; smallest trust
    surface) vs a pinned third-party action. **Recommend the binary.**
 
+## Decisions (2026-07-01, base main, HEAD 626ed2d)
+**Both passes clean — nothing to decide.** Approach: 0 findings (shape blessed). Correctness: 0
+findings (reformat verified exactly `shfmt -i 2 -ci` output, semantics-preserving; CI step correct;
+gate untouched). → `/close` re-review-or-merge fork.
+
+## Codex review (2026-07-01, base main, HEAD 626ed2d) — correctness pass — CLEAN
+Summary: **clean.** The four files are exactly `shfmt -i 2 -ci` output from their main versions;
+`shfmt -d -i 2 -ci $(git ls-files '*.sh')` empty; `bash -n` clean. CI step uses pinned `v3.13.1`, the
+`fb096c5d…` checksum, `sha256sum -c`, `$RUNNER_TEMP`, matching `-i 2 -ci`. `.claude/workflow.json`
+unchanged. **Zero findings.**
+
 ## Codex approach review (2026-07-01, base main, HEAD 626ed2d) — CLEAN
 Verdict: **sound shape.** The CI addition follows the ratified estate-wide standard — shfmt as a
 pinned, checksum-verified binary (like gitleaks), `-d -i 2 -ci` matching the reformat, running on PR +
