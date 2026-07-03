@@ -62,6 +62,8 @@ has "arch review reuses design lens" "$SKILL" "design-review-schema.json"
 has "read-only/check-mode column" "$SKILL" "Read-only / check mode"
 has "Table A Shell row (OPS-10)" "$SKILL" "Shell — \`*.sh\`"
 has "Shell row read-only shfmt -d" "$SKILL" "\`shfmt -d\`"
+has "Table A Markdown row" "$SKILL" "Markdown / docs — \`*.md\`"
+has "Markdown link-check advisory" "$SKILL" "link check is advisory"
 
 echo "== AC1/AC4: declarative classification matrix (tier+risk+flags in one table) =="
 has "Table B classification matrix" "$SKILL" "Table B — classification matrix"
