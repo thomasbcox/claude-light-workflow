@@ -48,6 +48,12 @@ Small completeness addition to the declarative table.
 2. **Caveat placement** — inline in the read-only cell (recommended, keeps it in the table) vs a
    note under the table (like the architecture-review note). **Recommend inline.**
 
+## Codex approach review (2026-07-02, base main, HEAD b034ba5) — CLEAN
+Verdict: **sound.** Minimal declarative shape — one Markdown/docs row + drift-linter anchors matching
+the Shell-row convention; the lychee caveat stays inline where the read-only invocation lives; no
+dependency, CI gate, behavioral branch, or docs-specific mechanism introduced. **Zero findings** —
+correctness proceeds. *(Live: PR #28 `gate` passed in 9s.)*
+
 ## Build note (2026-07-02)
 AC → file map:
 - AC1 (Markdown/docs Table A row) → `.claude/skills/dev-audit/SKILL.md`
