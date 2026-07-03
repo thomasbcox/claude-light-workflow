@@ -48,6 +48,16 @@ Small completeness addition to the declarative table.
 2. **Caveat placement** — inline in the read-only cell (recommended, keeps it in the table) vs a
    note under the table (like the architecture-review note). **Recommend inline.**
 
+## Decisions (2026-07-02, base main, HEAD b034ba5)
+**Both passes clean — nothing to decide.** Approach: 0 findings; correctness: 0 findings (row columns,
+marker, tools, advisory caveat, and linter anchors all verified). → `/close` re-review-or-merge fork.
+
+## Codex review (2026-07-02, base main, HEAD b034ba5) — correctness pass — CLEAN
+Summary: **clean.** The Markdown/docs row has the expected 6 columns, `*.md` marker,
+`markdownlint` + `lychee`, inline advisory/network caveat in the read-only cell, and `—` for
+dep-scan / SAST / test-runner; the drift linter anchors the row + caveat with the Shell-row `has`
+pattern. **Zero findings.**
+
 ## Codex approach review (2026-07-02, base main, HEAD b034ba5) — CLEAN
 Verdict: **sound.** Minimal declarative shape — one Markdown/docs row + drift-linter anchors matching
 the Shell-row convention; the lychee caveat stays inline where the read-only invocation lives; no
