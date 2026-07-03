@@ -48,6 +48,11 @@ Small completeness addition to the declarative table.
 2. **Caveat placement** — inline in the read-only cell (recommended, keeps it in the table) vs a
    note under the table (like the architecture-review note). **Recommend inline.**
 
+## Build note (2026-07-02)
+AC → file map:
+- AC1 (Markdown/docs Table A row) → `.claude/skills/dev-audit/SKILL.md`
+- AC2 (drift-linter anchor for the row + advisory caveat) → `tests/dev_audit_test.sh`
+
 ## Scope decision (2026-07-02)
 Thomas: **approve with recommended defaults** — scope as written; link checker = `lychee`; caveat
 inline in the read-only cell. Clean design pass (no findings, no one-way doors) — scope nod only.
