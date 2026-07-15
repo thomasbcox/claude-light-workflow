@@ -258,5 +258,28 @@ existing *Deployment & tooling improvements* section, framed as reviewer-tooling
 committed work. **Open question 2 (section placement) is therefore moot** — there is no new section.
 If a *second* parked enhancement ever appears, that is the signal to revisit the taxonomy, designed
 from two data points rather than one.
+
+## Build note (2026-07-15)
+
+| AC | Where it landed |
+|---|---|
+| AC1 — correctness bullet names the hidden-failure offenders | `AGENTS.md` — `**Hidden failure:**`, nested under the existing **Correctness** bullet |
+| AC2 — design bullet frames hiding failure as a shape flaw | `AGENTS.md` — `**Hiding failure is a shape flaw…**`, nested under the existing **Design / approach** bullet |
+| AC3 — tightness (one bullet per altitude, no new section, no meta-prose) | `AGENTS.md` — constraint, not a location; the two nested bullets above are the whole addition |
+| AC4 — option B filed with shape + trigger + boundary | `BACKLOG.md` — `OPS-11`, under *Deployment & tooling improvements*, after `OPS-9` |
+| AC5 — two drift assertions, one per altitude | `tests/reviewer_test.sh` — new `== drift: the hidden-failure lens is named at both altitudes ==` group |
+| AC6 — gate green | no file — the configured `testCommand` |
+| AC7 — scope containment | no file — `git diff --name-only main...HEAD` |
+
+**Nesting note (AC1/AC2).** Both bullets are **nested sub-bullets** under the two existing
+altitude bullets in *Your role*, rather than new top-level entries. That list is structured as
+*one bullet per altitude* ("what to hunt, here"); a third top-level bullet would have had no
+altitude to belong to, and a new heading was ruled out by AC3. Nesting keeps each addition
+visibly scoped to the altitude that owns it — which is the whole point of the change, since the
+offender straddles both.
+
+**No `install.sh` change (by design).** `AGENTS.md::workflow-AGENTS-template.md` is already in
+`ARTIFACTS` (`install.sh:28`), so this repo's contract *is* the template `/frame` copies into new
+repos. Both bullets propagate estate-wide on the next install with no deploy-set edit.
 </content>
 </invoke>
