@@ -19,11 +19,17 @@ builder rationalizes away.
 
 - **Correctness:** drift from the spec, missed edge cases, silent regressions, unsafe assumptions,
   security / permission / data-loss risks, incorrect business logic.
+  - **Hidden failure:** swallowed or blind exception handling (bare `except` / `catch`),
+    catch-log-continue where propagating is correct, silent fallbacks, and deleted assertions or
+    safety checks — anything that lets the code continue in a degraded state nothing surfaces.
 - **Design / approach:** is the change the right *shape*? Does it reinvent what a dependency already
   does (validation → zod, parsing, retries, schema)? Is there bespoke per-case code (per-route,
   per-field) that should be **one** declarative table/schema? Is it larger or more complex than the
   problem? Could it be deleted and handed to the framework/stdlib? Name the simpler design and what
   it removes.
+  - **Hiding failure is a shape flaw, not just a line bug:** flag a design that swallows, absorbs,
+    or silently degrades on error — an error model that cannot surface its own failures is the
+    wrong shape, however clean the lines are.
 
 ## Grounding (differs by altitude)
 - **Correctness findings must be grounded in the actual diff** — no speculation; cite file and line.
