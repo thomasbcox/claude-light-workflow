@@ -281,5 +281,32 @@ offender straddles both.
 **No `install.sh` change (by design).** `AGENTS.md::workflow-AGENTS-template.md` is already in
 `ARTIFACTS` (`install.sh:28`), so this repo's contract *is* the template `/frame` copies into new
 repos. Both bullets propagate estate-wide on the next install with no deploy-set edit.
+
+## Codex approach review (2026-07-15, base main, HEAD 568e143)
+
+**Verdict:** *"The implementation has a sound, proportionate shape and matches how I would satisfy
+the acceptance criteria: two tightly scoped contract bullets, one declarative OPS-11 roadmap entry,
+and two presence-only drift assertions. It adds no dependency, backend, schema, parser, helper, or
+redundant framework machinery. The relevant reviewer linter passes all 27 checks. The full gate
+could not run in this read-only review sandbox because guard tests require temporary directories;
+that is an environment limitation, not an approach concern."*
+
+**Findings: none** (empty `findings` array). The shape is **blessed** — it cleared approach review.
+
+Two notes on the verdict:
+
+- **The sandbox gate remark is not a finding.** The reviewer runs `-s read-only` and the guard suite
+  needs temp dirs, so it could only run the reviewer linter (27/27). The full gate is green
+  locally *and* server-side — CI's `gate` job passed on this HEAD (PR #29). Nothing to action.
+- **Dogfooding:** this pass read the *new* `AGENTS.md` from the working tree, so the hidden-failure
+  lens was applied to the change that introduces it. It found no failure-hiding shape here — which
+  is the expected answer for a docs/contract change with no runtime error paths, not evidence the
+  wording bites. The first real test of the lens is the next story with actual error handling in it.
+
+**Pass scope this round:** approach **only**, per Thomas's explicit `/review approach only`
+instruction. Step 7's default (a clean approach pass flows straight into the correctness pass in the
+same round) was **overridden by the human**, who is the decider. The correctness pass has **not**
+run against this branch — the lines are unreviewed. The step-7 invariant holds either way: the shape
+has cleared approach review, so correctness may run whenever Thomas calls it.
 </content>
 </invoke>
