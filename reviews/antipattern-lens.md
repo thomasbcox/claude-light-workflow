@@ -308,5 +308,44 @@ instruction. Step 7's default (a clean approach pass flows straight into the cor
 same round) was **overridden by the human**, who is the decider. The correctness pass has **not**
 run against this branch — the lines are unreviewed. The step-7 invariant holds either way: the shape
 has cleared approach review, so correctness may run whenever Thomas calls it.
+
+## Codex review (2026-07-15, base main, HEAD 8935efb)
+
+**Summary:** *"The implementation satisfies the substantive acceptance criteria, but the branch
+violates the spec's explicit scope-containment criterion by adding an unlisted approach-review
+artifact."*
+
+**Base note:** run with base `main`, not the last-reviewed SHA. Step 5's "re-review → last-reviewed
+SHA" governs *a re-review that verifies approved fixes*; this is instead the deferred second half of
+the **first** review (no fixes exist — the approach pass was clean), so the lines had never been
+reviewed against `main`.
+
+### BLOCKER
+
+**1. Approach artifact violates scope containment** · *`reviews/antipattern-lens.approach.json:1`*
+
+- **Claim:** the file is added by the branch, but AC7 permits only `AGENTS.md`, `BACKLOG.md`,
+  `tests/reviewer_test.sh`, `reviews/antipattern-lens.md`, and `reviews/antipattern-lens.design.json`.
+  The six-file diff therefore directly violates an acceptance criterion.
+- **Suggestion:** *"Either remove this artifact before merge or amend AC7 to explicitly exempt the
+  workflow-generated design, approach, and correctness review artifacts, consistent with the
+  convention documented in reviews/pluggable-reviewer.md."*
+
+**The finding is correct, and the cited precedent was verified.** `reviews/pluggable-reviewer.md:78`
+words its own scope AC as: *"the diff touches only the files this story enumerates, **plus** the
+workflow's own `reviews/pluggable-reviewer.*` trail artifacts (the story file + the
+design/approach/correctness …)"*. AC7 here enumerated the frame-time artifact (`.design.json`) but
+omitted the review-time artifacts (`.approach.json`, `.codex.json`) that `/review` steps 6 and 8
+**mandate** committing — a drafting error that deviated from the repo's established convention.
+
+**This is a spec defect, not an implementation defect, and it is structural rather than incidental.**
+AC7 as written is **unsatisfiable by any story that passes through `/review`**: committing this very
+review's `.codex.json` takes the diff to **seven** files, violating it again. Deleting the artifacts
+is not an option — the skill requires them and they are the audit trail. The substantive ACs
+(AC1–AC6) are unaffected; the reviewer explicitly confirms they are satisfied.
+
+**Division of labour, observed:** the approach pass passed this branch clean and the correctness
+pass caught this — correctly. A miswritten AC is a spec-conformance defect in the lines, not a flaw
+in the shape. Each altitude found what it is for.
 </content>
 </invoke>
