@@ -347,5 +347,38 @@ is not an option — the skill requires them and they are the audit trail. The s
 **Division of labour, observed:** the approach pass passed this branch clean and the correctness
 pass caught this — correctly. A miswritten AC is a spec-conformance defect in the lines, not a flaw
 in the shape. Each altitude found what it is for.
+
+## Decisions (2026-07-15)
+
+Covers both passes of this review round.
+
+**Approach pass (base main, HEAD 568e143) — clean.** Empty `findings` array; no dispositions
+required. The shape is **blessed**. Nothing was deferred or rejected, so nothing here is barred from
+a future round.
+
+**Correctness pass (base main, HEAD 8935efb) — 1 BLOCKER.**
+
+| Finding | Severity | Thomas's call |
+|---|---|---|
+| Approach artifact violates scope containment (`reviews/antipattern-lens.approach.json`) | BLOCKER | **FIX** — *"Fix — amend AC7 to the existing convention"* |
+
+**Approved fix, precisely scoped** (binding on `/close` — implement this and nothing else):
+
+Reword **AC7** to match the convention already documented at `reviews/pluggable-reviewer.md:78` —
+the diff touches only `AGENTS.md`, `BACKLOG.md`, `tests/reviewer_test.sh`, **plus** the workflow's
+own `reviews/antipattern-lens.*` trail artifacts (the story file + the design / approach /
+correctness review outputs).
+
+Notes binding the fix:
+
+- **Root cause is the spec, not the code.** AC1–AC6 are satisfied and untouched by this fix. No
+  product file changes: the edit is confined to AC7's wording in this story file.
+- **Codex's alternative — deleting the artifacts — was explicitly rejected.** `/review` steps 6 and
+  8 mandate committing `.approach.json` / `.codex.json`, and they are the audit trail. Deleting them
+  would break the skill's contract to satisfy a miswritten AC.
+- **The `## Test notes` entry for AC7 needs no change** — it already reads "verify no files appear
+  beyond those the AC enumerates," which stays correct once the AC enumerates the trail artifacts.
+- **Not a redesign.** This is a spec-conformance fix, not an approach/shape change, so `/close`'s
+  step-4 fork is the ordinary *re-review or merge* choice — not the redesign-forces-re-review path.
 </content>
 </invoke>
