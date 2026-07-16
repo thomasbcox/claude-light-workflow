@@ -323,3 +323,34 @@ behaviorally meaningful precisely because the doctrine is generic and deployed t
 review other apps; *this* repo (where the app under review **is** the workflow) is the one place the
 two coincide, which is how the slip happened. The approach pass could not catch this — it is a
 line-level word choice, not a shape flaw; the correctness pass is exactly the altitude for it.
+
+## Decisions (2026-07-16)
+
+Covers both passes of this round.
+
+**Approach pass (base main, HEAD 376bef9) — clean.** Empty `findings`; no dispositions. Shape
+**blessed**. Nothing deferred/rejected, so nothing barred from a future round.
+
+**Correctness pass (base main, HEAD 376bef9) — 1 IMPORTANT.**
+
+| Finding | Severity | Thomas's call |
+|---|---|---|
+| Recommendation grounding names the workflow instead of the app (`.claude/workflow-protocol.md:39`) | IMPORTANT | **FIX** |
+
+**Approved fix, precisely scoped** (binding on `/close` — implement this and nothing else):
+
+In `.claude/workflow-protocol.md:39`, change *"the purpose of the workflow"* to **"the purpose of the
+app under review."** The `## Consult model` line is the only edit. Thomas chose this phrasing (logged
+sub-choice) over the literal AC1 *"the purpose of the app"*: it satisfies AC1 while removing the
+app-vs-workflow ambiguity that caused the defect — the doctrine is read in repos where the two
+differ, so naming *"under review"* is the durable disambiguation.
+
+Notes binding the fix:
+- **Doc-only, spec-conformance.** No product code, no schema, no skill-step logic changes. AC1–AC8
+  are otherwise satisfied; only this word choice contradicted the spec.
+- **Not a redesign.** A line-level wording fix, so `/close`'s step-4 fork is the ordinary *re-review
+  or merge* choice — not the redesign-forces-re-review path.
+- **This finding is the first live exercise of the rule this story adds.** It was surfaced by the
+  correctness pass and presented via the new consult-presentation rule (cost + risk per disposition;
+  recommendation grounded in severity + claim, per the step-9 grounding this story installs). The
+  rule bit on its own change.
