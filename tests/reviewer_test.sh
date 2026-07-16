@@ -76,6 +76,10 @@ absent "no 'have Codex' role phrase" "$REVIEW" "have Codex"
 has "AGENTS.md neutral title" "$AGENTS" "independent reviewer contract"
 absent "AGENTS.md drops 'You are Codex'" "$AGENTS" "You are **Codex**"
 
+echo "== drift: the hidden-failure lens is named at both altitudes =="
+has "correctness names hidden failure" "$AGENTS" "**Hidden failure:**"
+has "design names failure-hiding as a shape flaw" "$AGENTS" "Hiding failure is a shape flaw"
+
 echo "== drift: frame bootstrap seeds the reviewer field =="
 has "bootstrap seeds reviewer=codex" "$FRAME" '"reviewer": "codex"'
 

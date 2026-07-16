@@ -47,6 +47,41 @@ permissions, or other recognized skill keys. As of 2026-06-12 all carry only
 `name` + `description` (`dev-audit` followed the same convention when added); nothing is strictly
 missing, so this is an evaluate-and-decide item, not a known gap. (Logged 2026-06-12 alongside BUG-4.)
 
+OPS-11 — **Evaluate** a dedicated anti-pattern / weak-error-handling review pass ("option B"). Like
+OPS-9 this is an **evaluate-and-decide** item, not committed work: the `antipattern-lens` story
+([reviews/antipattern-lens.md](reviews/antipattern-lens.md)) deliberately took the cheap half —
+naming hidden failure in `AGENTS.md` at both altitudes — and **parked** the dedicated pass pending
+evidence. Recorded so the analysis survives and whoever picks it up doesn't rebuild the wrong shape:
+
+- **Shape (if built).** An optional **parallel anti-pattern critic pass** — one focused prompt whose
+  sole job is hunting anti-patterns / weak error handling. **A pass is not a backend:** the
+  `reviewer: {codex, llm}` seam selects which backend runs the *existing* design/approach and
+  correctness passes; this would be an *additional* pass and must not redefine what the `llm`
+  **backend** means (that would give `reviewer: llm` two meanings and make dispatch, config, and
+  artifacts ambiguous). When built it may *use* an llm **provider** — non-agentic, inherently
+  read-only, cheap, schema-valid JSON natively — reusing the eventual `llm` context/schema harness
+  rather than inventing parallel orchestration. Run it as an **independent critic, not a third
+  sequential stage**: the multi-agent evidence (≈87% fewer false positives, ≈3× more real bugs) is a
+  *parallel independent-critic* result, while the same literature finds sequential **handoffs hurt
+  reliability** (Azure SRE built toward multi-agent specialization, then reversed course) at 4–220×
+  the tokens. A chained third stage would pay B's cost and collect little of its upside.
+- **Trigger (what makes it worth building).** **Observed dilution** — the correctness pass
+  demonstrably missing hidden failure *because* it is already carrying spec-drift + edge cases +
+  security + data-loss + business logic. Build on evidence, not on a hunch; the `AGENTS.md` bullets
+  landed first precisely so there is something to measure.
+- **Boundary (why the contract is not a lint config).** Only the **judgment** half — *does this
+  design/diff hide failure?* — is reviewer work. The **mechanical** offenders (bare `except`, `any`,
+  dead code, unused imports/vars) are caught deterministically, free, and with zero false positives
+  by linters (Ruff `BLE001`/`E722`/`TRY`, ESLint `no-explicit-any`), which `/dev-audit` Table A
+  already recommends per-ecosystem — and per the estate standard linters belong in **CI**, not the
+  local gate. Do **not** grow `AGENTS.md` into a lint config: it is a *prompt*, and every line costs
+  reviewer context on every run in every repo.
+
+(Logged 2026-07-15 alongside `antipattern-lens`. Filed as `OPS-11` per the `OPS-9` evaluate-and-decide
+precedent rather than a new `RFC-` prefix — a new prefix is a one-way door for a single parked idea,
+while renaming one line is two-way. If a *second* parked enhancement appears, that is the signal to
+revisit the taxonomy.)
+
 _(OPS-10 shipped — see [Done](#done).)_
 
 ---
