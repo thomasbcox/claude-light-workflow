@@ -282,3 +282,19 @@ schema **already carries** (no schema change). Do not re-litigate these while bu
 **Doctrine is source, not live copy.** The edit is to the repo's `.claude/workflow-protocol.md`; the
 live copy every app reads (`~/.claude/workflow-protocol.md`) is refreshed by `install.sh`, so this
 reaches running skills on the next install — the same deploy path as `antipattern-lens`.
+
+## Codex approach review (2026-07-16, base main, HEAD 376bef9)
+
+**Verdict:** *"The approach is sound, compact, and idiomatic for this instruction-driven repository.
+It centralizes the consult invariant in the existing normative section, uses terse pointers at the
+four execution sites, and keeps the correctness-specific severity + claim derivation local to
+`/review` step 9. It introduces no dependency, schema, top-level section, or unnecessary machinery.
+The targeted documentation-consistency test passes; the full gate could not run in the read-only
+sandbox because its guard tests require temporary-directory writes."*
+
+**Findings: none** (empty `findings` array). The shape is **blessed** — it cleared approach review.
+
+The sandbox gate remark is not a finding (same as the `antipattern-lens` round): the reviewer runs
+`-s read-only`, the guard suite needs temp dirs, so it could only run the reviewer linter. The full
+gate is green locally and on CI (PR #30 `gate` = SUCCESS on this HEAD). Continuing to the correctness
+pass in the same round per step 7 (a clean approach pass flows straight through).
