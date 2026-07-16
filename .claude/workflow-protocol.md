@@ -36,6 +36,8 @@ This replaces "decide twice." The human is consulted at three design altitudes �
 
 Disposition follows the two tags (reversibility × standing): **one-way door OR a major best-practice violation → block/consult; two-way + minor → advisory/log.** The builder is still never the approver (rule 4) — adding altitudes changes how many altitudes get a decision, never who decides.
 
+**How a consult is presented (the third rule — structure, not style).** Whenever a decision is put to the human — at any of the four stops (`/frame` step 7; `/review` steps 7 and 9; `/close` step 4) — every option carries its **cost** and its **risk**, not just what it does. This is **unconditional**: an option list without tradeoffs is incomplete, not merely terse. A **recommendation must be earned** — grounded in the finding's reversibility × standing tags, its severity + `claim`, the purpose of the workflow, or industry best practice — never offered reflexively to appear decisive; where the options are genuinely balanced, say so rather than manufacturing a pick. This governs the *structure* of a consult (what an option must carry); it is **not** a style guide — general communication style is not this document's concern and does not belong here.
+
 > **Records ride with the merge, not after it.** `/close` writes any release records — the
 > `CHANGELOG.md` entry *if the repo keeps a changelog*, the `BACKLOG.md` Done-move *if a tracked item
 > was resolved* — on the feature branch *after* the merge instruction, so they arrive on the base

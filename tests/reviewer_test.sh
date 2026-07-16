@@ -27,6 +27,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 REVIEW="$ROOT/.claude/skills/review/SKILL.md"
 FRAME="$ROOT/.claude/skills/frame/SKILL.md"
 AGENTS="$ROOT/AGENTS.md"
+PROTOCOL="$ROOT/.claude/workflow-protocol.md"
 WF="$ROOT/.claude/workflow.json"
 
 pass=0 fail=0
@@ -82,6 +83,10 @@ has "design names failure-hiding as a shape flaw" "$AGENTS" "Hiding failure is a
 
 echo "== drift: frame bootstrap seeds the reviewer field =="
 has "bootstrap seeds reviewer=codex" "$FRAME" '"reviewer": "codex"'
+
+echo "== drift: consult-presentation rule stated in doctrine + pointed at from a stop =="
+has "doctrine states consult-presentation rule" "$PROTOCOL" "How a consult is presented"
+has "a stop points at the rule" "$REVIEW" "consult-presentation rule"
 
 echo
 echo "passed=$pass failed=$fail"
