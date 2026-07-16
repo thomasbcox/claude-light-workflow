@@ -413,5 +413,28 @@ than the precedent's "the files this story enumerates"); only the artifact exemp
 
 **AC7 now passes.** The seven-file diff is exactly the three product files plus four
 `reviews/antipattern-lens.*` trail artifacts — all within the amended criterion.
+
+## Codex review (2026-07-15, base 8935efb, HEAD eb43259)
+
+**Round 2 — re-review verifying the approved fix.** Thomas chose re-review at `/close`'s step-4
+fork rather than merging, because the builder had amended his own spec to clear a BLOCKER and that
+warranted an independent check.
+
+**Pass selection:** correctness only, base `8935efb` (the last-reviewed SHA) — the round-keyed
+default for *a re-review that verifies approved fixes with no redesign last round*. The approach
+pass was correctly skipped: the shape was blessed in round 1 and no product file has changed since.
+
+**Summary:** *"The changes since 8935efb correctly amend AC7 to exempt the workflow-generated review
+trail and document the approved fix. The diff is scope-contained, `git diff --check` passes, and the
+directly relevant reviewer test passes with 27 checks. No correctness issues found."*
+
+**Findings: none** (empty `findings` array). The approved fix is **verified**.
+
+**Trail note — `reviews/antipattern-lens.codex.json` now holds only this round's clean result.**
+`/review` step 8 writes that filename per round, so round 2's output **overwrote** round 1's
+BLOCKER. This is by design (the protocol lists it as "correctness output *per round*" under one
+name), but it means the JSON artifact alone would misrepresent history. **This story file is the
+durable trail** — round 1's BLOCKER is preserved verbatim in the `## Codex review (2026-07-15, base
+main, HEAD 8935efb)` section above. Read the story file, not the JSON, for what actually happened.
 </content>
 </invoke>
