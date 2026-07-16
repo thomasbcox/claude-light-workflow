@@ -87,8 +87,10 @@ trigger (see In scope #4 and the Design sketch).
 5. `tests/reviewer_test.sh` gains **exactly two** new assertions — one per altitude — each a `has`
    drift check against `$AGENTS`, and no new helper, parser, or block-scoped machinery.
 6. The gate (`.claude/workflow.json` → `testCommand`) is green.
-7. **Scope containment:** the diff touches only `AGENTS.md`, `BACKLOG.md`, `tests/reviewer_test.sh`,
-   `reviews/antipattern-lens.md`, and `reviews/antipattern-lens.design.json`.
+7. **Scope containment:** the diff touches only `AGENTS.md`, `BACKLOG.md`, and
+   `tests/reviewer_test.sh`, **plus** the workflow's own `reviews/antipattern-lens.*` trail artifacts
+   (the story file + the design/approach/correctness JSON the loop writes), which are exempt — they
+   are produced by `/frame` and `/review`, not product code.
 
 ## Test notes
 
@@ -380,5 +382,36 @@ Notes binding the fix:
   beyond those the AC enumerates," which stays correct once the AC enumerates the trail artifacts.
 - **Not a redesign.** This is a spec-conformance fix, not an approach/shape change, so `/close`'s
   step-4 fork is the ordinary *re-review or merge* choice — not the redesign-forces-re-review path.
+
+## Fixes (2026-07-15)
+
+One approved finding, one edit. Nothing else was touched.
+
+**BLOCKER — "Approach artifact violates scope containment" → FIXED.** AC7 reworded to mirror the
+convention at `reviews/pluggable-reviewer.md:77-79`. Before, it enumerated five files (three product
+files + the story file + `.design.json`) and omitted the review-time artifacts. Now:
+
+> **Scope containment:** the diff touches only `AGENTS.md`, `BACKLOG.md`, and
+> `tests/reviewer_test.sh`, **plus** the workflow's own `reviews/antipattern-lens.*` trail artifacts
+> (the story file + the design/approach/correctness JSON the loop writes), which are exempt — they
+> are produced by `/frame` and `/review`, not product code.
+
+The three **product** files stay enumerated inline (unchanged from the original AC, and stricter
+than the precedent's "the files this story enumerates"); only the artifact exemption is added.
+
+**What this does *not* change:**
+
+- **No product file was touched.** `AGENTS.md`, `BACKLOG.md`, and `tests/reviewer_test.sh` are
+  byte-identical to the reviewed HEAD. The fix is confined to AC7's wording in this story file.
+- **AC1–AC6 untouched** — the reviewer confirmed them satisfied; the defect was only in AC7's text.
+- **`## Test notes` unchanged**, as the Decisions section anticipated: the AC7 note already reads
+  "verify no files appear beyond those the AC enumerates," which stays correct now that the AC
+  enumerates the trail artifacts.
+- **Codex's rejected alternative stays rejected** — the `.approach.json` / `.codex.json` artifacts
+  were **not** deleted. `/review` steps 6 and 8 mandate committing them, and they are the audit
+  trail; deleting them would break the skill's contract to satisfy a miswritten AC.
+
+**AC7 now passes.** The seven-file diff is exactly the three product files plus four
+`reviews/antipattern-lens.*` trail artifacts — all within the amended criterion.
 </content>
 </invoke>
