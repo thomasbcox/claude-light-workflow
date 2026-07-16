@@ -82,6 +82,35 @@ precedent rather than a new `RFC-` prefix — a new prefix is a one-way door for
 while renaming one line is two-way. If a *second* parked enhancement appears, that is the signal to
 revisit the taxonomy.)
 
+OPS-12 — **Evaluate** running the external reviewers **independently in parallel**. Parked idea
+(Thomas, 2026-07-16); **evaluate-and-decide** like OPS-9 / OPS-11, not committed work. It
+**generalizes OPS-11's** "independent critic, not a sequential stage" from the single anti-pattern
+pass to the whole reviewer layer. Recorded so the analysis survives and whoever picks it up doesn't
+rebuild the wrong shape:
+
+- **Idea.** Today the loop is **single-backend and sequential**: one reviewer backend (codex; `llm`
+  stubbed) runs the approach pass, which *gates* correctness — one external reviewer, one pass at a
+  time. The idea is multiple independent reviewers (e.g. codex + llm + others) reviewing the **same
+  diff concurrently, as independent critics**.
+- **Do not conflate with the approach→correctness gate.** That gate is *deliberately* sequential —
+  the short-circuit exists so the loop never reviews the lines of a doomed shape. Parallelism here is
+  across **backends/critics on a pass**, not across the two altitudes; removing the gate is a
+  different (and not-wanted) change.
+- **Depends on ≥2 wired backends.** The `llm` backend is the "designated second source" and is
+  currently a loud not-yet-wired stop — wire it first. Parallel reviewers presuppose it.
+- **Needs a reconciliation design.** N independent critics surface more findings, including more
+  spurious ones — so dedupe/consensus is required *before* the human decision menu, or the menu
+  balloons. The schemas carry per-finding fields but no agreement/consensus notion today.
+- **Cost vs. identity.** N× reviewer tokens and latency per review; weigh against the loop's
+  lightweight identity before committing (the same 4–220× multi-agent cost OPS-11 notes).
+
+(Logged 2026-07-16. Parked at Thomas's request while `consult-presentation` was mid-flight; filed
+here on clean `main`. **Taxonomy note:** OPS-12 is the "second parked enhancement" whose arrival
+OPS-11 named as the signal to revisit whether these evaluate-and-decide *enhancements* deserve their
+own prefix — `OPS-` nominally means shipping/tooling ergonomics, and both OPS-11/OPS-12 are
+reviewer-architecture ideas. That taxonomy revisit is a **one-way door** left for Thomas; both stay
+`OPS-` until he decides.)
+
 _(OPS-10 shipped — see [Done](#done).)_
 
 ---
