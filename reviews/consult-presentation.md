@@ -354,3 +354,17 @@ Notes binding the fix:
   correctness pass and presented via the new consult-presentation rule (cost + risk per disposition;
   recommendation grounded in severity + claim, per the step-9 grounding this story installs). The
   rule bit on its own change.
+
+## Fixes (2026-07-16)
+
+One approved finding, one edit.
+
+**IMPORTANT — "Recommendation grounding names the workflow instead of the app" → FIXED.**
+`.claude/workflow-protocol.md:39`: *"the purpose of the workflow"* → **"the purpose of the app under
+review."** This satisfies AC1 (*"the purpose of the app"*) and removes the app-vs-workflow ambiguity
+that caused the slip — the doctrine is read in repos where the app under review is not the workflow,
+so *"under review"* is the durable disambiguation Thomas chose over the bare AC1 phrase.
+
+**What this does *not* change:** no product code, no schema, no skill-step logic. The `## Consult
+model` line is the only edit; AC1–AC8 were otherwise satisfied. Not a redesign — a line-level wording
+fix, so step 4's fork is the ordinary *re-review or merge* choice.
