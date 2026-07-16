@@ -298,3 +298,28 @@ The sandbox gate remark is not a finding (same as the `antipattern-lens` round):
 `-s read-only`, the guard suite needs temp dirs, so it could only run the reviewer linter. The full
 gate is green locally and on CI (PR #30 `gate` = SUCCESS on this HEAD). Continuing to the correctness
 pass in the same round per step 7 (a clean approach pass flows straight through).
+
+## Codex review (2026-07-16, base main, HEAD 376bef9)
+
+**Summary:** *"The change largely implements the approved consult-presentation design, and the
+targeted reviewer/dev-audit linters pass. One specification mismatch remains."*
+
+### IMPORTANT
+
+**1. Recommendation grounding names the workflow instead of the app** · *`.claude/workflow-protocol.md:39`*
+
+- **Claim:** AC1 requires recommendations to be groundable in *"the purpose of the app,"* but the new
+  doctrine says *"the purpose of the workflow."* These are not interchangeable — the workflow reviews
+  *other* applications, and the product's purpose may determine the right disposition. The changed
+  wording removes an approved grounding source and can produce recommendations based on the review
+  machinery rather than the product under review.
+- **Suggestion:** replace *"the purpose of the workflow"* with *"the purpose of the app"* (or *"the
+  purpose of the app under review"*).
+
+**Verified — the finding is correct, and it is a spec-conformance defect, not a judgment call.** AC1,
+the design sketch (three places), and Thomas's canonical `~/.claude/CLAUDE.md` all say *"the purpose
+of the app."* The implementation deviated to *"the purpose of the workflow."* The deviation is
+behaviorally meaningful precisely because the doctrine is generic and deployed to ~8 repos that
+review other apps; *this* repo (where the app under review **is** the workflow) is the one place the
+two coincide, which is how the slip happened. The approach pass could not catch this — it is a
+line-level word choice, not a shape flaw; the correctness pass is exactly the altitude for it.
