@@ -265,3 +265,20 @@ implementing." Open questions #2 resolved: **AC3 stands on its own.**
 sketch describes — extend the existing `## Consult model` section (no new top-level section),
 add the four terse pointers, and ground step 9's recommendation in the `severity` + `claim` the
 schema **already carries** (no schema change). Do not re-litigate these while building.
+
+## Build note (2026-07-16)
+
+| AC | Where it landed |
+|---|---|
+| AC1 — doctrine states both bars (tradeoffs unconditional, recommendation earned) | `.claude/workflow-protocol.md` — new "How a consult is presented" paragraph inside the existing `## Consult model` section |
+| AC2 — rule states its own scope boundary (structure, not style) | same paragraph — closing sentence ("not a style guide … does not belong here") |
+| AC3 — `/review` step 9 grounded in severity + claim, no schema change | `.claude/skills/review/SKILL.md` step 9 |
+| AC4 — one pointer per stop (4 total) | `frame` step 7 (×1); `review` steps 7 and 9 (×2); `close` step 4 (×1) |
+| AC5 — tightness: no new top-level section, no style prose | constraint on `.claude/workflow-protocol.md`; verified by diff |
+| AC6 — gate green | the configured `testCommand` |
+| AC7 — scope containment | `git diff --name-only main...HEAD` |
+| AC8 — ≤2 drift assertions | `tests/reviewer_test.sh` — new "consult-presentation rule stated in doctrine + pointed at from a stop" group (2 `has` checks + a `PROTOCOL` var) |
+
+**Doctrine is source, not live copy.** The edit is to the repo's `.claude/workflow-protocol.md`; the
+live copy every app reads (`~/.claude/workflow-protocol.md`) is refreshed by `install.sh`, so this
+reaches running skills on the next install — the same deploy path as `antipattern-lens`.
