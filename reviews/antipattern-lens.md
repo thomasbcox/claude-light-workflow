@@ -436,5 +436,19 @@ BLOCKER. This is by design (the protocol lists it as "correctness output *per ro
 name), but it means the JSON artifact alone would misrepresent history. **This story file is the
 durable trail** — round 1's BLOCKER is preserved verbatim in the `## Codex review (2026-07-15, base
 main, HEAD 8935efb)` section above. Read the story file, not the JSON, for what actually happened.
+
+## Decisions — round 2 (2026-07-15)
+
+**Correctness re-review (base 8935efb, HEAD eb43259) — clean.** Empty `findings` array; **no
+dispositions required**. The round-1 BLOCKER's approved fix is independently verified. Nothing was
+deferred or rejected this round, so nothing is barred from a future round.
+
+**Round-1 dispositions stand** and are not re-opened: the approach pass was clean (shape blessed),
+and the single BLOCKER was decided **FIX** and has now been applied and verified.
+
+**State:** all acceptance criteria satisfied — AC1–AC6 confirmed in round 1, AC7 confirmed in round
+2 after the amendment. Both altitudes have reviewed this branch and neither has an open finding.
+The branch is review-complete; **the merge remains Thomas's separate call** in `/close` (deciding
+findings is not a merge decision).
 </content>
 </invoke>
