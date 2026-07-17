@@ -281,3 +281,17 @@ required atomic promotion is not guaranteed.
   artifact, violating **AC1**'s atomic-promotion requirement. **Suggestion:** create the temps inside
   `reviews/` (guaranteed same filesystem), rename after validation, add a `trap` to clean up
   unpromoted temps. *(Same defect the approach pass raised — already accepted for fix.)*
+
+## Decisions (2026-07-17)
+
+Both passes converged on a single defect; Thomas accepted the fix at the approach menu, which covers
+the correctness finding too.
+
+- **Approach — "Temporary files do not guarantee atomic promotion"** (IMPORTANT · two-way · kludgy):
+  **FIX** (Thomas: "accept the fix please"). Create each temp *inside* `reviews/` with a unique
+  template so `mv` is a same-filesystem atomic rename; add a `trap` to remove unpromoted temps.
+- **Correctness — "Temporary files may be promoted non-atomically"** (IMPORTANT, `SKILL.md:61`):
+  **FIX** — the *same* defect and the *same* fix; folded into the above, not a separate change.
+
+No BLOCKERs, no QUESTIONs, no NITs. The fix is a two-way tidy within the step-8 block; the shape stays
+blessed. To be applied in `/close`, then re-reviewed (correctness-only) to verify.
