@@ -295,3 +295,12 @@ the correctness finding too.
 
 No BLOCKERs, no QUESTIONs, no NITs. The fix is a two-way tidy within the step-8 block; the shape stays
 blessed. To be applied in `/close`, then re-reviewed (correctness-only) to verify.
+
+## Fixes (2026-07-17)
+
+- **IMPORTANT — atomic-promotion portability** (approach + correctness, converged): step-8 temps now
+  created **inside `reviews/`** via `mktemp reviews/.<slug>.<lens>.XXXXXX`, so `mv` to the sibling
+  stable path is a guaranteed same-filesystem **atomic rename** (no cross-volume copy+delete, no
+  partial-artifact window). Added `trap 'rm -f "$tmp_c" "$tmp_h"' EXIT` to remove any temp not
+  promoted. `tests/reviewer_test.sh` pins both (reviews-local `mktemp` + the `trap`) so the defect
+  can't silently regress. `.claude/skills/review/SKILL.md` step 8.

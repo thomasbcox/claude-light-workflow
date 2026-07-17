@@ -58,7 +58,13 @@ The reviewer **role contract** is `AGENTS.md` — tool-neutral and read automati
    **Invariant:** the correctness pass only ever runs on a shape that has cleared approach review.
 8. **Correctness pass — two concurrent critics.** The correctness altitude runs **two independent critics at once**: the general **correctness** critic (judges the lines against the spec — everything) and a dedicated **hidden-failure** critic (swallowed / absorbed / silently-degrading error handling ONLY — `AGENTS.md`'s "Hidden failure" bullet). This is **divided parallelism** — different questions, so findings partition by concern; it is *not* the approach→correctness gate (that stays sequential, step 7). **Dispatch by the resolved reviewer** (see **Reviewer backend**): if `llm` (or any non-codex backend), STOP per that section **before launching either** critic; for `codex`, launch both read-only (`-s read-only` — neither can edit the repo). Launch each to a **fresh temp file** with its **PID captured**, `wait` **per-PID** for an **explicit exit status**, then **atomically promote** each temp to its stable artifact **only** on {clean exit AND parseable JSON}:
    ```bash
-   tmp_c="$(mktemp)"; tmp_h="$(mktemp)"   # fresh per run — never the stable path
+   # Temps live INSIDE reviews/ so each promotion is a same-filesystem atomic rename. Bare `mktemp`
+   # lands in $TMPDIR (often another volume), where `mv` degrades to copy+delete and a reader can
+   # catch a partial artifact mid-write — the very stale/partial path this fail-closed join exists to
+   # kill. The trap removes any temp not promoted (a failed/aborted round leaves nothing behind).
+   tmp_c="$(mktemp reviews/.<slug>.codex.XXXXXX)"
+   tmp_h="$(mktemp reviews/.<slug>.hidden-failure.XXXXXX)"
+   trap 'rm -f "$tmp_c" "$tmp_h"' EXIT
 
    # correctness critic — prompt + finding-schema.json UNCHANGED; -o now a temp, promoted below
    codex exec -s read-only \
