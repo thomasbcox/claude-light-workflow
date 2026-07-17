@@ -267,3 +267,17 @@ invariant.
   **inside `reviews/`** with a unique template, validate, then rename to the stable sibling path; add a
   `trap` to remove unpromoted temps on failure. **Win:** true atomic replacement on every filesystem,
   no cross-volume partial-write path, no leaked temp artifacts.
+
+## Codex review (2026-07-17, base main, HEAD 6df8825)
+
+**Summary:** The concurrent critics, fail-closed join, dedicated schema/artifact, and labelled
+reconciliation match the spec, and the focused reviewer suite passes. One portability defect means the
+required atomic promotion is not guaranteed.
+
+### IMPORTANT
+- **Temporary files may be promoted non-atomically** — `.claude/skills/review/SKILL.md:61`. Bare
+  `mktemp` places temps in the **system** temp dir; moving them into the repo is atomic only when both
+  share a filesystem — otherwise `mv` is copy-and-delete and a reader can observe a **partial** stable
+  artifact, violating **AC1**'s atomic-promotion requirement. **Suggestion:** create the temps inside
+  `reviews/` (guaranteed same filesystem), rename after validation, add a `trap` to clean up
+  unpromoted temps. *(Same defect the approach pass raised — already accepted for fix.)*
