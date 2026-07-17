@@ -304,3 +304,19 @@ blessed. To be applied in `/close`, then re-reviewed (correctness-only) to verif
   partial-artifact window). Added `trap 'rm -f "$tmp_c" "$tmp_h"' EXIT` to remove any temp not
   promoted. `tests/reviewer_test.sh` pins both (reviews-local `mktemp` + the `trap`) so the defect
   can't silently regress. `.claude/skills/review/SKILL.md` step 8.
+
+## Codex review (2026-07-17, base 6df8825, HEAD 654ad4e) — re-review of the fix
+
+**Summary:** The same-filesystem atomic-promotion fix is correct. Two NITs: the cleanup trap has a
+narrow pre-installation leak window, and the drift test pins only one of the two local temp templates.
+
+### NIT
+- **Cleanup trap is installed after both allocations** — `.claude/skills/review/SKILL.md:67`. The
+  `trap` registers only *after* both `mktemp` calls; if the shell dies between the first `mktemp` and
+  the trap line (e.g. the second allocation fails), the first temp leaks — contrary to the stated
+  cleanup guarantee. **Suggestion:** arm the EXIT trap on both vars *before* the first `mktemp`, then
+  assign each path.
+- **Drift check covers only the correctness temp** — `tests/reviewer_test.sh:81`. The pin asserts
+  `tmp_c`'s reviews-local template only; `tmp_h` could regress to a system temp and still pass — yet
+  the Fixes note claims the tests pin **both**. **Suggestion:** add a presence check for
+  `mktemp reviews/.<slug>.hidden-failure.XXXXXX`.
