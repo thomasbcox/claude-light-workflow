@@ -82,34 +82,72 @@ precedent rather than a new `RFC-` prefix — a new prefix is a one-way door for
 while renaming one line is two-way. If a *second* parked enhancement appears, that is the signal to
 revisit the taxonomy.)
 
-OPS-12 — **Evaluate** running the external reviewers **independently in parallel**. Parked idea
-(Thomas, 2026-07-16); **evaluate-and-decide** like OPS-9 / OPS-11, not committed work. It
+OPS-12 — Run the external reviewers **independently in parallel** — **shape decided (divided
+parallelism); build imminent.** Logged 2026-07-16 as a parked evaluate-and-decide idea (kin to
+OPS-9 / OPS-11); on **2026-07-17** Thomas decided the shape and stated he intends to **wire the
+parallel-critic plumbing very soon** — so this is no longer "evaluate," it is pending build. It
 **generalizes OPS-11's** "independent critic, not a sequential stage" from the single anti-pattern
-pass to the whole reviewer layer. Recorded so the analysis survives and whoever picks it up doesn't
-rebuild the wrong shape:
+pass to the whole reviewer layer, and OPS-11's parked anti-pattern critic becomes the **first
+citizen** of the layer this stands up. Recorded so whoever builds it doesn't rebuild the wrong shape:
 
-- **Idea.** Today the loop is **single-backend and sequential**: one reviewer backend (codex; `llm`
-  stubbed) runs the approach pass, which *gates* correctness — one external reviewer, one pass at a
-  time. The idea is multiple independent reviewers (e.g. codex + llm + others) reviewing the **same
-  diff concurrently, as independent critics**.
-- **Do not conflate with the approach→correctness gate.** That gate is *deliberately* sequential —
-  the short-circuit exists so the loop never reviews the lines of a doomed shape. Parallelism here is
-  across **backends/critics on a pass**, not across the two altitudes; removing the gate is a
-  different (and not-wanted) change.
-- **Depends on ≥2 wired backends.** The `llm` backend is the "designated second source" and is
-  currently a loud not-yet-wired stop — wire it first. Parallel reviewers presuppose it.
-- **Needs a reconciliation design.** N independent critics surface more findings, including more
-  spurious ones — so dedupe/consensus is required *before* the human decision menu, or the menu
-  balloons. The schemas carry per-finding fields but no agreement/consensus notion today.
-- **Cost vs. identity.** N× reviewer tokens and latency per review; weigh against the loop's
-  lightweight identity before committing (the same 4–220× multi-agent cost OPS-11 notes).
+- **The fork — redundant vs divided (decided: divided).** Two ways to run critics in parallel on the
+  same diff. *Redundant* = N critics asking the **same** question (correctness), reconciled by
+  consensus — the reliability play (the ≈87%-fewer-false-positives / ≈3×-more-real-bugs multi-agent
+  result). *Divided* = N critics each asking a **different** question (correctness ∥ hidden-failure ∥
+  security ∥ test-adequacy) — the coverage play. Thomas chose **divided**: "reviewers that do
+  *different* things." Both review the same diff; they differ in whether the critics **duplicate** or
+  **partition** the question.
+- **Divided dissolves the reconciliation problem** (this supersedes the original "needs a
+  reconciliation design" worry, which was a *redundant*-shape problem). Under divided, findings
+  **partition by concern**, so the decision menu just grows **sections** — one per lens — with no
+  consensus vote. The only residual is **drop-near-duplicates by `file:line`+claim** when two lenses
+  touch the same spot: a merge, not a vote. Provenance is **structural** — each critic owns its own
+  schema and its own artifact (the standing rule below), so the artifact + labelled section already
+  identify the lens; **no `lens`/`source` field** is needed (a field nothing outside those artifacts
+  would read).
+- **Does NOT depend on the `llm` backend** (correction to the original filing's "depends on ≥2 wired
+  backends"). Divided parallelism rides on the **already-wired codex backend**: run `codex exec`
+  **twice concurrently** with different prompts + different `--output-schema`. Different *roles*, same
+  *backend* — buildable on what exists today. Wiring `llm` (OPS: the designated-second-source stub)
+  is a **separate enhancement** that buys **source diversity** — a genuinely different model catching
+  codex's blind spots — not a **precondition**.
+- **Critics live *within* the correctness altitude — never across the approach→correctness gate.**
+  That gate stays deliberately sequential (the short-circuit that stops the loop reviewing the lines
+  of a doomed shape). Parallelize the critics *on* the correctness pass, not the two altitudes.
+  Bonus: specialized critics fire only *after* the shape is blessed, so you never pay their tokens on
+  a shape headed for redesign — the short-circuit economics survive.
+- **The lenses** (the "different questions"), grounded in what the workflow already cares about
+  (AGENTS.md guardrails, the anti-pattern lens, `/dev-audit` Table A): **correctness vs spec**
+  (exists today), **hidden failure / weak error handling** (= OPS-11's parked pass — start here),
+  **security / data-loss**, **test adequacy vs the ACs**. *Not* "simplicity / reinvention" — that is
+  already the **approach** pass's job; do not duplicate it at the correctness altitude.
+- **Minimal first build.** One specialized critic running concurrently with the existing correctness
+  pass: same codex backend, its **own** prompt + **own** schema + **own** artifact
+  (`reviews/<slug>.<lens>.json` beside `.codex.json`), surfaced as its **own section** in the step-9
+  menu. **Standing rule (Thomas, 2026-07-17): every parallel critic henceforth creates its own finding
+  json — its own schema and its own artifact** (no shared `finding-schema.json`, no `lens`/`source`
+  field — separation is structural). Concurrency is **fail-closed**: each critic writes a fresh temp
+  promoted only on {clean exit AND valid JSON}; either critic failing stops the round (no menu, no
+  merge) — the added critic is *required*, never silently optional. Start the lens at **hidden-failure**
+  (OPS-11 already did that design and named its trigger).
+  **Build:** `reviews/parallel-critic.md` — hidden-failure lens, first citizen (branch
+  `claude/parallel-critic`).
+- **Cost vs. identity.** Divided is **N× tokens but ~1× wall-clock** (critics run concurrently) — so
+  the cost to the loop's lightweight identity is **spend, not latency**. Weigh N× spend before
+  growing the lens set; one lens at a time.
+- **Trigger discipline (noted, and being consciously front-run).** OPS-11's rule was: build the
+  dedicated pass on **observed dilution**, not a hunch. Thomas is choosing to stand up the
+  **plumbing** ahead of that trigger — a deliberate product-owner call to de-risk the wiring and buy
+  the capability early, accepting the N× spend against lightweight identity. The *which-lens-when*
+  decision can still follow evidence once the seam exists.
 
-(Logged 2026-07-16. Parked at Thomas's request while `consult-presentation` was mid-flight; filed
-here on clean `main`. **Taxonomy note:** OPS-12 is the "second parked enhancement" whose arrival
-OPS-11 named as the signal to revisit whether these evaluate-and-decide *enhancements* deserve their
-own prefix — `OPS-` nominally means shipping/tooling ergonomics, and both OPS-11/OPS-12 are
-reviewer-architecture ideas. That taxonomy revisit is a **one-way door** left for Thomas; both stay
-`OPS-` until he decides.)
+(Logged 2026-07-16; shape decided + intent-to-build recorded 2026-07-17. Originally parked at
+Thomas's request while `consult-presentation` was mid-flight; filed on clean `main`. **Taxonomy
+note:** OPS-12 is the "second parked enhancement" whose arrival OPS-11 named as the signal to revisit
+whether these enhancements deserve their own prefix — `OPS-` nominally means shipping/tooling
+ergonomics, and both OPS-11/OPS-12 are reviewer-architecture ideas. That revisit is a **one-way
+door** left for Thomas; both stay `OPS-` until he decides — and with OPS-12 now heading toward a
+build, that call comes due sooner.)
 
 _(OPS-10 shipped — see [Done](#done).)_
 

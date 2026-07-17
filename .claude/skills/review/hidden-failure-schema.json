@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "description": "Output contract for the HIDDEN-FAILURE parallel critic — a correctness-altitude lens scoped ONLY to swallowed / absorbed / silently-degrading error handling. Its own file (not finding-schema.json) per the standing rule: every parallel critic owns its schema and its artifact. Same finding shape as finding-schema.json so the step-9 menu renders both critics identically; kept separate so the two contracts can diverge without coupling.",
+  "properties": {
+    "summary": {
+      "type": "string",
+      "description": "One-paragraph assessment of the change's failure handling: does it surface its own failures, or can it continue in a degraded state nothing reports?"
+    },
+    "findings": {
+      "type": "array",
+      "description": "Empty array if the change hides no failure. Report ONLY hidden-failure findings — the parallel correctness critic covers everything else.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": ["BLOCKER", "IMPORTANT", "QUESTION", "NIT"]
+          },
+          "title": { "type": "string", "description": "Short label for the hidden-failure finding." },
+          "file": { "type": ["string", "null"], "description": "Path the finding is about, or null." },
+          "line": { "type": ["integer", "null"], "description": "Line number, or null." },
+          "claim": { "type": "string", "description": "How the diff swallows/absorbs/silently degrades on error (bare or blind except|catch, catch-log-continue where propagating is correct, silent fallback, deleted assertion or safety check) and why letting it continue unsurfaced matters." },
+          "suggestion": { "type": ["string", "null"], "description": "Concrete way to surface the failure instead (propagate, assert, fail loudly), or null." }
+        },
+        "required": ["severity", "title", "file", "line", "claim", "suggestion"]
+      }
+    }
+  },
+  "required": ["summary", "findings"]
+}
