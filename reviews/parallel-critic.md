@@ -177,6 +177,23 @@ honoring that file's "not a behavioral gate" charter.
 **Backlog:** commit the carried `BACKLOG.md`; add to OPS-12 a line: *"Build: `reviews/parallel-critic.md`
 (hidden-failure lens, first citizen)."*
 
+## Build note (2026-07-17)
+
+AC → file map:
+- **AC1** (concurrent launch · per-PID `wait` · temp→validate→atomic-promote · fail-closed) →
+  `.claude/skills/review/SKILL.md` step 8.
+- **AC2** (own prompt · own `hidden-failure-schema.json` · own artifact; correctness pass untouched) →
+  `.claude/skills/review/hidden-failure-schema.json` (new), `.claude/skills/review/SKILL.md` step 8.
+- **AC3** (two labelled menu groups, no consensus vote) → `.claude/skills/review/SKILL.md` step 9.
+- **AC4** (within the correctness altitude; approach→correctness gate untouched) →
+  `.claude/skills/review/SKILL.md` step 8 framing.
+- **AC5** (never-re-raise tracked per group; all critics' decisions recorded) →
+  `.claude/skills/review/SKILL.md` step 9.
+- **AC6** (drift checks, within the linter charter) → `tests/reviewer_test.sh`.
+- **AC7** (carried `BACKLOG.md` + OPS-12 reconciled to the standing per-critic rule + build pointer) →
+  `BACKLOG.md`.
+- **AC8** (scope containment) → verification only (`git diff --name-only main...HEAD`).
+
 ## Codex design review (2026-07-17)
 
 **Verdict:** Divided parallelism with one focused hidden-failure critic is a sound, appropriately
@@ -233,3 +250,20 @@ Scope **approved** by Thomas ("confirmed — do it"); the shape below is binding
   (no shared `finding-schema.json`, no `lens`/`source` field — separation is structural), and **OPS-12
   is amended** to record this standing rule (removing its "own schema *plus a lens/source field*"
   wording). AC2, In-scope, and AC8 updated to add the new schema file.
+
+## Codex approach review (2026-07-17, base main, HEAD d8d1b65)
+
+**Verdict:** The divided-parallelism shape is appropriately minimal — two fixed concurrent critics,
+distinct schema/artifact provenance, fail-closed joining, and labelled reconciliation without an
+unnecessary registry or dependency. One portability flaw weakens the promised atomic-promotion
+invariant.
+
+### IMPORTANT
+- **Temporary files do not guarantee atomic promotion** — *two-way · kludgy* · locus:
+  `.claude/skills/review/SKILL.md` step-8 concurrency block. Bare `mktemp` creates each temp in the
+  **system** temp dir, while its destination is inside the reviewed repo. `mv` is atomic **only** when
+  source and destination share a filesystem; a repo on another volume degrades `mv` to copy-and-delete,
+  so the "atomic promote" invariant isn't structurally guaranteed. **Alternative:** create each temp
+  **inside `reviews/`** with a unique template, validate, then rename to the stable sibling path; add a
+  `trap` to remove unpromoted temps on failure. **Win:** true atomic replacement on every filesystem,
+  no cross-volume partial-write path, no leaked temp artifacts.
