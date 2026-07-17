@@ -61,10 +61,12 @@ The reviewer **role contract** is `AGENTS.md` — tool-neutral and read automati
    # Temps live INSIDE reviews/ so each promotion is a same-filesystem atomic rename. Bare `mktemp`
    # lands in $TMPDIR (often another volume), where `mv` degrades to copy+delete and a reader can
    # catch a partial artifact mid-write — the very stale/partial path this fail-closed join exists to
-   # kill. The trap removes any temp not promoted (a failed/aborted round leaves nothing behind).
+   # kill. Arm the cleanup trap BEFORE the first mktemp so an interrupt between the two allocations
+   # can't leak the first temp; `rm -f` on the still-empty vars is a harmless no-op.
+   tmp_c=""; tmp_h=""
+   trap 'rm -f "$tmp_c" "$tmp_h"' EXIT
    tmp_c="$(mktemp reviews/.<slug>.codex.XXXXXX)"
    tmp_h="$(mktemp reviews/.<slug>.hidden-failure.XXXXXX)"
-   trap 'rm -f "$tmp_c" "$tmp_h"' EXIT
 
    # correctness critic — prompt + finding-schema.json UNCHANGED; -o now a temp, promoted below
    codex exec -s read-only \

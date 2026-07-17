@@ -79,6 +79,7 @@ has "per-PID join (correctness)" "$REVIEW" 'wait "$pid_c"'
 has "per-PID join (hidden-failure)" "$REVIEW" 'wait "$pid_h"'
 has "atomic promote gate" "$REVIEW" "temp→validate→promote invariant"
 has "temps are reviews-local (same-fs atomic rename)" "$REVIEW" 'mktemp reviews/.<slug>.codex.XXXXXX'
+has "hidden-failure temp is reviews-local too" "$REVIEW" 'mktemp reviews/.<slug>.hidden-failure.XXXXXX'
 has "trap cleans unpromoted temps" "$REVIEW" "trap 'rm -f"
 has "fail-closed: both critics required" "$REVIEW" "both critics are REQUIRED"
 has "step-9 presents two labelled groups" "$REVIEW" "two labelled groups"

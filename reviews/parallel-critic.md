@@ -320,3 +320,21 @@ narrow pre-installation leak window, and the drift test pins only one of the two
   `tmp_c`'s reviews-local template only; `tmp_h` could regress to a system temp and still pass — yet
   the Fixes note claims the tests pin **both**. **Suggestion:** add a presence check for
   `mktemp reviews/.<slug>.hidden-failure.XXXXXX`.
+
+## Decisions (2026-07-17, re-review)
+
+Both NITs from the fix re-review — **accepted** (Thomas: "accept both, then merge"). Neither is a
+redesign, so applying them routes straight to merge.
+
+- **NIT — trap installed after both allocations** (`SKILL.md:67`): **FIX** — arm the EXIT trap before
+  the first `mktemp`.
+- **NIT — drift check pins only `tmp_c`** (`reviewer_test.sh:81`): **FIX** — add the `tmp_h` template
+  pin so neither temp can regress to a system path unnoticed.
+
+## Fixes (2026-07-17, re-review)
+
+- **NIT 1:** step-8 block now sets `tmp_c=""; tmp_h=""` and arms `trap 'rm -f …' EXIT` **before** the
+  first `mktemp`, so an interrupt between the two allocations can't leak the first temp (`rm -f` on
+  empty vars is a no-op). `.claude/skills/review/SKILL.md`.
+- **NIT 2:** added a drift check pinning `mktemp reviews/.<slug>.hidden-failure.XXXXXX`, so the
+  hidden-failure temp is held reviews-local alongside the correctness temp. `tests/reviewer_test.sh`.
