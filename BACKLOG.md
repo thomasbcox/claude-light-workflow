@@ -82,10 +82,12 @@ precedent rather than a new `RFC-` prefix — a new prefix is a one-way door for
 while renaming one line is two-way. If a *second* parked enhancement appears, that is the signal to
 revisit the taxonomy.)
 
-OPS-12 — Run the external reviewers **independently in parallel** — **shape decided (divided
-parallelism); build imminent.** Logged 2026-07-16 as a parked evaluate-and-decide idea (kin to
-OPS-9 / OPS-11); on **2026-07-17** Thomas decided the shape and stated he intends to **wire the
-parallel-critic plumbing very soon** — so this is no longer "evaluate," it is pending build. It
+OPS-12 — Run the external reviewers **independently in parallel** — **BEGUN (not done): first build
+shipped, layer continuing.** Logged 2026-07-16 as a parked evaluate-and-decide idea (kin to
+OPS-9 / OPS-11); on **2026-07-17** Thomas decided the shape (divided, not redundant) and the **first
+lens shipped** — the hidden-failure critic, `merge: parallel-critic` (PR #32),
+[reviews/parallel-critic.md](reviews/parallel-critic.md). **Still open** (why this stays out of Done):
+further lenses (e.g. security, test-adequacy) and `llm`-backend source diversity remain unbuilt. It
 **generalizes OPS-11's** "independent critic, not a sequential stage" from the single anti-pattern
 pass to the whole reviewer layer, and OPS-11's parked anti-pattern critic becomes the **first
 citizen** of the layer this stands up. Recorded so whoever builds it doesn't rebuild the wrong shape:
@@ -141,8 +143,9 @@ citizen** of the layer this stands up. Recorded so whoever builds it doesn't reb
   the capability early, accepting the N× spend against lightweight identity. The *which-lens-when*
   decision can still follow evidence once the seam exists.
 
-(Logged 2026-07-16; shape decided + intent-to-build recorded 2026-07-17. Originally parked at
-Thomas's request while `consult-presentation` was mid-flight; filed on clean `main`. **Taxonomy
+(Logged 2026-07-16; shape decided + intent-to-build recorded 2026-07-17; **first build shipped
+2026-07-17** — `merge: parallel-critic`, PR #32 — item marked **begun, not done**. Originally parked
+at Thomas's request while `consult-presentation` was mid-flight; filed on clean `main`. **Taxonomy
 note:** OPS-12 is the "second parked enhancement" whose arrival OPS-11 named as the signal to revisit
 whether these enhancements deserve their own prefix — `OPS-` nominally means shipping/tooling
 ergonomics, and both OPS-11/OPS-12 are reviewer-architecture ideas. That revisit is a **one-way
