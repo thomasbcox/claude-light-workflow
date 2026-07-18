@@ -62,10 +62,30 @@ has "codex exec -s read-only" "$REVIEW" "codex exec -s read-only"
 has "approach schema abs path" "$REVIEW" '--output-schema "$HOME/.claude/skills/review/design-review-schema.json"'
 has "correctness schema abs path" "$REVIEW" '--output-schema "$HOME/.claude/skills/review/finding-schema.json"'
 has "approach -o repo-relative" "$REVIEW" "-o reviews/<slug>.approach.json"
-has "correctness -o repo-relative" "$REVIEW" "-o reviews/<slug>.codex.json"
+has "correctness promoted to its artifact" "$REVIEW" '"$tmp_c" reviews/<slug>.codex.json'
 has "codexModel passthrough" "$REVIEW" '${codexModel:+-m "$codexModel"}'
 has "stdin guard </dev/null" "$REVIEW" "</dev/null"
 has "frame design -o + schema" "$FRAME" "-o reviews/<slug>.design.json"
+
+echo "== drift: the parallel hidden-failure critic is wired (concurrent, fail-closed, own schema) =="
+# The correctness altitude now runs two critics at once. These are presence checks only — the seam
+# is Markdown, so per this file's charter there is no behavioral oracle to assert.
+has "correctness critic writes a temp" "$REVIEW" '-o "$tmp_c"'
+has "hidden-failure critic writes a temp" "$REVIEW" '-o "$tmp_h"'
+has "hidden-failure schema abs path" "$REVIEW" '--output-schema "$HOME/.claude/skills/review/hidden-failure-schema.json"'
+has "hidden-failure critic own artifact" "$REVIEW" "reviews/<slug>.hidden-failure.json"
+has "hidden-failure prompt scoped to one lens" "$REVIEW" "SCOPED TO ONE LENS"
+has "per-PID join (correctness)" "$REVIEW" 'wait "$pid_c"'
+has "per-PID join (hidden-failure)" "$REVIEW" 'wait "$pid_h"'
+has "atomic promote gate" "$REVIEW" "temp→validate→promote invariant"
+has "temps are reviews-local (same-fs atomic rename)" "$REVIEW" 'mktemp reviews/.<slug>.codex.XXXXXX'
+has "hidden-failure temp is reviews-local too" "$REVIEW" 'mktemp reviews/.<slug>.hidden-failure.XXXXXX'
+has "trap cleans unpromoted temps" "$REVIEW" "trap 'rm -f"
+has "fail-closed: both critics required" "$REVIEW" "both critics are REQUIRED"
+has "step-9 presents two labelled groups" "$REVIEW" "two labelled groups"
+has "step-9 own Hidden-failure section" "$REVIEW" "Hidden-failure review"
+# the dedicated schema ships as its own skill artifact
+has "hidden-failure schema exists" "$ROOT/.claude/skills/review/hidden-failure-schema.json" "HIDDEN-FAILURE parallel critic"
 
 echo "== drift: reviewer role language stays tool-neutral =="
 has "approach prompt neutral" "$REVIEW" "You are the independent reviewer doing an APPROACH review"
