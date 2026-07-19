@@ -4,6 +4,18 @@
   "description": "Canonical contract for the /deep-audit plan artifact (reviews/audit-plan-<date>.json). The JSON IS the plan — the markdown consult view is derived from it and regenerated on divergence. The canonical contract gate = this schema PLUS the named plan semantic check (row-identity uniqueness; totals.runs and totals.estTokens equal the row sums) which Draft-7 cannot express — both must pass before the view derives. planVersion is pinned so the engine story and the eventual differential (C-ledger) mode extend this contract only via an explicit version bump. All properties are required (the repo's schema convention).",
   "type": "object",
   "additionalProperties": false,
+  "definitions": {
+    "selector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lens", "altitude", "scope"],
+      "properties": {
+        "lens": { "type": "string", "enum": ["hidden-failure", "security-data-loss", "test-adequacy", "architecture-coherence", "*"] },
+        "altitude": { "type": "string", "enum": ["L0", "L1", "L2", "L3", "*"] },
+        "scope": { "type": "string", "minLength": 1, "description": "Unit-group path, subsystem:<dir>, app, a glob, or '*'." }
+      }
+    }
+  },
   "required": ["planVersion", "date", "target", "profile", "unitMap", "rows", "overrides", "totals", "assumptions", "coverage", "status"],
   "properties": {
     "planVersion": { "const": 1 },
@@ -20,12 +32,18 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["group", "files", "loc", "chunkUnits", "signals"],
+        "required": ["group", "files", "loc", "chunkUnits", "unitIds", "signals"],
         "properties": {
           "group": { "type": "string", "minLength": 1, "description": "Top-level (or split second-level) directory path, or (root)." },
           "files": { "type": "integer", "minimum": 1 },
           "loc": { "type": "integer", "minimum": 0 },
-          "chunkUnits": { "type": "integer", "minimum": 1, "description": "Chunk-adjusted unit count (files >400 LOC count as ceil(LOC/400))." },
+          "chunkUnits": { "type": "integer", "minimum": 1, "description": "Chunk-adjusted unit count (files >400 LOC count as ceil(LOC/400)). Must equal |unitIds| (plan semantic check)." },
+          "unitIds": {
+            "type": "array",
+            "minItems": 1,
+            "description": "The group's stable unit IDs, lexicographically ordered: repo-relative file paths; chunked files as path#1..#n. The ID registry rows and the engine address; also the pinned sampling input for light-depth rows.",
+            "items": { "type": "string", "minLength": 1 }
+          },
           "signals": {
             "type": "array",
             "items": { "type": "string", "enum": ["churn-high", "sensitive", "untested", "legacy", "non-code"] }
@@ -39,13 +57,19 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["lens", "altitude", "scope", "depth", "units", "runs", "estTokens", "omissionRisk", "why"],
+        "required": ["lens", "altitude", "scope", "depth", "units", "unitIds", "runs", "estTokens", "omissionRisk", "why"],
         "properties": {
           "lens": { "type": "string", "enum": ["hidden-failure", "security-data-loss", "test-adequacy", "architecture-coherence"] },
           "altitude": { "type": "string", "enum": ["L0", "L1", "L2", "L3"] },
           "scope": { "type": "string", "minLength": 1, "description": "Unit-group path, subsystem:<dir> (L2), or app (L3)." },
           "depth": { "type": "string", "enum": ["light", "standard", "deep"] },
           "units": { "type": "integer", "minimum": 1, "description": "Resolved chunk-adjusted units in scope." },
+          "unitIds": {
+            "type": "array",
+            "minItems": 1,
+            "description": "The exact ordered units this row runs — the engine executes these, never re-derives. standard/deep: the scope's full ordered list; light: the pinned every-3rd sample (indices 0,3,6,…) of it. Consistency with runs/units is the plan semantic check.",
+            "items": { "type": "string", "minLength": 1 }
+          },
           "runs": { "type": "integer", "minimum": 1, "description": "units × depth factor (light ceil(units/3), standard units, deep 2×units)." },
           "estTokens": { "type": "integer", "minimum": 1, "description": "runs × per-run token assumption (see assumptions)." },
           "omissionRisk": { "type": "string", "minLength": 1, "description": "One line: what goes unexamined if this row is cut." },
@@ -66,27 +90,61 @@
     },
     "overrides": {
       "type": "array",
-      "description": "Told-edits as normalized patches, applied after Phase C in array order. The approved plan is replayable from repo state + these patches; direct consult edits use the same shape (source: consult). Empty array when none.",
+      "description": "Told-edits as a DISCRIMINATED PATCH UNION by op — the schema rejects op/payload mismatches (no depth on remove/restrict; depth required on set-depth; add carries a complete rowIntent, no selector). Glob patches (exclude/only) apply before unit-map compilation; row patches after Phase C, in array order. The approved plan is replayable from repo state + these patches; direct consult edits use the same union (source: consult). Empty array when none.",
       "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["token", "selector", "op", "depth", "source"],
-        "properties": {
-          "token": { "type": ["string", "null"], "description": "The CLI token as given (e.g. 'security-data-loss:standard', 'exclude=docs/**'); null for a direct consult edit." },
-          "selector": {
+        "oneOf": [
+          {
             "type": "object",
             "additionalProperties": false,
-            "required": ["lens", "altitude", "scope"],
+            "required": ["token", "selector", "op", "source"],
             "properties": {
-              "lens": { "type": "string", "enum": ["hidden-failure", "security-data-loss", "test-adequacy", "architecture-coherence", "*"] },
-              "altitude": { "type": "string", "enum": ["L0", "L1", "L2", "L3", "*"] },
-              "scope": { "type": "string", "minLength": 1, "description": "Unit-group path, subsystem:<dir>, app, a glob, or '*'." }
+              "token": { "type": ["string", "null"], "description": "The CLI token as given; null for a direct consult edit." },
+              "selector": { "$ref": "#/definitions/selector" },
+              "op": { "type": "string", "enum": ["remove", "restrict"] },
+              "source": { "type": "string", "enum": ["cli", "consult"] }
             }
           },
-          "op": { "type": "string", "enum": ["add", "set", "remove", "restrict"] },
-          "depth": { "type": ["string", "null"], "enum": ["light", "standard", "deep", null], "description": "Target depth for add/set; null for remove/restrict." },
-          "source": { "type": "string", "enum": ["cli", "consult"] }
-        }
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["token", "selector", "op", "depth", "source"],
+            "properties": {
+              "token": { "type": ["string", "null"] },
+              "selector": { "$ref": "#/definitions/selector" },
+              "op": { "type": "string", "const": "set-depth" },
+              "depth": { "type": "string", "enum": ["light", "standard", "deep"] },
+              "source": { "type": "string", "enum": ["cli", "consult"] }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["token", "rowIntent", "op", "source"],
+            "properties": {
+              "token": { "type": ["string", "null"] },
+              "rowIntent": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["lens", "altitude", "scope", "depth"],
+                "description": "Complete row-intent: unitIds/units/runs/estTokens/omissionRisk derive deterministically via steps 2+5 at replay.",
+                "properties": {
+                  "lens": { "type": "string", "enum": ["hidden-failure", "security-data-loss", "test-adequacy", "architecture-coherence"] },
+                  "altitude": { "type": "string", "enum": ["L0", "L1", "L2", "L3"] },
+                  "scope": { "type": "string", "minLength": 1 },
+                  "depth": { "type": "string", "enum": ["light", "standard", "deep"] }
+                },
+                "oneOf": [
+                  { "properties": { "lens": { "const": "hidden-failure" }, "altitude": { "const": "L1" } } },
+                  { "properties": { "lens": { "const": "security-data-loss" }, "altitude": { "enum": ["L1", "L3"] } } },
+                  { "properties": { "lens": { "const": "test-adequacy" }, "altitude": { "const": "L1" } } },
+                  { "properties": { "lens": { "const": "architecture-coherence" }, "altitude": { "enum": ["L2", "L3"] } } }
+                ]
+              },
+              "op": { "type": "string", "const": "add" },
+              "source": { "type": "string", "enum": ["cli", "consult"] }
+            }
+          }
+        ]
       }
     },
     "totals": {

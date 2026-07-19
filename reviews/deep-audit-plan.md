@@ -392,3 +392,27 @@ deliberately withheld per the step-7 gate.
   deterministically via the same step-5 arithmetic. Schema rejects invalid op/payload combinations.
   File-level `exclude`/`only` globs apply **before** unit-map compilation, so group membership is
   addressable. Every approved edit replays without inference.
+
+## Fixes (2026-07-19, approach round 2)
+
+- **R2-F1 — unit identity.** Step 2 now assigns every unit a **stable ID** (file path; chunked
+  files `path#1..#n`) and stores each group's lexicographically **ordered `unitIds`** in `unitMap`
+  (`chunkUnits = |unitIds|` by construction); step 5 resolves **every row's `unitIds`** — full list
+  for standard/deep, the **pinned every-3rd sample** (indices 0,3,6…) for light — so the engine
+  runs exactly the listed units. Schema requires `unitIds` on both structures; the semantic check
+  gains invariants (3) `chunkUnits = |unitIds|` per group and (4) `runs = |unitIds| × (deep?2:1)`
+  per row, with light samples verified against the pinned selection.
+- **R2-F2 — discriminated patch union.** Step 4 and the schema now define patches as a union by
+  `op`: `remove`/`restrict` are selector-only (**no depth field exists** on that branch);
+  `set-depth` **requires** depth; `add` carries a complete **`rowIntent`** (lens/altitude/scope/
+  depth, Table L pairings enforced) from which `unitIds`/pricing derive deterministically at replay
+  — no selector, no fresh judgment. `exclude`/`only` globs act at **step 2, before unit-map
+  compilation**, so file-level membership is addressable. Invalid op/payload combinations are
+  schema-rejected.
+- **Evidence refreshed (compile re-run, not hand-edit).** Regenerating the smoke surfaced honest
+  drift — `reviews/` had grown by this story's own artifacts (86→88 chunk-units; `.claude`/`tests`
+  LOC up) — so the unit map was **recomputed from the current tree** (code-group chunk counts
+  unchanged ⇒ rows/pricing stand). Full contract gate: schema PASSED; semantic check with the two
+  new invariants PASSED; negative test `remove`+depth **REJECTED**; positive test well-formed `add`
+  patch **ACCEPTED**. Linter grew pins for unit identity, the union branches, pinned sampling, and
+  pre-compile globs.

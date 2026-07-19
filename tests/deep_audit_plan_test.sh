@@ -98,8 +98,16 @@ grep -q '"planVersion": { "const": 1 }' "$SCHEMA" && ok "schema pins planVersion
 has "schema row identity fields" "$SCHEMA" '"required": ["lens", "altitude", "scope", "depth", "units", "runs", "estTokens", "omissionRisk", "why"]'
 has "schema pins per-lens altitudes (oneOf)" "$SCHEMA" '"oneOf"'
 has "schema: hidden-failure only L1" "$SCHEMA" '{ "properties": { "lens": { "const": "hidden-failure" }, "altitude": { "const": "L1" } } }'
-has "schema: structured patch overrides" "$SCHEMA" '"required": ["token", "selector", "op", "depth", "source"]'
-has "schema: patch ops" "$SCHEMA" '"enum": ["add", "set", "remove", "restrict"]'
+has "schema: discriminated union — set-depth requires depth" "$SCHEMA" '"required": ["token", "selector", "op", "depth", "source"]'
+has "schema: set-depth op const" "$SCHEMA" '"const": "set-depth"'
+has "schema: add carries complete rowIntent" "$SCHEMA" '"rowIntent"'
+has "schema: remove/restrict selector-only branch" "$SCHEMA" '"enum": ["remove", "restrict"]'
+has "schema: rows pin unitIds" "$SCHEMA" '"required": ["lens", "altitude", "scope", "depth", "units", "unitIds", "runs", "estTokens", "omissionRisk", "why"]'
+has "schema: unitMap pins unitIds" "$SCHEMA" '"required": ["group", "files", "loc", "chunkUnits", "unitIds", "signals"]'
+has "skill: rows record resolved unit IDs" "$SKILL" "ordered \`unitIds\` list"
+has "skill: pinned every-3rd light sample" "$SKILL" "every 3rd entry"
+has "skill: globs act before unit-map compilation" "$SKILL" "before unit-map compilation"
+has "skill: semantic check covers unit identity" "$SKILL" 'chunkUnits = |unitIds|'
 
 echo "== consult stop + loud engine stop =="
 has "consult-presentation rule invoked" "$SKILL" "consult-presentation rule"

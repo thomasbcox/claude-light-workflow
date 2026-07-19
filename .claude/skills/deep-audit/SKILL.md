@@ -64,9 +64,16 @@ setup, CI config, secret patterns, domain context — and its Table A toolset se
 profile record). Carry the profile forward; do **not** duplicate its detection lists here.
 
 ### 2. Unit map (deterministic)
-- **Units:** tracked files (`git ls-files`), grouped by top-level directory; files at the repo root
-  form the **`(root)`** group; a group with > 200 files splits by second-level directory. Files
-  > 400 LOC count as `ceil(LOC/400)` chunk-units for pricing. A group containing no file of any
+- **Scope filter first:** `exclude=<glob>` / `only=<glob>` patches (step 4) apply **here, before
+  unit-map compilation** — they filter the `git ls-files` list itself, so group membership is
+  addressable at file granularity.
+- **Units and unit IDs:** the (filtered) tracked files, grouped by top-level directory; files at
+  the repo root form the **`(root)`** group; a group with > 200 files splits by second-level
+  directory. Every unit gets a **stable unit ID**: a file's ID is its repo-relative path; a file
+  > 400 LOC splits into `ceil(LOC/400)` chunk-units with IDs `path#1..#n`. Each group's
+  lexicographically **ordered `unitIds` list is stored in the plan's `unitMap`** — it is the ID
+  registry the rows and the engine address; `chunkUnits = |unitIds|` by construction. (L2/L3
+  scopes are their own single unit: `subsystem:<dir>` / `app`.) A group containing no file of any
   detected code ecosystem (step-1 profile — e.g. only md/json/yml) is marked **`non-code`**: it
   emits no L1/L2 rows and is listed under `coverage.notCovered`.
 - **Signals** (fixed predicates, evaluated per group):
@@ -117,30 +124,46 @@ transforms append to this table with an explicit order, never as new collision s
 **Scope rules:** Phase A L1 rules (P1/P2/P4/P5) and P6 apply to **code groups only** — `non-code`
 groups go to `coverage.notCovered`, not the plan.
 
-### 4. Overrides — the told **patch model**
+### 4. Overrides — the told **patch model** (a discriminated union by `op`)
 Every consult-time edit — a CLI token **or** a direct row change at the step-7 consult — normalizes
-to one **patch**: `{token, selector: {lens|*, altitude|*, scope|*}, op: add|set|remove|restrict,
-depth|null, source: cli|consult}`. Patches apply **after Phase C, in given order**, and are recorded
-verbatim in the plan's `overrides` block — the approved plan is **replayable** from repo state +
-patches; there is **no second edit path**.
+to one patch from a **discriminated union**; the schema rejects any op/payload mismatch:
+
+- **`remove`** / **`restrict`** — `{token, selector: {lens|*, altitude|*, scope|*}, op, source}` —
+  selector only, **no depth field**. `restrict` drops rows **not** matching.
+- **`set-depth`** — `{token, selector, op, depth, source}` — **depth required**, applied to every
+  row the selector matches.
+- **`add`** — `{token, rowIntent: {lens, altitude, scope, depth}, op, source}` — a **complete
+  row-intent** (no selector); the row's `unitIds`, `units`, `runs`, `estTokens`, and `omissionRisk`
+  derive **deterministically** from the intent via steps 2 and 5, so nothing about an added row
+  rests on fresh judgment at replay time.
+
+Patches are recorded verbatim in the plan's `overrides` block and apply in given order — glob
+patches (`exclude`/`only`) act at **step 2, before unit-map compilation** (file granularity); row
+patches act **after Phase C**. The approved plan is **replayable** from repo state + patches; there
+is **no second edit path**.
 
 CLI tokens (space- or comma-separated after `[path]`) parse to patches:
-- `<lens>:off` → `{lens, *, *, remove}` — drop every row of that lens.
-- `<lens>:light|standard|deep` → **set-or-add**: `set` every existing row of that lens; if none
-  exist, `add` rows by **Table L expansion** — for each altitude Table L allows the lens: L1 → one
-  row per code group, L2 → one per qualifying subsystem, L3 → `app` — at the given depth. (This is
-  what makes the coverage block's security opt-in actually expressible.)
-- `L2:off` / `L3:off` → `{*, L2|L3, *, remove}` — drop an altitude.
-- `exclude=<glob>` → `{*, *, glob, remove}` · `only=<glob>` → `{*, *, glob, restrict}` (drop rows
-  **not** matching).
+- `<lens>:off` → `remove {lens, *, *}` — drop every row of that lens.
+- `<lens>:light|standard|deep` → **set-or-add**: `set-depth` on every existing row of the lens; if
+  none exist, `add` patches by **Table L expansion** — for each altitude Table L allows the lens:
+  L1 → one row-intent per code group, L2 → one per qualifying subsystem, L3 → `app` — at the given
+  depth. (This is what makes the coverage block's security opt-in actually expressible.)
+- `L2:off` / `L3:off` → `remove {*, L2|L3, *}` — drop an altitude.
+- `exclude=<glob>` → `remove {*, *, glob}` · `only=<glob>` → `restrict {*, *, glob}` — both applied
+  at step 2 (see above).
 
-Direct consult edits serialize through the **same patch shape** with `source: consult`. Added rows
-are priced by step 5 exactly like compiled rows. An **unknown token is an error** — report it and
-stop; never guess (the reviewer-override precedent).
+Direct consult edits serialize through the **same union** with `source: consult`. An **unknown
+token is an error** — report it and stop; never guess (the reviewer-override precedent).
 
-### 5. Price each row (static arithmetic, all figures ESTIMATE)
+### 5. Resolve units and price each row (static arithmetic, all figures ESTIMATE)
 - `units` — resolved chunk-adjusted unit count in the row's scope (L2: 1 per subsystem; L3: 1).
-- `runs` — `units ×` depth factor: light `ceil(units/3)` (sampled), standard `units`, deep `2×units`.
+- **`unitIds` — the units this row will actually run**, resolved from the scope's `unitMap` entry:
+  **standard** and **deep** → the group's full ordered list; **light** → the **pinned sample**:
+  every 3rd entry of the lexicographically ordered list (indices 0, 3, 6, …). The sampling inputs
+  (the ordered list) live in `unitMap`, so the selection is reproducible from the artifact alone —
+  the engine runs exactly `unitIds`, never re-chooses.
+- `runs` — `|unitIds| ×` (deep ? 2 : 1); equivalently light `ceil(units/3)`, standard `units`, deep
+  `2×units`.
 - `estTokens` — `runs × 60k` (assumption: ≈ 60k tokens per critic-run, all-in; refine from observed
   engine data).
 - `omissionRisk` — one line: what goes unexamined if this row is cut.
@@ -153,7 +176,9 @@ required; the schema also pins per-lens altitude pairings, positive counts, and 
 **Parse-check it** (`jq -e . file` or `python3 -c 'import json;json.load(...)'`), then run the
 **plan semantic check** — the named contract check Draft-7 cannot express: (1) row identities
 `(lens, altitude, scope)` are **unique**; (2) `totals.runs = Σ rows[].runs` and
-`totals.estTokens = Σ rows[].estTokens`. Schema validation **plus** the semantic check is the
+`totals.estTokens = Σ rows[].estTokens`; (3) per unit-map group, `chunkUnits = |unitIds|`; (4) per
+row, `runs = |unitIds| × (deep ? 2 : 1)`, with light rows' `unitIds` matching the pinned every-3rd
+sample of their group's ordered list. Schema validation **plus** the semantic check is the
 canonical contract gate — on any failure STOP loudly; never present a view of an invalid plan.
 Then **derive**
 `reviews/audit-plan-<YYYY-MM-DD>.md` from the JSON, fixed sections in order: **Target profile ·
