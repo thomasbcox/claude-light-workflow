@@ -300,3 +300,26 @@ not enforce several invariants it claims to own.
   uniqueness and row/total arithmetic; that combined validation is the canonical contract check
   before deriving the view. **Win:** malformed schedules rejected before approval; lens
   applicability centralized; the engine sheds defensive branches.
+
+## Decisions (2026-07-19, approach round)
+
+Thomas: **"fix all"** — all three approach findings approved as redesign fixes. Per the step-7
+gate, the correctness pass was **deliberately not run** this round; the redesigned shape re-enters
+review via a fresh approach pass after `/close` applies:
+
+- **F1 — Table P resolution model → FIX.** Phased compile: (1) emit baseline candidate rows, (2)
+  resolve upgrades by max depth (P8/P9), (3) apply **named post-resolution transforms in declared
+  order** — P10 becomes the `mature-downgrade` transform. Every rule gets one mechanically
+  determined result; P10 stays (maturity may soften risk) but through a declared phase.
+- **F2 — told-override contract → FIX.** One normalized **patch model**: selector `(lens, altitude,
+  scope)` + operation `add | set | remove` + depth. CLI tokens parse into patches; direct consult
+  edits serialize through the same representation; `add` expands over Table L when the selected row
+  is absent (making the smoke plan's security opt-in actually expressible). The schema's
+  `overrides` block records structured patches, not free-form prose — the approved plan is
+  replayable from repo state + patches.
+- **F3 — schema invariants → FIX.** `plan-schema.json` gains per-lens altitude pairings (Table L
+  encoded), positive counts, non-empty strings, date format; plus a **named semantic check**
+  (row-identity uniqueness, totals = Σ rows) that must pass before the md view derives. Validation
+  passing = executable under the contract. Contract stays `planVersion: 1` (nothing shipped has
+  consumed v1); `/close` re-runs the smoke compile under the revised contract so the evidence
+  stays honest.
