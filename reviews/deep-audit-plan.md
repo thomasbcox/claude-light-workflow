@@ -264,3 +264,39 @@ AC → file map:
   `.claude/workflow.json`, `.github/workflows/ci.yml`.
 - **AC9** (OPS-13 build link) → `BACKLOG.md`.
 - **AC10** (scope containment) → verification only (`git diff --name-only main...HEAD`).
+
+## Codex approach review (2026-07-19, base main, HEAD ea7bfc6)
+
+**Verdict:** The approved high-level shape is sound — plan-only skill, referenced recon, canonical
+JSON with a derived consult view, conventional drift linting/wiring, loud engine stop. Revise the
+declarative core before treating v1 as the future engine's stable contract: rule precedence is
+internally inconsistent, told overrides are not fully expressible or replayable, and the schema does
+not enforce several invariants it claims to own.
+
+### IMPORTANT
+- **Table P mixes incompatible resolution models** — *two-way · kludgy* · locus: SKILL.md step 3.
+  P1–P9 emit/upgrade under highest-depth-wins; P10 *downgrades* — which can never win that reducer,
+  so P10 is either a no-op or an unstated ordered-mutation exception. Declarative in appearance,
+  procedural in fact. **Alternative:** explicit phases — emit baseline candidates → resolve upgrades
+  by max depth → apply named post-resolution transforms (the mature-repo downgrade) in declared
+  order; or drop P10 if maturity should never override risk. **Win:** one mechanically determined
+  result per rule, no special-case interpretation in any future compiler.
+- **The told-override contract cannot express or replay all approved edits** — *one-way ·
+  nonstandard* · locus: SKILL.md steps 4/7 + schema `overrides`. `<lens>:<depth>` only sets
+  *existing* rows — it cannot enable a lens Table P omitted, yet the smoke artifact itself tells
+  Thomas to add absent security coverage exactly that way. Direct consult edits aren't normalized
+  into the recorded overrides, so an approved plan stops being reproducible from repo state +
+  overrides — weakening the compiled-plan seam the engine inherits. **Alternative:** one normalized
+  patch model for every consult edit — selector (lens/altitude/scope) + operation (add/set/remove) +
+  depth, expanding over Table L when the selected row is absent; CLI tokens parse into those patches;
+  direct edits serialize through the same representation. **Win:** one replayable told seam; the
+  documented security opt-in actually works; differential mode can reconstruct why every row exists.
+- **The canonical schema does not own the catalog and pricing invariants** — *one-way ·
+  nonstandard* · locus: plan-schema.json. It accepts hidden-failure@L3, architecture-coherence@L1,
+  negative counts, duplicate `(lens, altitude, scope)` identities, and totals unrelated to row sums —
+  so passing validation does not establish executability; the real invariants live duplicated in
+  prose and ad-hoc smoke checks. **Alternative:** encode what Draft-7 can own (lens-specific
+  altitude variants, positive counts, non-empty strings, date format) + one small semantic check for
+  uniqueness and row/total arithmetic; that combined validation is the canonical contract check
+  before deriving the view. **Win:** malformed schedules rejected before approval; lens
+  applicability centralized; the engine sheds defensive branches.
