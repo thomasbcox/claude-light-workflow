@@ -1,14 +1,14 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "deep-audit plan (v1)",
-  "description": "Canonical contract for the /deep-audit plan artifact (reviews/audit-plan-<date>.json). The JSON IS the plan — the markdown consult view is derived from it and regenerated on divergence. planVersion is pinned so the engine story and the eventual differential (C-ledger) mode can extend this contract with an explicit version bump, never silently. All properties are required (the repo's schema convention).",
+  "description": "Canonical contract for the /deep-audit plan artifact (reviews/audit-plan-<date>.json). The JSON IS the plan — the markdown consult view is derived from it and regenerated on divergence. The canonical contract gate = this schema PLUS the named plan semantic check (row-identity uniqueness; totals.runs and totals.estTokens equal the row sums) which Draft-7 cannot express — both must pass before the view derives. planVersion is pinned so the engine story and the eventual differential (C-ledger) mode extend this contract only via an explicit version bump. All properties are required (the repo's schema convention).",
   "type": "object",
   "additionalProperties": false,
   "required": ["planVersion", "date", "target", "profile", "unitMap", "rows", "overrides", "totals", "assumptions", "coverage", "status"],
   "properties": {
     "planVersion": { "const": 1 },
-    "date": { "type": "string", "description": "YYYY-MM-DD compile date; also the artifact filename key." },
-    "target": { "type": "string", "description": "Absolute path of the audited repo root." },
+    "date": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", "description": "YYYY-MM-DD compile date; also the artifact filename key." },
+    "target": { "type": "string", "minLength": 1, "description": "Absolute path of the audited repo root." },
     "profile": {
       "type": "object",
       "description": "Detection snapshot carried from /dev-audit steps 1–2 (ecosystems, frameworks, tests, CI, secret signals — redacted, domain, Table B tier). Free-form object; informational.",
@@ -22,10 +22,10 @@
         "additionalProperties": false,
         "required": ["group", "files", "loc", "chunkUnits", "signals"],
         "properties": {
-          "group": { "type": "string", "description": "Top-level (or split second-level) directory path." },
-          "files": { "type": "integer" },
-          "loc": { "type": "integer" },
-          "chunkUnits": { "type": "integer", "description": "Chunk-adjusted unit count (files >400 LOC count as ceil(LOC/400))." },
+          "group": { "type": "string", "minLength": 1, "description": "Top-level (or split second-level) directory path, or (root)." },
+          "files": { "type": "integer", "minimum": 1 },
+          "loc": { "type": "integer", "minimum": 0 },
+          "chunkUnits": { "type": "integer", "minimum": 1, "description": "Chunk-adjusted unit count (files >400 LOC count as ceil(LOC/400))." },
           "signals": {
             "type": "array",
             "items": { "type": "string", "enum": ["churn-high", "sensitive", "untested", "legacy", "non-code"] }
@@ -35,7 +35,7 @@
     },
     "rows": {
       "type": "array",
-      "description": "The plan. One row per (lens, altitude, scope) identity — the Table P collision rule guarantees uniqueness.",
+      "description": "The plan. One row per (lens, altitude, scope) identity — uniqueness is enforced by the plan semantic check. The oneOf branches pin Table L's per-lens altitude pairings: a lens can only appear at the altitudes the catalog allows.",
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -43,30 +43,49 @@
         "properties": {
           "lens": { "type": "string", "enum": ["hidden-failure", "security-data-loss", "test-adequacy", "architecture-coherence"] },
           "altitude": { "type": "string", "enum": ["L0", "L1", "L2", "L3"] },
-          "scope": { "type": "string", "description": "Unit-group path, subsystem:<dir> (L2), or app (L3)." },
+          "scope": { "type": "string", "minLength": 1, "description": "Unit-group path, subsystem:<dir> (L2), or app (L3)." },
           "depth": { "type": "string", "enum": ["light", "standard", "deep"] },
-          "units": { "type": "integer", "description": "Resolved chunk-adjusted units in scope." },
-          "runs": { "type": "integer", "description": "units × depth factor (light ceil(units/3), standard units, deep 2×units)." },
-          "estTokens": { "type": "integer", "description": "runs × per-run token assumption (see assumptions)." },
-          "omissionRisk": { "type": "string", "description": "One line: what goes unexamined if this row is cut." },
+          "units": { "type": "integer", "minimum": 1, "description": "Resolved chunk-adjusted units in scope." },
+          "runs": { "type": "integer", "minimum": 1, "description": "units × depth factor (light ceil(units/3), standard units, deep 2×units)." },
+          "estTokens": { "type": "integer", "minimum": 1, "description": "runs × per-run token assumption (see assumptions)." },
+          "omissionRisk": { "type": "string", "minLength": 1, "description": "One line: what goes unexamined if this row is cut." },
           "why": {
             "type": "array",
-            "description": "Accumulated Table P rule reasons (and any override), e.g. 'P8: legacy'.",
-            "items": { "type": "string" }
+            "minItems": 1,
+            "description": "Accumulated Table P rule reasons and/or patches, e.g. 'P8: legacy', 'patch: security-data-loss:standard (add)'.",
+            "items": { "type": "string", "minLength": 1 }
           }
-        }
+        },
+        "oneOf": [
+          { "properties": { "lens": { "const": "hidden-failure" }, "altitude": { "const": "L1" } } },
+          { "properties": { "lens": { "const": "security-data-loss" }, "altitude": { "enum": ["L1", "L3"] } } },
+          { "properties": { "lens": { "const": "test-adequacy" }, "altitude": { "const": "L1" } } },
+          { "properties": { "lens": { "const": "architecture-coherence" }, "altitude": { "enum": ["L2", "L3"] } } }
+        ]
       }
     },
     "overrides": {
       "type": "array",
-      "description": "Told-overrides applied after Table P, recorded before→after. Empty array when none.",
+      "description": "Told-edits as normalized patches, applied after Phase C in array order. The approved plan is replayable from repo state + these patches; direct consult edits use the same shape (source: consult). Empty array when none.",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["token", "effect"],
+        "required": ["token", "selector", "op", "depth", "source"],
         "properties": {
-          "token": { "type": "string", "description": "The override as given, e.g. 'security-data-loss:deep', 'exclude=docs/**'." },
-          "effect": { "type": "string", "description": "Before→after description of what it changed." }
+          "token": { "type": ["string", "null"], "description": "The CLI token as given (e.g. 'security-data-loss:standard', 'exclude=docs/**'); null for a direct consult edit." },
+          "selector": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["lens", "altitude", "scope"],
+            "properties": {
+              "lens": { "type": "string", "enum": ["hidden-failure", "security-data-loss", "test-adequacy", "architecture-coherence", "*"] },
+              "altitude": { "type": "string", "enum": ["L0", "L1", "L2", "L3", "*"] },
+              "scope": { "type": "string", "minLength": 1, "description": "Unit-group path, subsystem:<dir>, app, a glob, or '*'." }
+            }
+          },
+          "op": { "type": "string", "enum": ["add", "set", "remove", "restrict"] },
+          "depth": { "type": ["string", "null"], "enum": ["light", "standard", "deep", null], "description": "Target depth for add/set; null for remove/restrict." },
+          "source": { "type": "string", "enum": ["cli", "consult"] }
         }
       }
     },
@@ -75,23 +94,24 @@
       "additionalProperties": false,
       "required": ["runs", "estTokens", "wallClockMinutes"],
       "properties": {
-        "runs": { "type": "integer" },
-        "estTokens": { "type": "integer" },
-        "wallClockMinutes": { "type": "integer", "description": "ceil(runs / concurrency) × per-run minutes (see assumptions)." }
+        "runs": { "type": "integer", "minimum": 0, "description": "Must equal Σ rows[].runs (plan semantic check)." },
+        "estTokens": { "type": "integer", "minimum": 0, "description": "Must equal Σ rows[].estTokens (plan semantic check)." },
+        "wallClockMinutes": { "type": "integer", "minimum": 0, "description": "ceil(runs / concurrency) × per-run minutes (see assumptions)." }
       }
     },
     "assumptions": {
       "type": "array",
+      "minItems": 1,
       "description": "Every pricing constant, printed: per-run tokens, concurrency, per-run minutes, chunk size, churn window/threshold.",
-      "items": { "type": "string" }
+      "items": { "type": "string", "minLength": 1 }
     },
     "coverage": {
       "type": "object",
       "additionalProperties": false,
       "required": ["covered", "notCovered"],
       "properties": {
-        "covered": { "type": "array", "items": { "type": "string" } },
-        "notCovered": { "type": "array", "description": "Explicit exclusions: excluded globs, dropped lenses/altitudes, L0 reserved.", "items": { "type": "string" } }
+        "covered": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "notCovered": { "type": "array", "description": "Explicit exclusions: excluded globs, dropped lenses/altitudes, non-code groups, L0 reserved.", "items": { "type": "string", "minLength": 1 } }
       }
     },
     "status": { "type": "string", "enum": ["proposed", "approved"] }

@@ -53,8 +53,11 @@ has "OPS-12 per-critic rule restated" "$SKILL" "its own schema"
 has "prompts/schemas deferred to engine story" "$SKILL" "engine story's scope"
 has "approach pass owns simplicity (OPS-12 boundary)" "$SKILL" "approach pass owns it"
 
-echo "== Table P determinism (the F1 BLOCKER fix) =="
-has "Table P present" "$SKILL" "Table P (the plan rules)"
+echo "== Table P determinism (the F1 BLOCKER fix; phased per the approach-round redesign) =="
+has "Table P present (phased)" "$SKILL" "Table P (phased, deterministic)"
+has "three declared phases" "$SKILL" "three declared phases"
+has "named post-resolution transform" "$SKILL" "mature-downgrade"
+has "transforms run after resolution" "$SKILL" "Transforms run **after** resolution"
 has "row identity pinned" "$SKILL" '`(lens, altitude, scope)`'
 has "fixed churn window" "$SKILL" "90 days"
 has "churn threshold" "$SKILL" "≥ 20 commits"
@@ -65,8 +68,14 @@ has "collision rule: highest depth wins" "$SKILL" "highest** depth wins"
 has "whys accumulate" "$SKILL" "accumulates on the row"
 has "determinism invariant stated" "$SKILL" "same overrides ⇒ same plan"
 
-echo "== override grammar (told beats table, errors never guessed) =="
+echo "== told patch model (the approach-round F2 redesign) =="
+has "patch model named" "$SKILL" "patch model"
 has "lens off token" "$SKILL" "<lens>:off"
+has "set-or-add semantics" "$SKILL" "set-or-add"
+has "Table L expansion for absent rows" "$SKILL" "Table L expansion"
+has "restrict op (only=)" "$SKILL" "restrict"
+has "consult edits use same patch shape" "$SKILL" "source: consult"
+has "replayable from repo state + patches" "$SKILL" "replayable"
 has "exclude glob token" "$SKILL" "exclude=<glob>"
 has "unknown token is an error" "$SKILL" "unknown token is an error"
 
@@ -76,14 +85,21 @@ has "per-run token assumption" "$SKILL" "60k"
 has "omission risk per row" "$SKILL" "omissionRisk"
 has "concurrency-batched wall-clock" "$SKILL" "totalRuns / 8"
 
-echo "== canonical JSON contract (the F2 fix) =="
+echo "== canonical JSON contract + semantic check (the F3 redesign) =="
 has "JSON is canonical" "$SKILL" "JSON is canonical"
 has "artifact path token" "$SKILL" "reviews/audit-plan-"
 has "parse-check before use" "$SKILL" "Parse-check"
+has "plan semantic check named" "$SKILL" "plan semantic check"
+has "uniqueness invariant" "$SKILL" "are **unique**"
+has "totals arithmetic invariant" "$SKILL" "totals.runs = Σ rows"
 has "view derived from JSON" "$SKILL" "derive"
 grep -q '"planVersion": { "const": 1 }' "$SCHEMA" && ok "schema pins planVersion=1" || bad "schema planVersion const"
 /usr/bin/env python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$SCHEMA" 2>/dev/null && ok "plan-schema.json is valid JSON" || bad "plan-schema.json invalid"
 has "schema row identity fields" "$SCHEMA" '"required": ["lens", "altitude", "scope", "depth", "units", "runs", "estTokens", "omissionRisk", "why"]'
+has "schema pins per-lens altitudes (oneOf)" "$SCHEMA" '"oneOf"'
+has "schema: hidden-failure only L1" "$SCHEMA" '{ "properties": { "lens": { "const": "hidden-failure" }, "altitude": { "const": "L1" } } }'
+has "schema: structured patch overrides" "$SCHEMA" '"required": ["token", "selector", "op", "depth", "source"]'
+has "schema: patch ops" "$SCHEMA" '"enum": ["add", "set", "remove", "restrict"]'
 
 echo "== consult stop + loud engine stop =="
 has "consult-presentation rule invoked" "$SKILL" "consult-presentation rule"

@@ -76,11 +76,15 @@ profile record). Carry the profile forward; do **not** duplicate its detection l
   - `legacy` — the group's newest commit is older than the target's `reviews/` directory birth
     commit (no `reviews/` ⇒ older than 1 year). "Never passed through the loop."
 
-### 3. Compile rows — Table P (the plan rules)
+### 3. Compile rows — Table P (phased, deterministic)
 Row identity = **`(lens, altitude, scope)`**; scope = a unit-group path, `subsystem:<dir>` (L2), or
-`app` (L3). Depth ∈ `light | standard | deep`. Evaluate **every** rule; emit/upgrade rows:
+`app` (L3). Depth ∈ `light | standard | deep`. The compile runs **three declared phases — emit,
+resolve, transform — in that order**; each phase's result is mechanically determined before the
+next runs (no rule ever needs procedural interpretation).
 
-| # | Predicate | Row emitted / modified | Depth |
+**Phase A — emit (baseline candidate rows):**
+
+| # | Predicate | Row emitted | Depth |
 |---|---|---|---|
 | P1 | always | (`hidden-failure`, L1, each unit-group) | standard |
 | P2 | group `sensitive` | (`security-data-loss`, L1, that group) | deep |
@@ -89,25 +93,50 @@ Row identity = **`(lens, altitude, scope)`**; scope = a unit-group path, `subsys
 | P5 | group not `untested` | (`test-adequacy`, L1, that group) | light |
 | P6 | ≥ 2 top-level groups | (`architecture-coherence`, L2, each `subsystem:<dir>` with ≥ 5 files) | standard |
 | P7 | always | (`architecture-coherence`, L3, `app`) | standard |
-| P8 | group `legacy` | upgrade that group's `hidden-failure` L1 row | deep |
-| P9 | group `churn-high` | upgrade that group's `hidden-failure` + `security-data-loss` L1 rows | one step deeper |
-| P10 | dev-audit Table B tier = `mature` AND no `sensitive` groups | downgrade every L1 row | one step lighter |
 
-**Collision rule:** one row per identity; the **highest** depth wins (`light < standard < deep`);
-every firing rule's *why* accumulates on the row (`"why": ["P1: baseline", "P8: legacy — never
-passed through the loop"]`).
-**Scope rules:** L1 rules (P1/P2/P4/P5) and P6 apply to **code groups only** — `non-code` groups go
-to `coverage.notCovered`, not the plan. Upgrade rules (P8/P9) are a **no-op** when the target row
-doesn't exist.
+**Phase B — resolve (upgrades; max wins):**
 
-### 4. Overrides (the "told" grammar)
-Tokens after `[path]`, space- or comma-separated, applied **after** Table P and recorded in the
-plan's `overrides` block with before→after:
-- `<lens>:off` — drop every row of that lens · `<lens>:light|standard|deep` — set them
-- `L2:off` / `L3:off` — drop an altitude
-- `exclude=<glob>` — remove matching unit-groups from scope · `only=<glob>` — restrict to matches
-An **unknown token is an error** — report it and stop; never guess (the reviewer-override
-precedent).
+| # | Predicate | Upgrade | Depth |
+|---|---|---|---|
+| P8 | group `legacy` | that group's `hidden-failure` L1 row | deep |
+| P9 | group `churn-high` | that group's `hidden-failure` + `security-data-loss` L1 rows | one step deeper |
+
+One row per identity; the **highest** depth wins (`light < standard < deep`); every firing rule's
+*why* accumulates on the row (`"why": ["P1: baseline", "P8: legacy — never passed through the
+loop"]`). An upgrade to a row Phase A did not emit is a **no-op**.
+
+**Phase C — named post-resolution transforms (declared order):**
+
+| Order | Transform | Predicate | Effect |
+|---|---|---|---|
+| 1 | `mature-downgrade` | dev-audit Table B tier = `mature` AND no `sensitive` groups | every L1 row one step lighter (floor `light`) |
+
+Transforms run **after** resolution, so a downgrade has one mechanically determined result; future
+transforms append to this table with an explicit order, never as new collision semantics.
+
+**Scope rules:** Phase A L1 rules (P1/P2/P4/P5) and P6 apply to **code groups only** — `non-code`
+groups go to `coverage.notCovered`, not the plan.
+
+### 4. Overrides — the told **patch model**
+Every consult-time edit — a CLI token **or** a direct row change at the step-7 consult — normalizes
+to one **patch**: `{token, selector: {lens|*, altitude|*, scope|*}, op: add|set|remove|restrict,
+depth|null, source: cli|consult}`. Patches apply **after Phase C, in given order**, and are recorded
+verbatim in the plan's `overrides` block — the approved plan is **replayable** from repo state +
+patches; there is **no second edit path**.
+
+CLI tokens (space- or comma-separated after `[path]`) parse to patches:
+- `<lens>:off` → `{lens, *, *, remove}` — drop every row of that lens.
+- `<lens>:light|standard|deep` → **set-or-add**: `set` every existing row of that lens; if none
+  exist, `add` rows by **Table L expansion** — for each altitude Table L allows the lens: L1 → one
+  row per code group, L2 → one per qualifying subsystem, L3 → `app` — at the given depth. (This is
+  what makes the coverage block's security opt-in actually expressible.)
+- `L2:off` / `L3:off` → `{*, L2|L3, *, remove}` — drop an altitude.
+- `exclude=<glob>` → `{*, *, glob, remove}` · `only=<glob>` → `{*, *, glob, restrict}` (drop rows
+  **not** matching).
+
+Direct consult edits serialize through the **same patch shape** with `source: consult`. Added rows
+are priced by step 5 exactly like compiled rows. An **unknown token is an error** — report it and
+stop; never guess (the reviewer-override precedent).
 
 ### 5. Price each row (static arithmetic, all figures ESTIMATE)
 - `units` — resolved chunk-adjusted unit count in the row's scope (L2: 1 per subsystem; L3: 1).
@@ -120,8 +149,13 @@ precedent).
 
 ### 6. Write the artifacts (JSON canonical → md derived)
 Write `reviews/audit-plan-<YYYY-MM-DD>.json` conforming to **`plan-schema.json` v1** (all fields
-required). **Parse-check it** (`jq -e . file` or `python3 -c 'import json;json.load(...)'`) —
-on failure STOP loudly; never present a view of an invalid plan. Then **derive**
+required; the schema also pins per-lens altitude pairings, positive counts, and the date format).
+**Parse-check it** (`jq -e . file` or `python3 -c 'import json;json.load(...)'`), then run the
+**plan semantic check** — the named contract check Draft-7 cannot express: (1) row identities
+`(lens, altitude, scope)` are **unique**; (2) `totals.runs = Σ rows[].runs` and
+`totals.estTokens = Σ rows[].estTokens`. Schema validation **plus** the semantic check is the
+canonical contract gate — on any failure STOP loudly; never present a view of an invalid plan.
+Then **derive**
 `reviews/audit-plan-<YYYY-MM-DD>.md` from the JSON, fixed sections in order: **Target profile ·
 Unit map · Plan rows** (lens / altitude / scope / depth / units / runs / est-tokens /
 omission-risk / why) **· Overrides applied · Cost estimate + assumptions · Coverage & exclusions**
@@ -131,9 +165,10 @@ status**.
 ### 7. Consult — STOP for Thomas
 Present the plan rows **from the artifact** per the consult-presentation rule — each row already
 carries its cost (`estTokens`) and risk (`omissionRisk`); read them, don't improvise a second
-narrative. Thomas edits (override tokens or direct row changes — re-run steps 4–6 on any edit;
-JSON first, view re-derived) or approves. On approval set `"status": "approved"` in the JSON and
-regenerate the view. **Approval approves the plan, not execution.**
+narrative. Thomas edits — every edit, token or direct, becomes a **recorded patch** (step 4,
+`source: consult`); re-run steps 4–6 on any edit (JSON first, view re-derived) — or approves. On
+approval set `"status": "approved"` in the JSON and regenerate the view. **Approval approves the
+plan, not execution.**
 
 ### 8. Loud stop (terminal)
 *"The deep-audit execution engine is not yet built (follow-up story: the OPS-13 engine slice). The

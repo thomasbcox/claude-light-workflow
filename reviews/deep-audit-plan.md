@@ -323,3 +323,28 @@ review via a fresh approach pass after `/close` applies:
   passing = executable under the contract. Contract stays `planVersion: 1` (nothing shipped has
   consumed v1); `/close` re-runs the smoke compile under the revised contract so the evidence
   stays honest.
+
+## Fixes (2026-07-19, approach round)
+
+- **F1 — phased Table P.** Step 3 restructured into three declared phases: **A emit** (P1–P7
+  baseline candidates) → **B resolve** (P8/P9 upgrades; highest depth wins, whys accumulate;
+  upgrade-to-absent-row is a no-op) → **C named post-resolution transforms in declared order**
+  (`mature-downgrade`, the former P10, with floor `light`). Every rule now has one mechanically
+  determined result; future transforms append with an explicit order.
+- **F2 — told patch model.** Step 4 rewritten: every edit (CLI token or direct consult change)
+  normalizes to `{token, selector(lens|*, altitude|*, scope|*), op add|set|remove|restrict,
+  depth|null, source cli|consult}`, applied after Phase C in order and recorded in `overrides` —
+  the approved plan is replayable from repo state + patches. `<lens>:<depth>` is **set-or-add**
+  with **Table L expansion** when no rows exist (the smoke plan's security opt-in is now
+  expressible); `only=` is the `restrict` op; consult edits ride the same shape (`source:
+  consult`).
+- **F3 — contract-owning schema + semantic check.** `plan-schema.json` now pins per-lens altitude
+  pairings via `oneOf` (hidden-failure→L1; security-data-loss→L1|L3; test-adequacy→L1;
+  architecture-coherence→L2|L3), positive counts, non-empty strings, and the date format;
+  `overrides` items are structured patches (free-form token/effect prose removed). Step 6 adds the
+  named **plan semantic check** (row-identity uniqueness; totals = Σ rows) — schema + semantic
+  check together are the canonical contract gate before the view derives.
+- **Evidence refreshed:** the smoke artifact re-validated under the revised contract — schema
+  PASSED (content needed no change), semantic check PASSED, and a negative test confirmed
+  `hidden-failure@L3` is now **rejected** (it validated under the old schema). Linter updated for
+  the new contracts (65 checks green); full gate + shellcheck/shfmt clean.
