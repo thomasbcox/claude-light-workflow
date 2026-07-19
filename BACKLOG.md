@@ -207,6 +207,13 @@ practice. Recorded so whoever builds it doesn't rebuild the wrong shape:
   **First slice:** the recon → plan-artifact consult, standalone-valuable ("what would a
   comprehensive audit cost on this repo" as a one-page decision) — story
   [reviews/deep-audit-plan.md](reviews/deep-audit-plan.md) (`/deep-audit`, plan stage only).
+  **Engine-slice opening ACs (deferred there from the first slice's round-3 review, Thomas
+  2026-07-19):** (a) patch-phase structural ops — dedicated `exclude-files`/`only-files` union
+  branches, selector `remove`/`restrict` reserved for compiled rows; (b) the full executability
+  semantic gate — a scope registry incl. L2/L3 membership, structural pricing constants, and
+  full-arithmetic checks (`unitIds` ≡ registry, `estTokens` = runs × constant, wall-clock formula) —
+  the executor build decides which checks earn their place. `planVersion` 1 has no consumers yet, so
+  the engine story may extend the contract in place.
 
 (Logged 2026-07-19. **Taxonomy note:** a *third* reviewer-architecture evaluate-and-decide item under
 `OPS-` — strengthens the OPS-11/OPS-12 signal that these may deserve their own prefix; that revisit

@@ -16,11 +16,22 @@
       }
     }
   },
-  "required": ["planVersion", "date", "target", "profile", "unitMap", "rows", "overrides", "totals", "assumptions", "coverage", "status"],
+  "required": ["planVersion", "date", "target", "source", "profile", "unitMap", "rows", "overrides", "totals", "assumptions", "coverage", "status"],
   "properties": {
     "planVersion": { "const": 1 },
     "date": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", "description": "YYYY-MM-DD compile date; also the artifact filename key." },
     "target": { "type": "string", "minLength": 1, "description": "Absolute path of the audited repo root." },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["revision", "dirty", "evaluatedAt"],
+      "description": "Source snapshot binding: one approval ↔ one code state ↔ one signal window. Every time-relative predicate (churn) derives from evaluatedAt, never from run time. The engine MUST fail closed if the target's revision/tree no longer matches.",
+      "properties": {
+        "revision": { "type": "string", "minLength": 7, "description": "git rev-parse HEAD at compile time." },
+        "dirty": { "type": "boolean", "description": "Whether the working tree had uncommitted changes at compile time." },
+        "evaluatedAt": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}", "description": "ISO evaluation cutoff; the churn window is the 90 days ending here." }
+      }
+    },
     "profile": {
       "type": "object",
       "description": "Detection snapshot carried from /dev-audit steps 1–2 (ecosystems, frameworks, tests, CI, secret signals — redacted, domain, Table B tier). Free-form object; informational.",

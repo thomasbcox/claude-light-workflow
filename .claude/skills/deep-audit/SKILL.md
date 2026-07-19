@@ -64,6 +64,11 @@ setup, CI config, secret patterns, domain context — and its Table A toolset se
 profile record). Carry the profile forward; do **not** duplicate its detection lists here.
 
 ### 2. Unit map (deterministic)
+- **Pin the snapshot first:** capture `evaluatedAt` (the ISO evaluation cutoff — the compile
+  instant) and the **source identity**: `git rev-parse HEAD` plus a dirty flag
+  (`git status --porcelain` non-empty). **Every time-relative predicate derives from the stored
+  `evaluatedAt`, never from run time** — so an unchanged tree compiles the same plan next month.
+  Both land in the plan's `source` block (step 6).
 - **Scope filter first:** `exclude=<glob>` / `only=<glob>` patches (step 4) apply **here, before
   unit-map compilation** — they filter the `git ls-files` list itself, so group membership is
   addressable at file granularity.
@@ -77,7 +82,8 @@ profile record). Carry the profile forward; do **not** duplicate its detection l
   detected code ecosystem (step-1 profile — e.g. only md/json/yml) is marked **`non-code`**: it
   emits no L1/L2 rows and is listed under `coverage.notCovered`.
 - **Signals** (fixed predicates, evaluated per group):
-  - `churn-high` — ≥ 20 commits touching the group in `git log --since='90 days ago'`.
+  - `churn-high` — ≥ 20 commits touching the group in the **90 days ending at `evaluatedAt`**
+    (`git log --since='<evaluatedAt − 90d>' --until='<evaluatedAt>'`).
   - `sensitive` — any path matching (case-insensitive) `auth|payment|billing|secret|crypto|token|session|pii`, or the detection profile flags an auth/payments/PII domain.
   - `untested` — no file in the group matches the detection's test patterns.
   - `legacy` — the group's newest commit is older than the target's `reviews/` directory birth
@@ -173,7 +179,11 @@ precedent).
 
 ### 6. Write the artifacts (JSON canonical → md derived)
 Write `reviews/audit-plan-<YYYY-MM-DD>.json` conforming to **`plan-schema.json` v1** (all fields
-required; the schema also pins per-lens altitude pairings, positive counts, and the date format).
+required; the schema also pins per-lens altitude pairings, positive counts, and the date format),
+including the **`source` block** — `{revision, dirty, evaluatedAt}` from step 2 — which binds the
+approval to one code state and one signal window; **the engine must fail closed on source
+mismatch** (target revision/tree no longer matches `source.revision`) rather than execute changed
+content.
 **Parse-check it** (`jq -e . file` or `python3 -c 'import json;json.load(...)'`), then run the
 **plan semantic check** — the named contract check Draft-7 cannot express: (1) row identities
 `(lens, altitude, scope)` are **unique**; (2) `totals.runs = Σ rows[].runs` and

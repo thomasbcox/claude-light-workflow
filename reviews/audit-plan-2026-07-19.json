@@ -96,6 +96,7 @@
       "loc": 5919,
       "chunkUnits": 88,
       "signals": [
+        "churn-high",
         "non-code"
       ],
       "unitIds": [
@@ -202,7 +203,7 @@
       "omissionRisk": "install.sh's deploy/overwrite paths go unexamined for swallowed failure",
       "why": [
         "P1: baseline",
-        "P9: churn-high (41 commits/90d)"
+        "P9: churn-high (42 commits/90d to evaluatedAt)"
       ],
       "unitIds": [
         ".gitignore",
@@ -227,7 +228,7 @@
       "omissionRisk": "the skills + guard hook (the loop's own machinery) go unexamined for silent degradation",
       "why": [
         "P1: baseline",
-        "P9: churn-high (43 commits/90d)"
+        "P9: churn-high (47 commits/90d to evaluatedAt)"
       ],
       "unitIds": [
         ".claude/hooks/block-main-writes.sh",
@@ -256,7 +257,7 @@
       "omissionRisk": "linters that silently pass on drift would themselves hide failure",
       "why": [
         "P1: baseline",
-        "P9: churn-high (20 commits/90d)"
+        "P9: churn-high (24 commits/90d to evaluatedAt)"
       ],
       "unitIds": [
         "tests/deep_audit_plan_test.sh",
@@ -393,5 +394,10 @@
       "security-data-loss \u2014 no sensitive paths/domain detected; add via override 'security-data-loss:standard' if wanted"
     ]
   },
-  "status": "proposed"
+  "status": "proposed",
+  "source": {
+    "revision": "53e6a90609abe798ff9be54f51638bae38820506",
+    "dirty": true,
+    "evaluatedAt": "2026-07-19T10:51:27-0700"
+  }
 }

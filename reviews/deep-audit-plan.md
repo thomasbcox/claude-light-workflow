@@ -472,3 +472,16 @@ story's own promises; engine-grade input validation belongs to the story that bu
 
 Per the step-7 gate the correctness pass again waits: the snapshot-binding fix is a contract
 change, so the shape re-enters review once more after `/close`.
+
+## Fixes (2026-07-19, approach round 3)
+
+- **R3-F1 — source snapshot binding.** Step 2 now pins the snapshot first: `evaluatedAt` (ISO
+  cutoff) + `source.revision` (`git rev-parse HEAD`) + dirty flag; **every time-relative predicate
+  derives from the stored cutoff** (churn = the 90 days *ending at `evaluatedAt`*), restoring
+  "same repo state ⇒ same plan." Step 6 writes the required `source` block and states the engine's
+  obligation: **fail closed on source mismatch**. Schema: `source {revision, dirty, evaluatedAt}`
+  required, ISO pattern pinned. Smoke artifact recompiled: source block added, churn honestly
+  recounted under the cutoff window ((root) 42 · .claude 47 · tests 24 — thresholds unchanged;
+  `reviews` now churn-high too, non-code so no row impact); negative test: a plan **without**
+  `source` is now rejected. Deferred R3-F2/R3-F3 recorded as engine-slice opening ACs in OPS-13
+  (BACKLOG.md), untouched here per the decisions.

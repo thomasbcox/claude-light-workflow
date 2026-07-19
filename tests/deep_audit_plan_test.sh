@@ -59,8 +59,11 @@ has "three declared phases" "$SKILL" "three declared phases"
 has "named post-resolution transform" "$SKILL" "mature-downgrade"
 has "transforms run after resolution" "$SKILL" "Transforms run **after** resolution"
 has "row identity pinned" "$SKILL" '`(lens, altitude, scope)`'
-has "fixed churn window" "$SKILL" "90 days"
+has "churn window derives from the stored cutoff" "$SKILL" "90 days ending at \`evaluatedAt\`"
 has "churn threshold" "$SKILL" "≥ 20 commits"
+has "snapshot pinned at compile start" "$SKILL" "Pin the snapshot first"
+has "engine fails closed on source mismatch" "$SKILL" "fail closed on source"
+has "schema requires the source block" "$SCHEMA" '"required": ["revision", "dirty", "evaluatedAt"]'
 has "chunk threshold" "$SKILL" "400 LOC"
 has "root files form the (root) group" "$SKILL" '`(root)`'
 has "non-code groups emit no L1/L2 rows" "$SKILL" "non-code"
