@@ -452,3 +452,23 @@ units or prices cannot be fully verified from the artifact.
   have no registry membership. **Alternative:** one registry for every executable scope (incl.
   subsystem/app membership), structural pricing constants, and a semantic check extended to full
   arithmetic. **Win:** the engine never re-derives or defensively re-validates its input.
+
+## Decisions (2026-07-19, approach round 3)
+
+Thomas: **"fix #1, defer the rest to the engine story"** — bounding the plan-stage contract at this
+story's own promises; engine-grade input validation belongs to the story that builds the engine.
+
+- **R3-F1 — source snapshot binding → FIX.** The plan gains source identity: git revision (tree
+  state), a dirty-state note, and an ISO **evaluation cutoff**; the churn window derives from the
+  stored cutoff (not from run time), restoring "same repo state ⇒ same plan." The engine will fail
+  closed on source mismatch.
+- **R3-F2 — patch-phase structural ops → DEFER to the engine story** (recorded as an opening AC
+  there: dedicated `exclude-files`/`only-files` branches; selector `remove`/`restrict` reserved for
+  rows).
+- **R3-F3 — full executability semantic gate → DEFER to the engine story** (opening AC there: scope
+  registry incl. L2/L3 membership, structural pricing constants, full-arithmetic checks — the
+  executor build determines which checks earn their place). `planVersion` 1 has no consumers, so
+  the engine story may extend the contract without a version dance.
+
+Per the step-7 gate the correctness pass again waits: the snapshot-binding fix is a contract
+change, so the shape re-enters review once more after `/close`.
