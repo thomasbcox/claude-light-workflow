@@ -152,6 +152,65 @@ ergonomics, and both OPS-11/OPS-12 are reviewer-architecture ideas. That revisit
 door** left for Thomas; both stay `OPS-` until he decides — and with OPS-12 now heading toward a
 build, that call comes due sooner.)
 
+OPS-13 — **Whole-app multi-lens audit** ("deep audit") — **shape decided (plan-then-execute fleet);
+first slice in frame.** Logged 2026-07-19 from Thomas's concern that the review loop is
+**diff-scoped**: both parallel critics judge only the newest changes, so judgment-level lenses never
+sweep the whole app. Linters in CI cover the *mechanical* hidden-failure cases estate-wide; the
+*judgment* cases in old/cold code have no coverage anywhere. Evaluate-and-decide kin of
+OPS-9/11/12, with the engine chosen (2026-07-19) after a research pass on mid-2026 multi-agent
+practice. Recorded so whoever builds it doesn't rebuild the wrong shape:
+
+- **Complement, don't replace.** The review loop stays the cheap per-change gate (diff-scoped by
+  design); this is the occasional deep sweep. Cadence is a **trigger table, not a calendar**:
+  adopt/inherit a repo → full sweep; pre-major-release → L2/L3 + security; post-large-refactor →
+  L2/L3; post-incident → the lens matching the incident class; otherwise a light periodic pass.
+- **Steering interface (the told/suggest seam).** A declarative **audit-plan artifact** compiled by
+  recon and approved at a consult before anything runs (the frame-consult pattern applied to audits).
+  **Altitude ladder:** L0 lines · L1 units (per-file) · L2 subsystems (cross-file patterns) · L3
+  application (systemic: authz coverage, data-flow, can-the-app-surface-its-own-failures).
+  **Lens catalog:** each lens = prompt + **its own schema** (the OPS-12 standing per-critic rule,
+  generalized) + the altitudes it applies at. **Suggestion matrix** (the Table-B pattern): detected
+  profile signals → proposed lenses × altitudes × depth, each row carrying its *why*. "Told" =
+  Thomas edits/overrides plan lines; "suggested" = the matrix output. Cost estimate shown before
+  approval — the plan is the one-page thing he decides on, priced before it runs.
+- **Engine: A-chassis with B/C growth paths.** Three engines weighed: **A** compiled-plan fleet
+  (recon → approved plan → deterministic execution), **B** budgeted recursive descent (risk-weighted
+  adaptive depth, spend-where-scary), **C** differential ledger (fingerprint-diff re-audits, durable
+  dispositions). **Decision: build A**, borrowing B's risk-weighted depth *at plan time* (adaptive
+  allocation without runtime nondeterminism) and stubbing C's artifact layout from day one (a
+  two-way door). Revisit triggers: runs feel wasteful on boring code → add B's descent; re-run cost
+  hurts at the chosen cadence → activate C on the stubbed ledger. **Rejected:** a single
+  mega-context read (recreates at repo scale the dilution disease the parallel critics cure; one
+  point of judgment, no independence) and flat swarms (see next bullet).
+- **Verification is adversarial or it is theater (mid-2026 evidence).** Documented: 80+ agents
+  *including dedicated adversarial reviewers* unanimously endorsed a **nonexistent** OpenSSL
+  vulnerability — same-model panels echo-chamber (shared training distributions validate each
+  other's hallucinations); consensus is not verification. And the human triage budget is the scarce
+  resource: curl closed its bug bounty (confirmed rate <5% under AI submissions); HackerOne paused a
+  program (2026-03). Therefore, regardless of engine: **kill-mandate verifiers** (their job is to
+  destroy the finding), **context asymmetry** (the verifier reads the code fresh, never the finder's
+  argument), **mechanical confirmation** wherever a claim is mechanically checkable, **small nested
+  teams** (3–4 per team; hierarchical summarization as the repo-scale context substrate),
+  **precision-first reporting** with explicit **coverage accounting** ("what was NOT covered").
+  (Evidence: arXiv:2604.19049 Refute-or-Promote; arXiv:2607.01425 Agent4cs; arXiv:2501.18160
+  RepoAudit.)
+- **Upgrades the `llm`-backend rationale.** Cross-model critics are now an evidence-backed defense
+  against echo-chamber false positives — wiring the `llm` backend (`review/SKILL.md`'s designated
+  second source, still a loud stop; no standalone backlog item, noted here) graduates from
+  nice-to-have source diversity to best practice once the audit's verify stage exists.
+- **Posture invariants** (inherited from `/dev-audit` + OPS-12): read-only against the target,
+  report-first, `AUDIT-` hand-off only on explicit instruction, fail-closed orchestration (the
+  OPS-12 temp→validate→promote template), per-critic schema + artifact.
+- **Build note.** The orchestration runtime (parallel fan-out, budgets, adversarial verify,
+  completeness critic) already exists in the session harness's workflow engine — the build is the
+  recon/plan compiler, the lens catalog, and prompts/schemas, not orchestration infrastructure.
+  **First slice:** the recon → plan-artifact consult, standalone-valuable ("what would a
+  comprehensive audit cost on this repo" as a one-page decision) — story `deep-audit-plan`, in frame.
+
+(Logged 2026-07-19. **Taxonomy note:** a *third* reviewer-architecture evaluate-and-decide item under
+`OPS-` — strengthens the OPS-11/OPS-12 signal that these may deserve their own prefix; that revisit
+stays a **one-way door** left for Thomas.)
+
 _(OPS-10 shipped — see [Done](#done).)_
 
 ---
