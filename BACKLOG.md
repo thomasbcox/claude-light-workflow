@@ -205,7 +205,8 @@ practice. Recorded so whoever builds it doesn't rebuild the wrong shape:
   completeness critic) already exists in the session harness's workflow engine — the build is the
   recon/plan compiler, the lens catalog, and prompts/schemas, not orchestration infrastructure.
   **First slice:** the recon → plan-artifact consult, standalone-valuable ("what would a
-  comprehensive audit cost on this repo" as a one-page decision) — story `deep-audit-plan`, in frame.
+  comprehensive audit cost on this repo" as a one-page decision) — story
+  [reviews/deep-audit-plan.md](reviews/deep-audit-plan.md) (`/deep-audit`, plan stage only).
 
 (Logged 2026-07-19. **Taxonomy note:** a *third* reviewer-architecture evaluate-and-decide item under
 `OPS-` — strengthens the OPS-11/OPS-12 signal that these may deserve their own prefix; that revisit

@@ -222,3 +222,26 @@ below is binding on implementation.
 - **OQ2 → lens catalog v1 = all four** (hidden-failure L1 · security-data-loss L1+L3 ·
   test-adequacy L1 · architecture-coherence L2/L3); dead-code deferred (two-way).
 - **OQ3 → JSON canonical + derived md** (= F2). **OQ4 → per-row arithmetic** (= F3).
+
+## Smoke run (2026-07-19)
+
+Ran the compile against this repo itself. Result: `reviews/audit-plan-2026-07-19.json` (canonical,
+status `proposed`) + derived `.md` view — all AC5 sections present. Parse-check passed; **full
+JSON-Schema validation against `plan-schema.json` passed** (jsonschema module present); totals
+cross-check: Σ rows = 78 runs / 4.68M est. tokens = the totals block. Deterministic inputs recorded:
+3 code groups (`(root)`, `.claude`, `tests` — all churn-high), 2 non-code groups (`.github`,
+`reviews` → notCovered), 0 sensitive paths → no security rows, with the coverage block naming the
+override to add them. Consult stop and loud engine stop confirmed as the terminal texts.
+
+Dogfooding value: the smoke surfaced three determinism gaps pre-commit — root-level files had no
+group, non-code groups drew nonsense L1 rows, and the `untested` predicate carried an undecidable
+"covers it" clause — all fixed in the skill (the `(root)` group rule, the `non-code` scope rule,
+and the simplified predicate) before this commit.
+
+**Artifact-tracking note:** `.gitignore` ignores `reviews/audit-*.md` (its comment targets
+`/dev-audit` *reports* as untracked local artifacts). The smoke plan's derived `.md` view is caught
+by that glob and left **untracked — deliberately coherent** with the F2 design: the canonical
+`.json` is committed (it is the plan and the engine's input); the view is regenerable from it on
+demand. If Thomas wants plan *views* tracked while reports stay ignored, that is a one-line
+`.gitignore` narrowing (e.g. `audit-????-??-??.md`) — out of AC10 scope, flagged for the review
+round rather than silently expanding the diff.

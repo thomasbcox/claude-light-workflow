@@ -1,7 +1,7 @@
 {
   "baseBranch": "main",
   "branchPrefix": "claude/",
-  "testCommand": "bash tests/guard_test.sh && bash tests/reviewer_test.sh && bash tests/dev_audit_test.sh",
+  "testCommand": "bash tests/guard_test.sh && bash tests/reviewer_test.sh && bash tests/dev_audit_test.sh && bash tests/deep_audit_plan_test.sh",
   "reviewer": "codex",
   "codexModel": ""
 }

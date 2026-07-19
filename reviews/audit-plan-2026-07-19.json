@@ -1,0 +1,48 @@
+{
+  "planVersion": 1,
+  "date": "2026-07-19",
+  "target": "/Users/thomasbcox/Projects/claude-light-workflow",
+  "profile": {
+    "ecosystems": ["shell", "markdown", "json", "github-actions"],
+    "domain": "developer tooling — Claude↔Codex review-loop skills (no auth/payments/PII)",
+    "tests": "tests/*.sh drift linters, run by testCommand and CI gate",
+    "ci": ".github/workflows/ci.yml (gate job) + scheduled.yml",
+    "secretSignals": "none detected (0 sensitive path matches; no tracked .env)",
+    "tableBTier": "developing (missing LICENSE caps maturity; CI+tests+clean secrets present)"
+  },
+  "unitMap": [
+    { "group": "(root)", "files": 8, "loc": 1410, "chunkUnits": 9, "signals": ["churn-high", "untested"] },
+    { "group": ".claude", "files": 13, "loc": 992, "chunkUnits": 13, "signals": ["churn-high", "untested"] },
+    { "group": "tests", "files": 4, "loc": 408, "chunkUnits": 4, "signals": ["churn-high"] },
+    { "group": ".github", "files": 2, "loc": 92, "chunkUnits": 2, "signals": ["non-code"] },
+    { "group": "reviews", "files": 84, "loc": 5648, "chunkUnits": 86, "signals": ["non-code"] }
+  ],
+  "rows": [
+    { "lens": "hidden-failure", "altitude": "L1", "scope": "(root)", "depth": "deep", "units": 9, "runs": 18, "estTokens": 1080000, "omissionRisk": "install.sh's deploy/overwrite paths go unexamined for swallowed failure", "why": ["P1: baseline", "P9: churn-high (41 commits/90d)"] },
+    { "lens": "hidden-failure", "altitude": "L1", "scope": ".claude", "depth": "deep", "units": 13, "runs": 26, "estTokens": 1560000, "omissionRisk": "the skills + guard hook (the loop's own machinery) go unexamined for silent degradation", "why": ["P1: baseline", "P9: churn-high (43 commits/90d)"] },
+    { "lens": "hidden-failure", "altitude": "L1", "scope": "tests", "depth": "deep", "units": 4, "runs": 8, "estTokens": 480000, "omissionRisk": "linters that silently pass on drift would themselves hide failure", "why": ["P1: baseline", "P9: churn-high (20 commits/90d)"] },
+    { "lens": "test-adequacy", "altitude": "L1", "scope": "(root)", "depth": "standard", "units": 9, "runs": 9, "estTokens": 540000, "omissionRisk": "install.sh has no test coverage question answered", "why": ["P4: untested (no test-pattern files in group)"] },
+    { "lens": "test-adequacy", "altitude": "L1", "scope": ".claude", "depth": "standard", "units": 13, "runs": 13, "estTokens": 780000, "omissionRisk": "whether the linters actually pin the skills' load-bearing phrases stays unasked", "why": ["P4: untested (no test-pattern files in group)"] },
+    { "lens": "test-adequacy", "altitude": "L1", "scope": "tests", "depth": "light", "units": 4, "runs": 2, "estTokens": 120000, "omissionRisk": "sampled only — a linter with a dead check could slip", "why": ["P5: has test-pattern files"] },
+    { "lens": "architecture-coherence", "altitude": "L2", "scope": "subsystem:.claude", "depth": "standard", "units": 1, "runs": 1, "estTokens": 60000, "omissionRisk": "cross-skill pattern drift (stop patterns, consult rules) unexamined", "why": ["P6: ≥2 top-level groups; .claude has ≥5 files"] },
+    { "lens": "architecture-coherence", "altitude": "L3", "scope": "app", "depth": "standard", "units": 1, "runs": 1, "estTokens": 60000, "omissionRisk": "no systemic view: whether the loop's error model coheres end-to-end", "why": ["P7: always"] }
+  ],
+  "overrides": [],
+  "totals": { "runs": 78, "estTokens": 4680000, "wallClockMinutes": 30 },
+  "assumptions": [
+    "≈60k tokens per critic-run (all-in); refine from observed engine data",
+    "concurrency 8; ≈3 min per run → wallClock = ceil(78/8)×3",
+    "chunk size 400 LOC; churn window 90 days, high ≥ 20 commits",
+    "depth factors: light ceil(units/3), standard units, deep 2×units"
+  ],
+  "coverage": {
+    "covered": ["(root) L1", ".claude L1+L2", "tests L1", "app L3 (architecture)"],
+    "notCovered": [
+      ".github — non-code (yml only)",
+      "reviews/ — non-code (the loop's own artifacts; the antipattern-lens AC7 exemption precedent)",
+      "L0 (lines) — reserved, no v1 lens",
+      "security-data-loss — no sensitive paths/domain detected; add via override 'security-data-loss:standard' if wanted"
+    ]
+  },
+  "status": "proposed"
+}

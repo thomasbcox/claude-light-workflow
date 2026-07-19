@@ -1,0 +1,99 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "deep-audit plan (v1)",
+  "description": "Canonical contract for the /deep-audit plan artifact (reviews/audit-plan-<date>.json). The JSON IS the plan — the markdown consult view is derived from it and regenerated on divergence. planVersion is pinned so the engine story and the eventual differential (C-ledger) mode can extend this contract with an explicit version bump, never silently. All properties are required (the repo's schema convention).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["planVersion", "date", "target", "profile", "unitMap", "rows", "overrides", "totals", "assumptions", "coverage", "status"],
+  "properties": {
+    "planVersion": { "const": 1 },
+    "date": { "type": "string", "description": "YYYY-MM-DD compile date; also the artifact filename key." },
+    "target": { "type": "string", "description": "Absolute path of the audited repo root." },
+    "profile": {
+      "type": "object",
+      "description": "Detection snapshot carried from /dev-audit steps 1–2 (ecosystems, frameworks, tests, CI, secret signals — redacted, domain, Table B tier). Free-form object; informational.",
+      "additionalProperties": true
+    },
+    "unitMap": {
+      "type": "array",
+      "description": "Deterministic unit groups with their fixed-predicate signals.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["group", "files", "loc", "chunkUnits", "signals"],
+        "properties": {
+          "group": { "type": "string", "description": "Top-level (or split second-level) directory path." },
+          "files": { "type": "integer" },
+          "loc": { "type": "integer" },
+          "chunkUnits": { "type": "integer", "description": "Chunk-adjusted unit count (files >400 LOC count as ceil(LOC/400))." },
+          "signals": {
+            "type": "array",
+            "items": { "type": "string", "enum": ["churn-high", "sensitive", "untested", "legacy", "non-code"] }
+          }
+        }
+      }
+    },
+    "rows": {
+      "type": "array",
+      "description": "The plan. One row per (lens, altitude, scope) identity — the Table P collision rule guarantees uniqueness.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["lens", "altitude", "scope", "depth", "units", "runs", "estTokens", "omissionRisk", "why"],
+        "properties": {
+          "lens": { "type": "string", "enum": ["hidden-failure", "security-data-loss", "test-adequacy", "architecture-coherence"] },
+          "altitude": { "type": "string", "enum": ["L0", "L1", "L2", "L3"] },
+          "scope": { "type": "string", "description": "Unit-group path, subsystem:<dir> (L2), or app (L3)." },
+          "depth": { "type": "string", "enum": ["light", "standard", "deep"] },
+          "units": { "type": "integer", "description": "Resolved chunk-adjusted units in scope." },
+          "runs": { "type": "integer", "description": "units × depth factor (light ceil(units/3), standard units, deep 2×units)." },
+          "estTokens": { "type": "integer", "description": "runs × per-run token assumption (see assumptions)." },
+          "omissionRisk": { "type": "string", "description": "One line: what goes unexamined if this row is cut." },
+          "why": {
+            "type": "array",
+            "description": "Accumulated Table P rule reasons (and any override), e.g. 'P8: legacy'.",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "overrides": {
+      "type": "array",
+      "description": "Told-overrides applied after Table P, recorded before→after. Empty array when none.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["token", "effect"],
+        "properties": {
+          "token": { "type": "string", "description": "The override as given, e.g. 'security-data-loss:deep', 'exclude=docs/**'." },
+          "effect": { "type": "string", "description": "Before→after description of what it changed." }
+        }
+      }
+    },
+    "totals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runs", "estTokens", "wallClockMinutes"],
+      "properties": {
+        "runs": { "type": "integer" },
+        "estTokens": { "type": "integer" },
+        "wallClockMinutes": { "type": "integer", "description": "ceil(runs / concurrency) × per-run minutes (see assumptions)." }
+      }
+    },
+    "assumptions": {
+      "type": "array",
+      "description": "Every pricing constant, printed: per-run tokens, concurrency, per-run minutes, chunk size, churn window/threshold.",
+      "items": { "type": "string" }
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["covered", "notCovered"],
+      "properties": {
+        "covered": { "type": "array", "items": { "type": "string" } },
+        "notCovered": { "type": "array", "description": "Explicit exclusions: excluded globs, dropped lenses/altitudes, L0 reserved.", "items": { "type": "string" } }
+      }
+    },
+    "status": { "type": "string", "enum": ["proposed", "approved"] }
+  }
+}
