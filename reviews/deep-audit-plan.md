@@ -348,3 +348,31 @@ review via a fresh approach pass after `/close` applies:
   PASSED (content needed no change), semantic check PASSED, and a negative test confirmed
   `hidden-failure@L3` is now **rejected** (it validated under the old schema). Linter updated for
   the new contracts (65 checks green); full gate + shellcheck/shfmt clean.
+
+## Codex approach review — round 2 (2026-07-19, base main, HEAD 4fb7e85)
+
+**Verdict:** The phased Table P redesign is mechanically coherent, and schema + the named semantic
+check now own the agreed row/catalog invariants. Two one-way contract gaps remain: the canonical
+plan does not identify the exact units an engine must run, and the normalized patch representation
+cannot replay every consult edit it claims to support.
+
+### IMPORTANT
+- **Canonical rows price units without identifying them** — *one-way · nonstandard* · locus:
+  SKILL.md steps 2/5 + schema unitMap/rows. Rows carry aggregate counts, not file identities, chunk
+  boundaries, or which units a light-depth sample selected — so the engine cannot "execute exactly
+  that artifact"; it would re-derive chunks and re-choose samples, letting one approved plan produce
+  different coverage. **Alternative:** stable unit IDs in `unitMap`; each row records its ordered
+  resolved unit IDs (or its explicit sample); a pinned deterministic sampling algorithm is
+  acceptable if its complete inputs live in the artifact. **Win:** no engine-side scheduling
+  judgment; approved coverage reproducible; coverage accounting names exactly what ran.
+- **Patch records are not complete edit representations** — *one-way · nonstandard* · locus:
+  SKILL.md step 4 + schema overrides. A patch carries selector/op/depth, but a row also carries
+  units, pricing, omissionRisk, why — an added row or a direct edit to those fields cannot be
+  replayed without fresh judgment; file-level `exclude`/`only` globs cannot address members of an
+  aggregate group row; and the schema accepts incoherent forms (`add` with null depth, `remove`
+  with depth). **Alternative:** a discriminated patch union — `remove`/`restrict` carry selectors
+  only; `set-depth` requires depth; `add`/`replace` carries a complete row-intent payload from which
+  pricing derives deterministically; apply file globs before unit-map compilation (or represent unit
+  membership); schema rejects invalid op/payload combos. **Win:** every approved edit replayable
+  without inference; malformed patch states impossible; one genuinely complete contract for CLI and
+  consult edits.
