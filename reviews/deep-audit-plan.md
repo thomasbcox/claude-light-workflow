@@ -245,3 +245,22 @@ by that glob and left **untracked — deliberately coherent** with the F2 design
 demand. If Thomas wants plan *views* tracked while reports stay ignored, that is a one-line
 `.gitignore` narrowing (e.g. `audit-????-??-??.md`) — out of AC10 scope, flagged for the review
 round rather than silently expanding the diff.
+
+## Build note (2026-07-19)
+
+AC → file map:
+- **AC1** (skill exists, frontmatter, stand-down) → `.claude/skills/deep-audit/SKILL.md`.
+- **AC2** (detection by reference, no duplicated tables) → `SKILL.md` step 1.
+- **AC3** (L0–L3 ladder · lens catalog v1 · own-schema rule · prompts deferred) → `SKILL.md`
+  (Altitude ladder + Table L).
+- **AC4** (Table P determinism: predicates/thresholds, row identity, collision + scope rules,
+  override grammar) → `SKILL.md` steps 2–4.
+- **AC5** (canonical JSON per `plan-schema.json` v1, parse-check, derived md, fixed sections) →
+  `SKILL.md` step 6, `.claude/skills/deep-audit/plan-schema.json`; smoke evidence
+  `reviews/audit-plan-2026-07-19.json` (+ untracked derived view, per the gitignore note).
+- **AC6** (consult stop; approval ≠ execution; loud engine stop) → `SKILL.md` steps 7–8.
+- **AC7** (read-only posture, backlog-on-instruction, redaction) → `SKILL.md` Hard constraints.
+- **AC8** (deploy + gate wiring) → `install.sh`, `tests/deep_audit_plan_test.sh`,
+  `.claude/workflow.json`, `.github/workflows/ci.yml`.
+- **AC9** (OPS-13 build link) → `BACKLOG.md`.
+- **AC10** (scope containment) → verification only (`git diff --name-only main...HEAD`).
