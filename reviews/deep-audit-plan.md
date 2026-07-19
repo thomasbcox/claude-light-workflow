@@ -422,3 +422,33 @@ deliberately withheld per the step-7 gate.
 pre-`unitIds` schema pin left beside its successor) — caught immediately after push, against the
 loop's own red-gate rule. Fixed in the follow-up commit; the linter's phrase pins did exactly their
 job. Process note recorded so the trail is honest.
+
+## Codex approach review — round 3 (2026-07-19, base main, HEAD 7a95260)
+
+**Verdict:** The phased compiler, stable L1 unit IDs, pinned sampling, and discriminated row-patch
+payloads are substantial improvements; the overall architecture is sound. v1 is not yet a complete
+stable engine contract: approval is not bound to a source snapshot, the patch union does not
+structurally distinguish compilation phases, and the semantic gate still permits schedules whose
+units or prices cannot be fully verified from the artifact.
+
+### IMPORTANT
+- **The approved plan is not bound to a source snapshot** — *one-way · nonstandard*. The artifact
+  records a mutable path + calendar date, no git revision/tree, and churn uses time-relative
+  `--since='90 days ago'` — so an **unchanged repo compiles differently as time passes** (breaks
+  this story's own "same repo state ⇒ same plan"), and the engine could execute changed content at
+  the same path after approval. **Alternative:** record revision/tree id, dirty-state policy, and an
+  ISO evaluation cutoff; derive the 90-day boundary from the stored cutoff; engine fails closed on
+  source mismatch. **Win:** one approval ↔ one code state ↔ one signal window.
+- **Patch phase is encoded in prose rather than the union** — *one-way · kludgy*. `exclude=` /
+  `only=` (pre-compile file filters) share the `remove`/`restrict` branches with post-compile row
+  edits; replay must infer phase from token text (and consult patches may have `token: null`).
+  **Alternative:** dedicated branches `{op: exclude-files, glob}` / `{op: only-files, glob}`;
+  selector-based `remove`/`restrict` reserved for compiled rows. **Win:** patch order and
+  application point determined structurally, no token reparsing.
+- **The semantic gate does not prove unit or pricing executability** — *one-way · nonstandard*. It
+  verifies group counts, run factors, sampling, uniqueness, and sums — but not standard/deep
+  `unitIds` ≡ the scope registry, `units` ≡ scope size, `estTokens` = runs × constant, or the
+  wall-clock formula; pricing constants are prose; L2/L3 synthetic IDs (`subsystem:<dir>`, `app`)
+  have no registry membership. **Alternative:** one registry for every executable scope (incl.
+  subsystem/app membership), structural pricing constants, and a semantic check extended to full
+  arithmetic. **Win:** the engine never re-derives or defensively re-validates its input.
