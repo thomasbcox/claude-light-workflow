@@ -416,3 +416,9 @@ deliberately withheld per the step-7 gate.
   new invariants PASSED; negative test `remove`+depth **REJECTED**; positive test well-formed `add`
   patch **ACCEPTED**. Linter grew pins for unit identity, the union branches, pinned sampling, and
   pre-compile globs.
+
+**Gate correction (2026-07-19):** the round-2 fix commit was made with the deep-audit linter RED
+(3 drift failures: two load-bearing phrases line-wrapped mid-token by the rewrite; one stale
+pre-`unitIds` schema pin left beside its successor) — caught immediately after push, against the
+loop's own red-gate rule. Fixed in the follow-up commit; the linter's phrase pins did exactly their
+job. Process note recorded so the trail is honest.

@@ -95,7 +95,7 @@ has "totals arithmetic invariant" "$SKILL" "totals.runs = Σ rows"
 has "view derived from JSON" "$SKILL" "derive"
 grep -q '"planVersion": { "const": 1 }' "$SCHEMA" && ok "schema pins planVersion=1" || bad "schema planVersion const"
 /usr/bin/env python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$SCHEMA" 2>/dev/null && ok "plan-schema.json is valid JSON" || bad "plan-schema.json invalid"
-has "schema row identity fields" "$SCHEMA" '"required": ["lens", "altitude", "scope", "depth", "units", "runs", "estTokens", "omissionRisk", "why"]'
+# (row required-fields pin lives below with unitIds — the round-2 contract)
 has "schema pins per-lens altitudes (oneOf)" "$SCHEMA" '"oneOf"'
 has "schema: hidden-failure only L1" "$SCHEMA" '{ "properties": { "lens": { "const": "hidden-failure" }, "altitude": { "const": "L1" } } }'
 has "schema: discriminated union — set-depth requires depth" "$SCHEMA" '"required": ["token", "selector", "op", "depth", "source"]'

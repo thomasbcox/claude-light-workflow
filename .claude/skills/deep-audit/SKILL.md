@@ -152,8 +152,9 @@ CLI tokens (space- or comma-separated after `[path]`) parse to patches:
 - `exclude=<glob>` → `remove {*, *, glob}` · `only=<glob>` → `restrict {*, *, glob}` — both applied
   at step 2 (see above).
 
-Direct consult edits serialize through the **same union** with `source: consult`. An **unknown
-token is an error** — report it and stop; never guess (the reviewer-override precedent).
+Direct consult edits serialize through the **same union** with `source: consult`.
+An **unknown token is an error** — report it and stop; never guess (the reviewer-override
+precedent).
 
 ### 5. Resolve units and price each row (static arithmetic, all figures ESTIMATE)
 - `units` — resolved chunk-adjusted unit count in the row's scope (L2: 1 per subsystem; L3: 1).
@@ -162,8 +163,8 @@ token is an error** — report it and stop; never guess (the reviewer-override p
   every 3rd entry of the lexicographically ordered list (indices 0, 3, 6, …). The sampling inputs
   (the ordered list) live in `unitMap`, so the selection is reproducible from the artifact alone —
   the engine runs exactly `unitIds`, never re-chooses.
-- `runs` — `|unitIds| ×` (deep ? 2 : 1); equivalently light `ceil(units/3)`, standard `units`, deep
-  `2×units`.
+- `runs` — `|unitIds| ×` (deep ? 2 : 1); equivalently light `ceil(units/3)`, standard `units`,
+  deep `2×units`.
 - `estTokens` — `runs × 60k` (assumption: ≈ 60k tokens per critic-run, all-in; refine from observed
   engine data).
 - `omissionRisk` — one line: what goes unexamined if this row is cut.
