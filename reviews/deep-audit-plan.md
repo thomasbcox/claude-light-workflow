@@ -376,3 +376,19 @@ cannot replay every consult edit it claims to support.
   membership); schema rejects invalid op/payload combos. **Win:** every approved edit replayable
   without inference; malformed patch states impossible; one genuinely complete contract for CLI and
   consult edits.
+
+## Decisions (2026-07-19, approach round 2)
+
+Thomas: **"fix both"** — both round-2 findings approved as redesign fixes; correctness pass again
+deliberately withheld per the step-7 gate.
+
+- **R2-F1 — unit identity → FIX.** `unitMap` gains stable per-unit IDs (file paths; chunked files
+  as `path#1..#n`); every row records its **ordered resolved unit IDs** — for light depth, the
+  explicitly selected sample (pinned deterministic selection, inputs stored in the artifact). The
+  engine executes exactly the listed units; coverage accounting names exactly what ran.
+- **R2-F2 — complete patch union → FIX.** `overrides` becomes a **discriminated union** by `op`:
+  `remove`/`restrict` carry selector only (no depth field); `set-depth` requires depth; `add`
+  carries a complete row-intent (lens, altitude, scope, depth) from which units/pricing derive
+  deterministically via the same step-5 arithmetic. Schema rejects invalid op/payload combinations.
+  File-level `exclude`/`only` globs apply **before** unit-map compilation, so group membership is
+  addressable. Every approved edit replays without inference.
