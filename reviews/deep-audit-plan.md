@@ -505,3 +505,26 @@ representation does not uniquely identify the audited source state.
   plan artifacts outside the audited revision. **Win:** an actual one-plan-to-one-source invariant,
   no dirty ambiguity, no in-repo self-invalidation, one unambiguous engine comparison — without
   reopening the deferred executability work.
+
+## Decisions (2026-07-19, approach round 4)
+
+Thomas: **"hybrid fix"** — correct only what *this story* over-claims; hand the precise
+source-identity *mechanism* to the engine story. Correctness pass again withheld per the step-7
+gate (approved fix = redesign). Scope of the fix `/close` will apply, exactly:
+
+- **R4-F1a — honest invariant → FIX (this story).** Downgrade AC4's "same repo state + same
+  overrides ⇒ same plan" to the accurate **replayability** property: *the plan records every input
+  it used (source revision, dirty flag, `evaluatedAt` cutoff, overrides) and is reproducible from
+  those recorded inputs.* Update AC4 and the skill wording to match.
+- **R4-F1b — stable cutoff → FIX (this story).** Derive `evaluatedAt` from the **bound revision's
+  committer timestamp** for a clean tree (so recompiling unchanged committed source yields the same
+  churn window and the same plan); fall back to wall-clock only for a dirty tree, explicitly
+  labelled non-reproducible. Skill step 2 + the smoke artifact refresh.
+- **R4-F1c — stop over-specifying the engine check → FIX (this story).** Replace the naive
+  "engine fails closed if target revision ≠ current HEAD" (self-invalidating for an in-repo plan)
+  with: *the plan records source identity; the engine's exact mismatch/verification policy —
+  including the self-hosted plan-in-repo case and dirty-tree content identity — is the engine
+  story's.* Skill step 6 wording.
+- **R4-F1d — precise source fingerprint → DEFER to the engine story.** The content-fingerprint of
+  the audited file set (excluding generated plan artifacts) that the engine recomputes, and unique
+  dirty-tree identification, fold into OPS-13's existing R3-F3 engine AC (executability gate).
