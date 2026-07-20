@@ -62,7 +62,9 @@ has "row identity pinned" "$SKILL" '`(lens, altitude, scope)`'
 has "churn window derives from the stored cutoff" "$SKILL" "90 days ending at \`evaluatedAt\`"
 has "churn threshold" "$SKILL" "≥ 20 commits"
 has "snapshot pinned at compile start" "$SKILL" "Pin the snapshot first"
-has "engine fails closed on source mismatch" "$SKILL" "fail closed on source"
+has "clean-tree evaluatedAt from bound revision" "$SKILL" "the bound revision's committer timestamp"
+has "plan replayable from recorded inputs" "$SKILL" "reproducibility comes from the source"
+has "engine owns the verification policy (this story records only)" "$SKILL" "it does not define the check"
 has "schema requires the source block" "$SCHEMA" '"required": ["revision", "dirty", "evaluatedAt"]'
 has "chunk threshold" "$SKILL" "400 LOC"
 has "root files form the (root) group" "$SKILL" '`(root)`'

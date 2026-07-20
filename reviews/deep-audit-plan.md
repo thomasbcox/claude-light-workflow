@@ -61,10 +61,13 @@ reviewer backend.
    one-line charter + applicable altitudes, with the per-critic own-schema rule restated and lens
    prompts/schemas explicitly deferred to the engine story.
 4. **Deterministic compile:** all profile→plan decisions live in a rule table (Table P) — exact
-   predicates and thresholds, a fixed 90-day churn window, row identity `(lens, altitude, scope)`,
-   a highest-depth-wins collision rule with accumulated whys — plus a defined override grammar
-   whose unknown tokens are a reported error, never guessed. Same repo state + same overrides ⇒
-   same plan; prose adds no judgment.
+   predicates and thresholds, a churn window fixed at 90 days ending at the recorded `evaluatedAt`,
+   row identity `(lens, altitude, scope)`, a highest-depth-wins collision rule with accumulated
+   whys — plus a defined override grammar whose unknown tokens are a reported error, never guessed.
+   The plan is **replayable**: it records every input it used (source revision, dirty flag,
+   `evaluatedAt` cutoff, overrides) and reproduces from those recorded inputs; for a **clean tree**
+   the compile is fully reproducible because `evaluatedAt` derives from the bound revision. Prose
+   adds no judgment.
 5. Running the skill compiles **canonical** `reviews/audit-plan-<date>.json` (validating against
    `plan-schema.json` v1, parse-checked before use) and **derives** `reviews/audit-plan-<date>.md`
    from it, with fixed sections: target profile · unit map · plan rows (lens × altitude × scope ×
@@ -528,3 +531,21 @@ gate (approved fix = redesign). Scope of the fix `/close` will apply, exactly:
 - **R4-F1d — precise source fingerprint → DEFER to the engine story.** The content-fingerprint of
   the audited file set (excluding generated plan artifacts) that the engine recomputes, and unique
   dirty-tree identification, fold into OPS-13's existing R3-F3 engine AC (executability gate).
+
+## Fixes (2026-07-19, approach round 4 — hybrid)
+
+- **R4-F1a (honest invariant).** AC4 + the skill now state the accurate **replayability** property —
+  the plan records every input (source revision, dirty, `evaluatedAt`, overrides) and reproduces
+  from them — instead of the over-claimed "same repo state ⇒ same plan."
+- **R4-F1b (stable cutoff).** Step 2: for a **clean tree** `evaluatedAt` = the bound revision's
+  committer timestamp (`git show -s --format=%cI HEAD`), so recompiling committed source is fully
+  reproducible; a **dirty tree** falls back to wall-clock, explicitly labelled non-reproducible.
+- **R4-F1c (stop over-specifying the engine).** Step 6 replaced the self-invalidating "fail closed
+  if revision ≠ current HEAD" with: the plan **records** source identity; the engine owns the
+  **verification policy** (incl. the in-repo-plan self-reference and dirty-tree fingerprint).
+- **R4-F1d (defer the mechanism).** OPS-13's engine AC extended with source-identity verification:
+  content fingerprint of the audited set excluding generated plan/review artifacts, dirty-tree
+  identity, fail-closed check.
+- **Smoke refresh.** Recompiled: `source` block present; because this ran mid-`/close` the tree was
+  dirty, so it took the fallback path (honestly recorded). Full contract gate PASSED (schema +
+  semantic check); drift linter re-pinned for the reworded contracts.

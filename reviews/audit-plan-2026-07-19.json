@@ -203,7 +203,7 @@
       "omissionRisk": "install.sh's deploy/overwrite paths go unexamined for swallowed failure",
       "why": [
         "P1: baseline",
-        "P9: churn-high (42 commits/90d to evaluatedAt)"
+        "P9: churn-high (43 commits/90d to evaluatedAt)"
       ],
       "unitIds": [
         ".gitignore",
@@ -228,7 +228,7 @@
       "omissionRisk": "the skills + guard hook (the loop's own machinery) go unexamined for silent degradation",
       "why": [
         "P1: baseline",
-        "P9: churn-high (47 commits/90d to evaluatedAt)"
+        "P9: churn-high (48 commits/90d to evaluatedAt)"
       ],
       "unitIds": [
         ".claude/hooks/block-main-writes.sh",
@@ -257,7 +257,7 @@
       "omissionRisk": "linters that silently pass on drift would themselves hide failure",
       "why": [
         "P1: baseline",
-        "P9: churn-high (24 commits/90d to evaluatedAt)"
+        "P9: churn-high (25 commits/90d to evaluatedAt)"
       ],
       "unitIds": [
         "tests/deep_audit_plan_test.sh",
@@ -396,8 +396,8 @@
   },
   "status": "proposed",
   "source": {
-    "revision": "53e6a90609abe798ff9be54f51638bae38820506",
+    "revision": "6584a7ccb86503896c4ae4d5073b4c2a52977fd3",
     "dirty": true,
-    "evaluatedAt": "2026-07-19T10:51:27-0700"
+    "evaluatedAt": "2026-07-20T09:39:21-0700"
   }
 }

@@ -64,11 +64,16 @@ setup, CI config, secret patterns, domain context — and its Table A toolset se
 profile record). Carry the profile forward; do **not** duplicate its detection lists here.
 
 ### 2. Unit map (deterministic)
-- **Pin the snapshot first:** capture `evaluatedAt` (the ISO evaluation cutoff — the compile
-  instant) and the **source identity**: `git rev-parse HEAD` plus a dirty flag
-  (`git status --porcelain` non-empty). **Every time-relative predicate derives from the stored
-  `evaluatedAt`, never from run time** — so an unchanged tree compiles the same plan next month.
-  Both land in the plan's `source` block (step 6).
+- **Pin the snapshot first:** capture the **source identity** — `revision` (`git rev-parse HEAD`)
+  and a `dirty` flag (`git status --porcelain` non-empty) — and the `evaluatedAt` cutoff. **For a
+  clean tree, `evaluatedAt` = the bound revision's committer timestamp** (`git show -s
+  --format=%cI HEAD`), so recompiling the same committed source yields the same cutoff, the same
+  churn window, and the same plan — reproducibility comes from the source, not the wall clock. For
+  a **dirty tree**, fall back to the wall-clock instant and note it: an uncommitted tree is not
+  uniquely reproducible (the `dirty` boolean does not capture *what* changed — the content-level
+  fingerprint that would is the engine story's, per OPS-13). **Every time-relative predicate
+  derives from the stored `evaluatedAt`, never from run time.** All three land in the `source`
+  block (step 6).
 - **Scope filter first:** `exclude=<glob>` / `only=<glob>` patches (step 4) apply **here, before
   unit-map compilation** — they filter the `git ls-files` list itself, so group membership is
   addressable at file granularity.
@@ -180,10 +185,13 @@ precedent).
 ### 6. Write the artifacts (JSON canonical → md derived)
 Write `reviews/audit-plan-<YYYY-MM-DD>.json` conforming to **`plan-schema.json` v1** (all fields
 required; the schema also pins per-lens altitude pairings, positive counts, and the date format),
-including the **`source` block** — `{revision, dirty, evaluatedAt}` from step 2 — which binds the
-approval to one code state and one signal window; **the engine must fail closed on source
-mismatch** (target revision/tree no longer matches `source.revision`) rather than execute changed
-content.
+including the **`source` block** — `{revision, dirty, evaluatedAt}` from step 2 — which records the
+code state and signal window the plan was compiled against. The plan **identifies** its source; the
+engine's exact **verification policy** — how it confirms the target still matches `source.revision`
+(note the plan artifact lives *in* the audited repo, so committing it advances HEAD past the bound
+revision; the engine operates on `source.revision` itself, excluding generated plan/review
+artifacts), and how it fingerprints a dirty tree — is the **engine story's** (OPS-13, with the
+deferred executability gate). This story records the binding; it does not define the check.
 **Parse-check it** (`jq -e . file` or `python3 -c 'import json;json.load(...)'`), then run the
 **plan semantic check** — the named contract check Draft-7 cannot express: (1) row identities
 `(lens, altitude, scope)` are **unique**; (2) `totals.runs = Σ rows[].runs` and
