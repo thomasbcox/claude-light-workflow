@@ -485,3 +485,23 @@ change, so the shape re-enters review once more after `/close`.
   `reviews` now churn-high too, non-code so no row impact); negative test: a plan **without**
   `source` is now rejected. Deferred R3-F2/R3-F3 recorded as engine-slice opening ACs in OPS-13
   (BACKLOG.md), untouched here per the decisions.
+
+## Codex approach review — round 4 (2026-07-19, base main, HEAD ac1d17d)
+
+**Verdict:** The plan-stage architecture is otherwise sound, and the two engine-story deferrals
+remain settled. One source-binding contract gap remains: the new revision-plus-dirty-flag
+representation does not uniquely identify the audited source state.
+
+### IMPORTANT
+- **The snapshot binding is circular and does not identify dirty content** — *one-way ·
+  nonstandard*. Three sub-claims: (1) `source.revision` identifies only HEAD and `dirty` is a mere
+  boolean, so distinct dirty trees share one identity; (2) the plan lives *in* the audited repo, so
+  committing it advances HEAD — the smoke plan records `53e6a90` but is committed at `ac1d17d`, so a
+  naive "revision == current HEAD" check self-invalidates; (3) a fresh compile-time `evaluatedAt`
+  means recompiling unchanged source can still shift the churn window, so "same repo state ⇒ same
+  plan" is not literally true. **Alternative:** bind to a content fingerprint of the audited file
+  set (excluding generated plan artifacts) that the engine recomputes; make `evaluatedAt` an
+  explicit replay input or derive it from the bound revision; *or* require a clean tree and keep
+  plan artifacts outside the audited revision. **Win:** an actual one-plan-to-one-source invariant,
+  no dirty ambiguity, no in-repo self-invalidation, one unambiguous engine comparison — without
+  reopening the deferred executability work.
