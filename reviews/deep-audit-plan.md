@@ -549,3 +549,20 @@ gate (approved fix = redesign). Scope of the fix `/close` will apply, exactly:
 - **Smoke refresh.** Recompiled: `source` block present; because this ran mid-`/close` the tree was
   dirty, so it took the fallback path (honestly recorded). Full contract gate PASSED (schema +
   semantic check); drift linter re-pinned for the reworded contracts.
+
+## Codex approach review — round 5 (2026-07-21, base main, HEAD b2cd5e3)
+
+**Verdict:** The plan-stage architecture is sound overall, and all round 1–4 decisions remain closed.
+One lifecycle gap keeps it from being fully ready: the date-only canonical path can silently replace
+an already approved plan.
+
+### IMPORTANT
+- **Date-only artifact identity can overwrite an approved plan** — *one-way · nonstandard*. Every
+  invocation writes `reviews/audit-plan-<YYYY-MM-DD>.json` with no plan identifier or collision
+  policy. Consult edits legitimately regenerate the *current proposal*, but a **separate invocation
+  the same day** targets the identical canonical path and can **silently replace an approved engine
+  handoff** — and the contract cannot distinguish another revision, target state, or override set
+  compiled that day. **Alternative:** give each plan an immutable identity (date + short source
+  revision + sequence/nonce) recorded in schema and filename; *or* keep the date path for an active
+  proposal but **fail closed before replacing an `approved` artifact**, requiring a new uniquely
+  named plan.
