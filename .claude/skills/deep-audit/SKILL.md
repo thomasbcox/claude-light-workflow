@@ -123,14 +123,18 @@ One row per identity; the **highest** depth wins (`light < standard < deep`); ev
 *why* accumulates on the row (`"why": ["P1: baseline", "P8: legacy — never passed through the
 loop"]`). An upgrade to a row Phase A did not emit is a **no-op**.
 
-**Phase C — named post-resolution transforms (declared order):**
+**Phase C — named post-resolution transforms (declared order): _none in v1_.**
 
-| Order | Transform | Predicate | Effect |
-|---|---|---|---|
-| 1 | `mature-downgrade` | dev-audit Table B tier = `mature` AND no `sensitive` groups | every L1 row one step lighter (floor `light`) |
-
-Transforms run **after** resolution, so a downgrade has one mechanically determined result; future
-transforms append to this table with an explicit order, never as new collision semantics.
+The phase exists as the declared extension point: a transform that *lowers* depth cannot be
+expressed as a Phase-B upgrade (a max-wins reducer can never resolve downward), so any future
+downgrade belongs here, numbered, running **after** resolution — never as new collision semantics.
+**v1 ships no transforms**: the only candidate (`mature-downgrade`, keyed on `/dev-audit` Table B's
+maturity tier) consumed an input this skill's recon boundary does not produce — Table B is
+`/dev-audit` **step 5**, while step 1 here reuses only its **steps 1–2**. Rather than widen the
+boundary to fetch a tier, the rule was dropped: **every Table P predicate now reads only signals
+this skill computes itself** (step-2 unit-map signals) plus the steps 1–2 profile. Lightening a
+well-maintained repo remains available as an explicit `<lens>:<depth>` override patch (step 4) —
+a human judgment rather than a maturity heuristic.
 
 **Scope rules:** Phase A L1 rules (P1/P2/P4/P5) and P6 apply to **code groups only** — `non-code`
 groups go to `coverage.notCovered`, not the plan.

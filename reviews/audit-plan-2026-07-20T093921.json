@@ -12,8 +12,7 @@
     "domain": "developer tooling \u2014 Claude\u2194Codex review-loop skills (no auth/payments/PII)",
     "tests": "tests/*.sh drift linters, run by testCommand and CI gate",
     "ci": ".github/workflows/ci.yml (gate job) + scheduled.yml",
-    "secretSignals": "none detected (0 sensitive path matches; no tracked .env)",
-    "tableBTier": "developing (missing LICENSE caps maturity; CI+tests+clean secrets present)"
+    "secretSignals": "none detected (0 sensitive path matches; no tracked .env)"
   },
   "unitMap": [
     {

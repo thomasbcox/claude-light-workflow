@@ -56,8 +56,10 @@ has "approach pass owns simplicity (OPS-12 boundary)" "$SKILL" "approach pass ow
 echo "== Table P determinism (the F1 BLOCKER fix; phased per the approach-round redesign) =="
 has "Table P present (phased)" "$SKILL" "Table P (phased, deterministic)"
 has "three declared phases" "$SKILL" "three declared phases"
-has "named post-resolution transform" "$SKILL" "mature-downgrade"
-has "transforms run after resolution" "$SKILL" "Transforms run **after** resolution"
+has "Phase C is the declared extension point" "$SKILL" "Phase C — named post-resolution transforms (declared order): _none in v1_"
+absent "no rule reads the unavailable dev-audit tier" "$SKILL" "Table B tier = \`mature\`"
+has "transforms run after resolution" "$SKILL" "running **after** resolution"
+has "downgrade cannot be a Phase-B upgrade (why the phase exists)" "$SKILL" "can never resolve downward"
 has "row identity pinned" "$SKILL" '`(lens, altitude, scope)`'
 has "churn window derives from the stored cutoff" "$SKILL" "90 days ending at \`evaluatedAt\`"
 has "churn threshold" "$SKILL" "≥ 20 commits"

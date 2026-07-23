@@ -645,3 +645,21 @@ redesign).
   *Rejected alternatives:* **B** (run `/dev-audit` steps 1–5 every compile) — widens the boundary
   and pulls tool-running into the plan stage; **C** (defer) — would ship the invent-an-input
   behaviour this story exists to eliminate.
+
+## Fixes (2026-07-23, approach round 6)
+
+- **R6-F1 applied by deletion.** The `mature-downgrade` transform is gone from Table P. **Phase C
+  survives as the declared extension point with _no v1 transforms_**, and now states *why* the phase
+  exists at all (a depth-lowering rule cannot be expressed as a Phase-B upgrade — a max-wins reducer
+  never resolves downward) and *why* v1 ships none (its only candidate consumed `/dev-audit` Table B's
+  tier, produced at that skill's **step 5**, while step 1 here reuses only **steps 1–2**). Every Table
+  P predicate now reads **only signals this skill computes itself** plus the steps 1–2 profile.
+  Lightening a well-maintained repo remains available as an explicit `<lens>:<depth>` override — a
+  human judgment rather than a maturity heuristic.
+- **Invented value removed from the evidence.** The smoke artifact's `profile.tableBTier`
+  (`"developing (missing LICENSE caps maturity…)"`) — the value I had supplied by judgment, which is
+  what proved the finding — is deleted. Contract gate re-run: schema PASSED, all four semantic
+  invariants PASSED, and no plan row's `why` depends on a tier.
+- **Linter re-pinned:** the `mature-downgrade` presence check is replaced by a check that Phase C is
+  the *empty* declared extension point, plus an **`absent`** assertion that no rule reads the
+  unavailable tier — so a future edit cannot quietly reintroduce the undefined input.
