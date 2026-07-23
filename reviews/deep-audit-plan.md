@@ -626,3 +626,22 @@ touched while the content was still round 5's verbatim result. Caught by compari
 the committed round-5 artifact rather than trusting mtime; the round-6 result above is the genuine
 one. (Ironic and instructive: the same stale-artifact class this story spent two rounds designing
 out of the skill.)
+
+## Decisions (2026-07-23, approach round 6)
+
+Thomas: **"go with A"** — drop the `mature-downgrade` transform rather than widen the recon
+boundary to fetch a tier. Correctness pass again withheld per the step-7 gate (approved fix =
+redesign).
+
+- **R6-F1 — Table P consumes an unavailable tier → FIX by deletion (option A).** Remove the
+  `mature-downgrade` transform, the sole consumer of `/dev-audit`'s Table B maturity tier — an input
+  the declared recon boundary (steps 1–2) does not produce. **Phase C survives as the documented
+  extension point with no v1 transforms**, preserving the phased emit → resolve → transform model
+  the engine inherits. Every remaining rule then consumes only signals the skill computes itself
+  (churn, sensitive, untested, legacy) plus the steps 1–2 profile. AC2's narrow boundary is
+  unchanged; **no rule that raises scrutiny is lost** — only the automatic cost discount, which
+  remains available manually via a `<lens>:<depth>` override patch. The invented
+  `profile.tableBTier` must also be removed from the smoke artifact.
+  *Rejected alternatives:* **B** (run `/dev-audit` steps 1–5 every compile) — widens the boundary
+  and pulls tool-running into the plan stage; **C** (defer) — would ship the invent-an-input
+  behaviour this story exists to eliminate.
