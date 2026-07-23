@@ -113,3 +113,6 @@ Repos without the marker are governed by the light workflow as normal.
 ## Requirements
 `codex` CLI (`codex exec`), `git`, `python3`, `jq`. `gh` + a remote enable PR mode; without a
 remote the loop runs fully local (local `--no-ff` merge).
+
+## License
+MIT — Copyright (c) 2026 Thomas B. Cox. See [LICENSE](LICENSE) for the full text.
