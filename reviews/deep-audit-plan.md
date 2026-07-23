@@ -597,3 +597,32 @@ read-before-write branch, and the accumulating series doubles as the target's pl
   by recompiling rather than hand-editing). Contract gate PASSED (schema + all four semantic
   invariants; totals 78 runs / 4.68M tokens / 30 min unchanged); negative test: a plan **without**
   `compiledAt` is now rejected. Linter pinned for the new convention.
+
+## Codex approach review — round 6 (2026-07-23, base main, HEAD a9edbf6)
+
+**Verdict:** The plan-stage shape is nearly sound, and prior decisions remain closed. One unresolved
+compiler-input gap prevents shipment: Table P consumes a maturity tier that the referenced recon does
+not produce.
+
+### IMPORTANT
+- **Table P depends on an unavailable maturity classification** — *one-way · kludgy* · locus:
+  SKILL.md steps 1 and 3. Step 1 runs only **`/dev-audit` steps 1–2**, but the `mature-downgrade`
+  transform consumes **`/dev-audit` Table B's maturity tier — produced at its step 5**, after the
+  zero-dependency and heavier-tool stages. The compiler therefore has **no defined source** for one
+  of its inputs and must either invent the tier or silently skip the transform, defeating the
+  mechanically-determined plan seam. **Alternative:** reuse `/dev-audit` through its Table B
+  classification stage (including the prerequisite evidence stages) without producing its report,
+  and carry that tier into Table P — amending the detection-reference boundary while keeping the
+  classification table single-sourced. **Win:** removes one undefined compiler input and its agent-
+  judgment path; every Table P transform then consumes data the declared recon actually produces.
+
+**Confirmed against the tree** (not taken on faith): `/dev-audit` §5 is indeed where Table B lives;
+`deep-audit` §1 indeed references only "steps 1–2"; the transform indeed reads "Table B tier". And
+the smoke artifact's `profile.tableBTier` is `"developing (missing LICENSE caps maturity; …)"` — a
+value **I invented by judgment**, which is precisely the failure path the finding predicts.
+
+**Process note:** the first poll for this round's artifact read a **stale** file — mtime had been
+touched while the content was still round 5's verbatim result. Caught by comparing content against
+the committed round-5 artifact rather than trusting mtime; the round-6 result above is the genuine
+one. (Ironic and instructive: the same stale-artifact class this story spent two rounds designing
+out of the skill.)
