@@ -211,6 +211,38 @@ practice. Recorded so whoever builds it doesn't rebuild the wrong shape:
 `OPS-` — strengthens the OPS-11/OPS-12 signal that these may deserve their own prefix; that revisit
 stays a **one-way door** left for Thomas.)
 
+OPS-14 — **Make a user story the focus of every cycle.** Filed 2026-07-21 at Thomas's request as a
+**future need**; evaluate-and-decide (kin to OPS-9/11/12/13), not committed work. Today `/frame`
+produces a spec whose `## Problem` and acceptance criteria are framed in **mechanism** — what gets
+built — with no required statement of **who benefits and how**. The proposal: every cycle centers on
+a **user story** (the "as a ⟨role⟩, I want ⟨capability⟩, so that ⟨benefit⟩" unit), and the technical
+spec hangs off it rather than standing alone.
+
+- **Why it may matter (evidence from this session, not theory).** `deep-audit-plan` took **five
+  approach rounds**, three of which were scope arguments about how deep the plan-stage contract
+  should go before the engine exists. Each round's finding was individually valid; what was missing
+  was a **shared yardstick** for "is this needed *yet*." A user story supplies one: a finding either
+  blocks the stated user benefit or it does not. Thomas resolved those rounds by hand, ruling
+  fix-vs-defer four separate times — exactly the adjudication a user story would make cheaper and
+  more consistent.
+- **Likely shape (if built).** `/frame` step 5 requires a user-story line before the ACs; each AC
+  traces to it; the `/review` consult weighs findings against the stated benefit (a finding that
+  doesn't threaten it is a candidate defer); `/close` records whether the benefit shipped. The
+  reviewer contract (`AGENTS.md`) may need a line so the approach pass judges shape **against the
+  user story**, not against an unbounded notion of completeness.
+- **Tensions to resolve before building.** (1) Much of this repo's work is **tooling for Thomas
+  himself** — the "role" is often *him*, which can make the ceremony feel hollow; the item should
+  decide whether user stories apply to all cycles or only user-facing ones. (2) A user story is a
+  *prompt*, and every required line costs context on every run (the OPS-11 every-line-costs lesson).
+  (3) It changes the story-file template, which every past `reviews/*.md` follows — decide whether
+  existing stories stay as-is (they should; no retro-fitting).
+
+(Logged 2026-07-21. **Taxonomy note:** a *fourth* evaluate-and-decide workflow/architecture item
+under `OPS-`, and the first that is about the loop's **unit of work** rather than its reviewer layer
+— `OPS-` nominally means shipping/tooling ergonomics. The prefix revisit OPS-11 first flagged, and
+OPS-12/OPS-13 each strengthened, now has a fourth data point. Still a **one-way door** left for
+Thomas.)
+
 _(OPS-10 shipped — see [Done](#done).)_
 
 ---
