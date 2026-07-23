@@ -1,6 +1,6 @@
 {
   "planVersion": 1,
-  "date": "2026-07-19",
+  "date": "2026-07-20",
   "target": "/Users/thomasbcox/Projects/claude-light-workflow",
   "profile": {
     "ecosystems": [
@@ -19,7 +19,7 @@
     {
       "group": "(root)",
       "files": 8,
-      "loc": 1410,
+      "loc": 1422,
       "chunkUnits": 9,
       "signals": [
         "churn-high",
@@ -40,7 +40,7 @@
     {
       "group": ".claude",
       "files": 13,
-      "loc": 1130,
+      "loc": 1172,
       "chunkUnits": 13,
       "signals": [
         "churn-high",
@@ -65,7 +65,7 @@
     {
       "group": "tests",
       "files": 4,
-      "loc": 424,
+      "loc": 437,
       "chunkUnits": 4,
       "signals": [
         "churn-high"
@@ -93,8 +93,8 @@
     {
       "group": "reviews",
       "files": 86,
-      "loc": 5919,
-      "chunkUnits": 88,
+      "loc": 6451,
+      "chunkUnits": 90,
       "signals": [
         "churn-high",
         "non-code"
@@ -108,7 +108,8 @@
         "reviews/antipattern-lens.design.json",
         "reviews/antipattern-lens.md#1",
         "reviews/antipattern-lens.md#2",
-        "reviews/audit-plan-2026-07-19.json",
+        "reviews/audit-plan-2026-07-20T093921.json#1",
+        "reviews/audit-plan-2026-07-20T093921.json#2",
         "reviews/auto-merge-close.codex.json",
         "reviews/auto-merge-close.md",
         "reviews/backlog-bookkeeping.codex.json",
@@ -140,7 +141,8 @@
         "reviews/consult-presentation.md",
         "reviews/deep-audit-plan.approach.json",
         "reviews/deep-audit-plan.design.json",
-        "reviews/deep-audit-plan.md",
+        "reviews/deep-audit-plan.md#1",
+        "reviews/deep-audit-plan.md#2",
         "reviews/defer-to-native.codex.json",
         "reviews/defer-to-native.md",
         "reviews/design-review-loop.codex.json",
@@ -399,5 +401,6 @@
     "revision": "6584a7ccb86503896c4ae4d5073b4c2a52977fd3",
     "dirty": true,
     "evaluatedAt": "2026-07-20T09:39:21-0700"
-  }
+  },
+  "compiledAt": "2026-07-20T09:39:21-0700"
 }

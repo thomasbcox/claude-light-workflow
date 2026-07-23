@@ -68,9 +68,12 @@ reviewer backend.
    `evaluatedAt` cutoff, overrides) and reproduces from those recorded inputs; for a **clean tree**
    the compile is fully reproducible because `evaluatedAt` derives from the bound revision. Prose
    adds no judgment.
-5. Running the skill compiles **canonical** `reviews/audit-plan-<date>.json` (validating against
-   `plan-schema.json` v1, parse-checked before use) and **derives** `reviews/audit-plan-<date>.md`
-   from it, with fixed sections: target profile · unit map · plan rows (lens × altitude × scope ×
+5. Running the skill compiles **canonical** `reviews/audit-plan-<YYYY-MM-DD>T<HHMMSS>.json`
+   (validating against `plan-schema.json` v1, parse-checked before use) and **derives** the
+   same-stamped `.md` from it. The stamp (`compiledAt`) is minted **once per invocation**, so a
+   later run can never overwrite an earlier — possibly approved — plan, and consult edits rewrite
+   this invocation's artifacts rather than minting a new stamp. Fixed sections: source · target
+   profile · unit map · plan rows (lens × altitude × scope ×
    depth × units × runs × est-tokens × omission-risk × why) · overrides applied · cost estimate +
    assumptions · coverage & exclusions (explicit not-covered list) · plan status. On divergence the
    JSON wins and the view is regenerated.
@@ -566,3 +569,31 @@ an already approved plan.
   revision + sequence/nonce) recorded in schema and filename; *or* keep the date path for an active
   proposal but **fail closed before replacing an `approved` artifact**, requiring a new uniquely
   named plan.
+
+## Decisions (2026-07-21, approach round 5)
+
+Thomas (proposing the mechanism himself): **timestamped filename — "can't we have the filename
+include hh24miss to prevent collision?"** Chosen over the fail-closed guard I had recommended: it
+makes collisions **impossible by construction** rather than guarded against, needs no
+read-before-write branch, and the accumulating series doubles as the target's plan history
+(forward-compatible with OPS-13's deferred differential-ledger growth path). Accepted as a
+**redesign** (it changes the artifact naming contract), so the correctness pass waits one more round.
+
+- **R5-F1 — approved-plan overwrite → FIX (timestamped identity).** Artifact path becomes
+  `reviews/audit-plan-<YYYY-MM-DD>T<HHMMSS>.json` (+ same-stamped `.md`), colon-free and
+  chronologically sortable. The stamp = `compiledAt`, **minted once per invocation**; **consult
+  edits rewrite this invocation's artifacts and never re-mint**, so one invocation leaves exactly
+  one plan and "which plan was approved" is unambiguous. `compiledAt` is recorded in the schema
+  (required) so the artifact is self-describing rather than carrying a filename-only fact; it is
+  distinct from `source.evaluatedAt` (the signal cutoff).
+
+## Fixes (2026-07-21, approach round 5)
+
+- **R5-F1 applied.** Skill step 6 rewritten (stamped identity, one-stamp-per-invocation rule,
+  collision-impossible rationale); step 7 states edits rewrite rather than re-mint; schema gains
+  required `compiledAt` with the filename-key description; AC5 updated. Smoke artifacts **renamed
+  via `git mv`** to `audit-plan-2026-07-20T093921.{json,md}` and **recompiled** — which correctly
+  re-derived the plan's own unit-map entry under its new name (the in-repo self-reference, handled
+  by recompiling rather than hand-editing). Contract gate PASSED (schema + all four semantic
+  invariants; totals 78 runs / 4.68M tokens / 30 min unchanged); negative test: a plan **without**
+  `compiledAt` is now rejected. Linter pinned for the new convention.

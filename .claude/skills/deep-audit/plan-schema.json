@@ -16,10 +16,11 @@
       }
     }
   },
-  "required": ["planVersion", "date", "target", "source", "profile", "unitMap", "rows", "overrides", "totals", "assumptions", "coverage", "status"],
+  "required": ["planVersion", "date", "compiledAt", "target", "source", "profile", "unitMap", "rows", "overrides", "totals", "assumptions", "coverage", "status"],
   "properties": {
     "planVersion": { "const": 1 },
-    "date": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", "description": "YYYY-MM-DD compile date; also the artifact filename key." },
+    "date": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", "description": "YYYY-MM-DD compile date." },
+    "compiledAt": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}", "description": "ISO compile instant, minted once per invocation. Its <YYYY-MM-DD>T<HHMMSS> form is the artifact filename key, so every invocation writes a unique path and can never overwrite an earlier (possibly approved) plan; consult edits rewrite this same artifact rather than re-minting. Distinct from source.evaluatedAt, which is the signal cutoff." },
     "target": { "type": "string", "minLength": 1, "description": "Absolute path of the audited repo root." },
     "source": {
       "type": "object",

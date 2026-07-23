@@ -183,7 +183,17 @@ precedent).
   ≈ 3 min/run). Print every assumption in the plan's `assumptions` block.
 
 ### 6. Write the artifacts (JSON canonical → md derived)
-Write `reviews/audit-plan-<YYYY-MM-DD>.json` conforming to **`plan-schema.json` v1** (all fields
+**Artifact identity — one stamp per invocation.** Mint `compiledAt` (the compile instant) **once**,
+at the start of this invocation, and write to
+**`reviews/audit-plan-<YYYY-MM-DD>T<HHMMSS>.json`** (compact, colon-free so it is filesystem- and
+shell-safe, and sorts chronologically as plain text). Because every invocation gets its own path, a
+later run **can never overwrite an earlier — approved — plan**; collisions are impossible by
+construction rather than guarded against. The accumulating series is the target's plan history.
+**Consult edits do NOT re-mint the stamp:** a step-7 edit recompiles into the *same* file, so one
+invocation leaves exactly one plan and "which plan was approved" is never ambiguous. (`compiledAt`
+is *when compiled*; `source.evaluatedAt` is *the signal cutoff* — for a clean tree the bound
+revision's commit time. Different facts; both recorded.)
+The artifact conforms to **`plan-schema.json` v1** (all fields
 required; the schema also pins per-lens altitude pairings, positive counts, and the date format),
 including the **`source` block** — `{revision, dirty, evaluatedAt}` from step 2 — which records the
 code state and signal window the plan was compiled against. The plan **identifies** its source; the
@@ -199,8 +209,8 @@ deferred executability gate). This story records the binding; it does not define
 row, `runs = |unitIds| × (deep ? 2 : 1)`, with light rows' `unitIds` matching the pinned every-3rd
 sample of their group's ordered list. Schema validation **plus** the semantic check is the
 canonical contract gate — on any failure STOP loudly; never present a view of an invalid plan.
-Then **derive**
-`reviews/audit-plan-<YYYY-MM-DD>.md` from the JSON, fixed sections in order: **Target profile ·
+Then **derive** the sibling `reviews/audit-plan-<YYYY-MM-DD>T<HHMMSS>.md` (same stamp) from the
+JSON, fixed sections in order: **Source · Target profile ·
 Unit map · Plan rows** (lens / altitude / scope / depth / units / runs / est-tokens /
 omission-risk / why) **· Overrides applied · Cost estimate + assumptions · Coverage & exclusions**
 (explicit **not covered** list: excluded globs, dropped altitudes/lenses, L0 reserved) **· Plan
@@ -210,7 +220,8 @@ status**.
 Present the plan rows **from the artifact** per the consult-presentation rule — each row already
 carries its cost (`estTokens`) and risk (`omissionRisk`); read them, don't improvise a second
 narrative. Thomas edits — every edit, token or direct, becomes a **recorded patch** (step 4,
-`source: consult`); re-run steps 4–6 on any edit (JSON first, view re-derived) — or approves. On
+`source: consult`); re-run steps 4–6 on any edit (JSON first, view re-derived) — **rewriting this
+invocation's existing artifacts, never minting a new stamp** — or approves. On
 approval set `"status": "approved"` in the JSON and regenerate the view. **Approval approves the
 plan, not execution.**
 
