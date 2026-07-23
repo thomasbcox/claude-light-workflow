@@ -663,3 +663,30 @@ redesign).
 - **Linter re-pinned:** the `mature-downgrade` presence check is replaced by a check that Phase C is
   the *empty* declared extension point, plus an **`absent`** assertion that no rule reads the
   unavailable tier — so a future edit cannot quietly reintroduce the undefined input.
+
+## Codex approach review — round 7 (2026-07-23, base main, HEAD 27c976a)
+
+**Verdict:** The plan-stage architecture is otherwise sound, and the settled engine deferrals remain
+closed. Not quite ready to ship: L1 eligibility is classified at **group** granularity but priced and
+scheduled at **unit** granularity, producing materially false coverage and cost in mixed groups.
+
+### IMPORTANT
+- **Mixed groups schedule non-code files as L1 critic units** — *one-way · kludgy*. A group becomes a
+  *code group* if it contains **any** detected-code file, after which **every** file/chunk in it
+  enters each L1 row. So the compiler prices and claims L1 coverage for units its own `non-code` rule
+  would exclude if they merely lived in a different directory — same files, different answer by
+  directory layout.
+
+**Quantified against the smoke artifact** (the finding's own evidence, measured not assumed):
+
+| Group | L1 units scheduled | actually code | non-code |
+|---|---|---|---|
+| `(root)` | 9 | 1 (`install.sh`) | 8 |
+| `.claude` | 13 | 1 (`block-main-writes.sh`) | 12 |
+| `tests` | 4 | 4 | 0 |
+
+As planned: **78 runs / 4.68M tokens**. Scheduling only code units: **18 runs / 1.08M tokens**.
+The plan therefore **overstates itself by 60 runs — 77%** — buying hidden-failure and test-adequacy
+critic time on `.gitignore`, `README.md`, and a dozen Markdown/JSON files, and claiming coverage of
+them in the bargain. Both of the story's headline numbers (cost, coverage) are wrong in the same
+direction.
