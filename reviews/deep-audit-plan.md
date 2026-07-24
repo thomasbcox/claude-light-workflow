@@ -900,3 +900,21 @@ above applies its lesson locally (stop restating; reference).
   in the schema, plus `has` checks that the descriptions **reference** SKILL.md — so a future edit
   can neither reintroduce the overclaim nor silently drop the reference.
 - Schema re-validates; smoke artifact still conforms; full gate green.
+
+## Codex review (2026-07-24, base faf960d, HEAD fc6ef05) — re-review of RR-1/RR-2: CLEAN
+
+**Summary:** The two overclaims are **absent** from the current schema; both replacement
+descriptions coherently defer to the matching SKILL.md rules; no remaining schema text contradicts
+those rules. Schema is valid JSON and passes Draft-7 meta-schema validation. The linter's two
+`absent`-checks and two `has`-checks match the current text, correctly pin the regression guards, and
+the full linter passes all 97 checks.
+
+**Findings: none (empty array).** Verified against current file contents (the corrected re-review
+prompt directed the reviewer to treat the story's recorded findings as historical, after the earlier
+stale-echo). The last known duplicated-claim copies are resolved and guarded against recurrence.
+
+## Decisions (2026-07-24, re-review verification)
+
+Zero findings — nothing to decide. The correctness fixes (RR-1/RR-2) are verified clean. Per the
+loop, `/close` still stops at the merge fork for Thomas's explicit merge instruction; a clean
+re-review does not fast-path a merge.
