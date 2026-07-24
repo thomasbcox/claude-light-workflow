@@ -306,6 +306,41 @@ becomes the **N+1** that fails the scope-containment AC — a defect the workflo
 enhancement — filed `OPS-` as workflow-tooling ergonomics, estate-wide via `install.sh`. A **sixth**
 `OPS-` workflow item; the prefix-revisit question OPS-11 opened keeps accruing data points.)
 
+OPS-17 — **Fixes keep "re-appearing" because each rule is restated in multiple artifacts; single-source
+it.** Filed 2026-07-24 from Thomas's observation ("why do we keep seeing issues re-appear we thought
+we'd fixed"), root-caused during `deep-audit-plan`. Evaluate-and-decide.
+
+- **The root cause (not a mystery — a consistent pattern).** Every rule in a skill-story is stated
+  in **several places**: the **skill prose** (`SKILL.md`), the **schema `description` fields**
+  (which restate rules as English), the **story ACs**, the **drift-linter pins** (which quote skill
+  text), and the **smoke/example artifact**. A fix updates the copy the finding cited and misses the
+  siblings, and **nothing cross-checks the copies for agreement** — so a later review finds the
+  un-fixed copy and it reads as "the same issue, again." Documented instances in this one story:
+  round-4 replayability (fixed the AC, missed skill+linter → resurfaced round 8), round-6 tier
+  removal (fixed skill+smoke, missed schema → resurfaced round 8), round-8 F1/F3 (fixed skill, missed
+  schema → resurfaced at re-review as RR-1/RR-2). Same shape every time.
+- **The worst offender: schema `description` fields.** JSON-Schema *structural* constraints
+  (`required`/`enum`/`oneOf`) are **enforced**; the `description` strings are **unenforced prose**
+  that duplicate skill rules ("derives deterministically", "never overwrites"). The drift linter
+  pins only the *skill* text, so schema descriptions drift silently. This is a DRY violation dressed
+  as documentation.
+- **Candidate fixes (evaluate).** (a) **Minimise restatement** — each rule lives in exactly one
+  authoritative place (the skill); schema descriptions describe a field's *shape/meaning* and
+  **reference** the skill for the *rule* rather than restating it; ACs reference, don't duplicate.
+  (This is the fix `deep-audit-plan`'s RR-1/RR-2 applied locally.) (b) **Cross-consistency linting**
+  — the drift linter asserts skill↔schema↔AC agreement on shared claims (more pins chasing copies;
+  brittle). (c) A **frame/close doctrine line**: "a behavioural rule is stated once; other artifacts
+  reference it." Lean: (a)+(c) — remove the duplicate copies rather than police them.
+- **A second, related reliability lesson (record, may split out).** During the same re-review the
+  **independent reviewer echoed prior findings** verbatim from the story file (which quotes them)
+  instead of re-reading the current sources — a false "recurrence." Mitigation: the re-review prompt
+  should direct the reviewer to verify against *current file contents* and treat the story's recorded
+  findings as historical. (Caught by content-diffing the reviewer output vs. the prior artifact.)
+
+(Logged 2026-07-24. A **seventh** `OPS-` workflow item and the first about the loop's **DRY /
+single-source-of-truth** discipline — estate-wide, since it is inherent to how skill+schema+AC+linter
+restate rules. The prefix-revisit question OPS-11 opened keeps accruing data points.)
+
 _(OPS-10 shipped — see [Done](#done).)_
 
 ---
