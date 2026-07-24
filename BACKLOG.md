@@ -271,6 +271,41 @@ files and skip its actual logic.
 (Logged 2026-07-23. A **fifth** evaluate-and-decide item under `OPS-`; the prefix-revisit question
 OPS-11 opened keeps accruing data points — still a one-way door left for Thomas.)
 
+OPS-16 — **Scope-containment ACs keep breaking on the loop's own review-trail artifacts.** Filed
+2026-07-23 at Thomas's request as a recurring, estate-wide papercut; evaluate-and-decide. **The
+bug:** `/frame` step 6 writes `reviews/<slug>.design.json` and step 8 commits it *with the spec* —
+before implementation starts; `/review` then writes `.approach.json` and `.codex.json`. But frame's
+scope-AC guidance (step 5 test-notes) only warns against file **counts** and says "enumerate the
+allowed files" — it **never tells the author to include the workflow's own review-trail artifacts**
+in that enumeration. So an author enumerates their *product* files, and the loop's own `.design.json`
+becomes the **N+1** that fails the scope-containment AC — a defect the workflow inflicts on itself.
+
+- **Not hypothetical — documented recurrence.** `antipattern-lens` had to **amend its AC7 "to exempt
+  the workflow-generated review" artifacts** (see that story's round-2 review). `deep-audit-plan`
+  pre-empted it by writing AC10 as "…and files under `reviews/`". Thomas reports hitting it
+  **across individual projects** — and since `/frame` is deployed estate-wide by `install.sh`, the
+  gap ships to every repo.
+- **Why `.design.json` is the worst offender.** It is created and committed at **frame time**, long
+  before the author is thinking about the eventual diff — so it is the artifact most reliably
+  forgotten when the scope AC is written. `.approach.json` / `.codex.json` compound it each review
+  round.
+- **Candidate fixes (evaluate).** (a) **Doctrine exemption** — codify in `workflow-protocol.md` +
+  frame's step-5 guidance that scope-containment ACs **categorically exempt** the review trail
+  (`reviews/<slug>.*` is workflow bookkeeping, never the change's product), so the scope check reads
+  "no *non-review-trail* file beyond those enumerated" and **no story ever enumerates them**.
+  (b) **Guidance-only** — frame prompts the author to always append "and files under `reviews/`" to
+  the enumeration (lighter; relies on memory each time). (c) **A canned scope-check incantation**
+  that excludes `reviews/` (e.g. `git diff --name-only <base>...HEAD -- . ':(exclude)reviews/'`).
+  Lean: (a) — the review trail is *definitionally* not the product, so the exemption belongs in
+  doctrine once, not in every story's AC.
+- **Boundary.** Scope-containment ACs exist to catch **unintended product-file sprawl**; the fix must
+  exempt only the workflow's **own** artifacts, not weaken the check for product files. `reviews/`
+  holds only workflow artifacts, so exempting the whole directory is safe.
+
+(Logged 2026-07-23. A concrete **recurring defect** in frame's guidance rather than a parked
+enhancement — filed `OPS-` as workflow-tooling ergonomics, estate-wide via `install.sh`. A **sixth**
+`OPS-` workflow item; the prefix-revisit question OPS-11 opened keeps accruing data points.)
+
 _(OPS-10 shipped — see [Done](#done).)_
 
 ---
