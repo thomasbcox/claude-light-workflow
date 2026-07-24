@@ -690,3 +690,24 @@ The plan therefore **overstates itself by 60 runs — 77%** — buying hidden-fa
 critic time on `.gitignore`, `README.md`, and a dozen Markdown/JSON files, and claiming coverage of
 them in the bargain. Both of the story's headline numbers (cost, coverage) are wrong in the same
 direction.
+
+## Decisions (2026-07-23, approach round 7)
+
+Thomas: **"a"** — classify code/non-code at **unit** granularity so scheduling and pricing match
+eligibility; **plus** file a backlog need to treat skill instructions as "code". Correctness pass
+again withheld per the step-7 gate (approved fix = redesign).
+
+- **R7-F1 — group-vs-unit granularity → FIX (option A).** Move the code/non-code determination from
+  the group to the **unit**: each file/chunk is code iff it belongs to a detected code ecosystem
+  (step-1 profile). L1 rows (P1/P2/P4/P5) schedule and price **only the code units** in scope;
+  non-code units go to `coverage.notCovered`. The `non-code` **group** marker stays as the "no code
+  units at all → the group emits no L1/L2 rows" shortcut, but eligibility is per-unit. Schema/`why`
+  and the semantic-check invariants follow the per-unit unitIds. Smoke recompiles accordingly
+  (expected: ~78 → ~18 L1 runs for this repo, because its shell files are the only detected-code
+  units — see the prompts-as-code caveat below).
+- **Backlog: prompts-as-code (filed separately).** This repo's real product is **Markdown skill
+  instructions**; under A they classify as docs, so the correct fix for *this* repo is a future
+  decision to treat skill/prompt instructions as a first-class code ecosystem for auditing — not to
+  keep an incoherent granularity. Filed as its own OPS- item; **not** folded into this story (its
+  scope-containment AC forbids unrelated files, and the item is an evaluate-and-decide, not this
+  fix).
