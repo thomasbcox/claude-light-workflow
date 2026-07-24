@@ -711,3 +711,23 @@ again withheld per the step-7 gate (approved fix = redesign).
   keep an incoherent granularity. Filed as its own OPS- item; **not** folded into this story (its
   scope-containment AC forbids unrelated files, and the item is an evaluate-and-decide, not this
   fix).
+
+## Fixes (2026-07-23, approach round 7)
+
+- **R7-F1 applied — classification moved from group to unit granularity.** Step 2 now classifies each
+  **unit** as code (belongs to a detected code ecosystem) or non-code, and stores each group's
+  ordered **`codeUnitIds`** (the code subset of `unitIds`). Step 3 scope rules: L1 rules apply to
+  groups with ≥1 code unit; an L1 row covers **only** the scope's `codeUnitIds`. Step 5 resolves L1
+  `unitIds` from `codeUnitIds` (standard/deep = all; light = pinned every-3rd of them); `units` =
+  `|codeUnitIds|`. Schema gains required `codeUnitIds`; the semantic check gains two invariants
+  (`codeUnitIds ⊆ unitIds` order-preserved; every L1 row drawn from its scope's `codeUnitIds`) — so a
+  non-code unit can never be scheduled or priced.
+- **Smoke recompiled — the headline numbers are now honest.** `78 → 18 runs` / `4.68M → 1.08M
+  tokens` / `30 → 9 min`. The dropped 60 runs were exactly the docs/config units (`.gitignore`,
+  `README.md`, a dozen `.md`/`.json`) that the group rule had scheduled and priced as critic work.
+  Coverage now lists them under *not covered* rather than falsely claiming them. Full contract gate
+  PASSED.
+- **Known and recorded:** this repo's real product is its Markdown skill instructions, which classify
+  as non-code, so the plan now covers only its 3 shell files at L1 — correct by the rule, and the
+  gap **OPS-15** (skill/prompt instructions as auditable code, `merge: backlog-ops15`) exists to
+  close. The L2/L3 architecture rows still cover the whole design.

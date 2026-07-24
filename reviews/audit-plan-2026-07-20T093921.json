@@ -34,6 +34,9 @@
         "ai-dev-workflow-architecture.md#2",
         "install.sh",
         "workflow-skill-defects.story.md"
+      ],
+      "codeUnitIds": [
+        "install.sh"
       ]
     },
     {
@@ -59,6 +62,9 @@
         ".claude/skills/review/hidden-failure-schema.json",
         ".claude/workflow-protocol.md",
         ".claude/workflow.json"
+      ],
+      "codeUnitIds": [
+        ".claude/hooks/block-main-writes.sh"
       ]
     },
     {
@@ -70,6 +76,12 @@
         "churn-high"
       ],
       "unitIds": [
+        "tests/deep_audit_plan_test.sh",
+        "tests/dev_audit_test.sh",
+        "tests/guard_test.sh",
+        "tests/reviewer_test.sh"
+      ],
+      "codeUnitIds": [
         "tests/deep_audit_plan_test.sh",
         "tests/dev_audit_test.sh",
         "tests/guard_test.sh",
@@ -87,7 +99,8 @@
       "unitIds": [
         ".github/workflows/ci.yml",
         ".github/workflows/scheduled.yml"
-      ]
+      ],
+      "codeUnitIds": []
     },
     {
       "group": "reviews",
@@ -189,7 +202,8 @@
         "reviews/shfmt-format.codex.json",
         "reviews/shfmt-format.design.json",
         "reviews/shfmt-format.md"
-      ]
+      ],
+      "codeUnitIds": []
     }
   ],
   "rows": [
@@ -198,24 +212,16 @@
       "altitude": "L1",
       "scope": "(root)",
       "depth": "deep",
-      "units": 9,
-      "runs": 18,
-      "estTokens": 1080000,
+      "units": 1,
+      "runs": 2,
+      "estTokens": 120000,
       "omissionRisk": "install.sh's deploy/overwrite paths go unexamined for swallowed failure",
       "why": [
         "P1: baseline",
         "P9: churn-high (43 commits/90d to evaluatedAt)"
       ],
       "unitIds": [
-        ".gitignore",
-        "AGENTS.md",
-        "ARCHITECTURE.md",
-        "BACKLOG.md",
-        "README.md",
-        "ai-dev-workflow-architecture.md#1",
-        "ai-dev-workflow-architecture.md#2",
-        "install.sh",
-        "workflow-skill-defects.story.md"
+        "install.sh"
       ]
     },
     {
@@ -223,28 +229,16 @@
       "altitude": "L1",
       "scope": ".claude",
       "depth": "deep",
-      "units": 13,
-      "runs": 26,
-      "estTokens": 1560000,
+      "units": 1,
+      "runs": 2,
+      "estTokens": 120000,
       "omissionRisk": "the skills + guard hook (the loop's own machinery) go unexamined for silent degradation",
       "why": [
         "P1: baseline",
         "P9: churn-high (48 commits/90d to evaluatedAt)"
       ],
       "unitIds": [
-        ".claude/hooks/block-main-writes.sh",
-        ".claude/settings.json",
-        ".claude/skills/close/SKILL.md",
-        ".claude/skills/deep-audit/SKILL.md",
-        ".claude/skills/deep-audit/plan-schema.json",
-        ".claude/skills/dev-audit/SKILL.md",
-        ".claude/skills/frame/SKILL.md",
-        ".claude/skills/review/SKILL.md",
-        ".claude/skills/review/design-review-schema.json",
-        ".claude/skills/review/finding-schema.json",
-        ".claude/skills/review/hidden-failure-schema.json",
-        ".claude/workflow-protocol.md",
-        ".claude/workflow.json"
+        ".claude/hooks/block-main-writes.sh"
       ]
     },
     {
@@ -272,23 +266,15 @@
       "altitude": "L1",
       "scope": "(root)",
       "depth": "standard",
-      "units": 9,
-      "runs": 9,
-      "estTokens": 540000,
+      "units": 1,
+      "runs": 1,
+      "estTokens": 60000,
       "omissionRisk": "install.sh has no test coverage question answered",
       "why": [
         "P4: untested (no test-pattern files in group)"
       ],
       "unitIds": [
-        ".gitignore",
-        "AGENTS.md",
-        "ARCHITECTURE.md",
-        "BACKLOG.md",
-        "README.md",
-        "ai-dev-workflow-architecture.md#1",
-        "ai-dev-workflow-architecture.md#2",
-        "install.sh",
-        "workflow-skill-defects.story.md"
+        "install.sh"
       ]
     },
     {
@@ -296,27 +282,15 @@
       "altitude": "L1",
       "scope": ".claude",
       "depth": "standard",
-      "units": 13,
-      "runs": 13,
-      "estTokens": 780000,
+      "units": 1,
+      "runs": 1,
+      "estTokens": 60000,
       "omissionRisk": "whether the linters actually pin the skills' load-bearing phrases stays unasked",
       "why": [
         "P4: untested (no test-pattern files in group)"
       ],
       "unitIds": [
-        ".claude/hooks/block-main-writes.sh",
-        ".claude/settings.json",
-        ".claude/skills/close/SKILL.md",
-        ".claude/skills/deep-audit/SKILL.md",
-        ".claude/skills/deep-audit/plan-schema.json",
-        ".claude/skills/dev-audit/SKILL.md",
-        ".claude/skills/frame/SKILL.md",
-        ".claude/skills/review/SKILL.md",
-        ".claude/skills/review/design-review-schema.json",
-        ".claude/skills/review/finding-schema.json",
-        ".claude/skills/review/hidden-failure-schema.json",
-        ".claude/workflow-protocol.md",
-        ".claude/workflow.json"
+        ".claude/hooks/block-main-writes.sh"
       ]
     },
     {
@@ -371,9 +345,9 @@
   ],
   "overrides": [],
   "totals": {
-    "runs": 78,
-    "estTokens": 4680000,
-    "wallClockMinutes": 30
+    "runs": 18,
+    "estTokens": 1080000,
+    "wallClockMinutes": 9
   },
   "assumptions": [
     "\u224860k tokens per critic-run (all-in); refine from observed engine data",
@@ -383,16 +357,24 @@
   ],
   "coverage": {
     "covered": [
-      "(root) L1",
-      ".claude L1+L2",
-      "tests L1",
-      "app L3 (architecture)"
+      "architecture-coherence L2 @ subsystem:.claude",
+      "architecture-coherence L3 @ app",
+      "hidden-failure L1 @ (root)",
+      "hidden-failure L1 @ .claude",
+      "hidden-failure L1 @ tests",
+      "test-adequacy L1 @ (root)",
+      "test-adequacy L1 @ .claude",
+      "test-adequacy L1 @ tests"
     ],
     "notCovered": [
-      ".github \u2014 non-code (yml only)",
-      "reviews/ \u2014 non-code (the loop's own artifacts; the antipattern-lens AC7 exemption precedent)",
       "L0 (lines) \u2014 reserved, no v1 lens",
-      "security-data-loss \u2014 no sensitive paths/domain detected; add via override 'security-data-loss:standard' if wanted"
+      "security-data-loss \u2014 no sensitive paths/domain detected; add via override 'security-data-loss:standard' if wanted",
+      "(root): 8 non-code unit(s) not scheduled for L1",
+      ".claude: 12 non-code unit(s) not scheduled for L1",
+      ".github: 2 non-code unit(s) not scheduled for L1",
+      "reviews: 90 non-code unit(s) not scheduled for L1",
+      "L0 (lines) \u2014 reserved, no v1 lens",
+      "security-data-loss \u2014 no sensitive paths/domain detected (add via override security-data-loss:standard)"
     ]
   },
   "status": "proposed",

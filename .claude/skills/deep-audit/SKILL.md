@@ -83,9 +83,16 @@ profile record). Carry the profile forward; do **not** duplicate its detection l
   > 400 LOC splits into `ceil(LOC/400)` chunk-units with IDs `path#1..#n`. Each group's
   lexicographically **ordered `unitIds` list is stored in the plan's `unitMap`** — it is the ID
   registry the rows and the engine address; `chunkUnits = |unitIds|` by construction. (L2/L3
-  scopes are their own single unit: `subsystem:<dir>` / `app`.) A group containing no file of any
-  detected code ecosystem (step-1 profile — e.g. only md/json/yml) is marked **`non-code`**: it
-  emits no L1/L2 rows and is listed under `coverage.notCovered`.
+  scopes are their own single unit: `subsystem:<dir>` / `app`.)
+- **Code vs non-code is a per-UNIT property, not per-group** (the classification granularity must
+  match the scheduling granularity — L1 rows schedule *units*). A unit is **code** iff its file
+  belongs to a detected **code** ecosystem — a step-1 / Table A row that carries a linter/analyzer
+  (e.g. shell `*.sh`, Python, JS/TS, Go…); Markdown-docs and data/config-only files (`*.md`,
+  `*.json`, `*.yml`, `.gitignore`, lockfiles) are **non-code**. Each group stores its ordered
+  **`codeUnitIds`** (the code subset of `unitIds`) in `unitMap`. A group whose `codeUnitIds` is
+  **empty** is the `non-code` shortcut — it emits no L1/L2 rows. Non-code units inside a **mixed**
+  group are **not scheduled** and are summarised in `coverage.notCovered` (so `README.md` sitting
+  next to `install.sh` is excluded exactly as it would be in a docs-only directory).
 - **Signals** (fixed predicates, evaluated per group):
   - `churn-high` — ≥ 20 commits touching the group in the **90 days ending at `evaluatedAt`**
     (`git log --since='<evaluatedAt − 90d>' --until='<evaluatedAt>'`).
@@ -136,8 +143,10 @@ this skill computes itself** (step-2 unit-map signals) plus the steps 1–2 prof
 well-maintained repo remains available as an explicit `<lens>:<depth>` override patch (step 4) —
 a human judgment rather than a maturity heuristic.
 
-**Scope rules:** Phase A L1 rules (P1/P2/P4/P5) and P6 apply to **code groups only** — `non-code`
-groups go to `coverage.notCovered`, not the plan.
+**Scope rules:** Phase A L1 rules (P1/P2/P4/P5) and the P6 L2 rule apply only to groups with **≥1
+code unit** (empty-`codeUnitIds` groups emit nothing). An emitted L1 row covers **only the scope's
+`codeUnitIds`**, never its non-code units (step 5 resolves the exact set); `untested` and other
+signals are still evaluated per group.
 
 ### 4. Overrides — the told **patch model** (a discriminated union by `op`)
 Every consult-time edit — a CLI token **or** a direct row change at the step-7 consult — normalizes
@@ -172,12 +181,14 @@ An **unknown token is an error** — report it and stop; never guess (the review
 precedent).
 
 ### 5. Resolve units and price each row (static arithmetic, all figures ESTIMATE)
-- `units` — resolved chunk-adjusted unit count in the row's scope (L2: 1 per subsystem; L3: 1).
-- **`unitIds` — the units this row will actually run**, resolved from the scope's `unitMap` entry:
-  **standard** and **deep** → the group's full ordered list; **light** → the **pinned sample**:
-  every 3rd entry of the lexicographically ordered list (indices 0, 3, 6, …). The sampling inputs
-  (the ordered list) live in `unitMap`, so the selection is reproducible from the artifact alone —
-  the engine runs exactly `unitIds`, never re-chooses.
+- **`unitIds` — the units this row will actually run.** For an **L1** row, resolve from the scope's
+  **`codeUnitIds`** (never the full `unitIds` — non-code units are out of scope, per step 3):
+  **standard** / **deep** → the full ordered `codeUnitIds`; **light** → the **pinned sample**: every
+  3rd entry of that ordered list (indices 0, 3, 6, …). For **L2/L3** the row's single synthetic unit
+  is its scope (`subsystem:<dir>` / `app`). The sampling input (the ordered list) lives in `unitMap`,
+  so the selection is reproducible from the artifact alone — the engine runs exactly `unitIds`,
+  never re-chooses.
+- `units` — the scope's schedulable count: L1 → `|codeUnitIds|`; L2/L3 → 1.
 - `runs` — `|unitIds| ×` (deep ? 2 : 1); equivalently light `ceil(units/3)`, standard `units`,
   deep `2×units`.
 - `estTokens` — `runs × 60k` (assumption: ≈ 60k tokens per critic-run, all-in; refine from observed
@@ -209,9 +220,11 @@ deferred executability gate). This story records the binding; it does not define
 **Parse-check it** (`jq -e . file` or `python3 -c 'import json;json.load(...)'`), then run the
 **plan semantic check** — the named contract check Draft-7 cannot express: (1) row identities
 `(lens, altitude, scope)` are **unique**; (2) `totals.runs = Σ rows[].runs` and
-`totals.estTokens = Σ rows[].estTokens`; (3) per unit-map group, `chunkUnits = |unitIds|`; (4) per
-row, `runs = |unitIds| × (deep ? 2 : 1)`, with light rows' `unitIds` matching the pinned every-3rd
-sample of their group's ordered list. Schema validation **plus** the semantic check is the
+`totals.estTokens = Σ rows[].estTokens`; (3) per unit-map group, `chunkUnits = |unitIds|` and
+`codeUnitIds ⊆ unitIds` (order-preserved); (4) per row, `runs = |unitIds| × (deep ? 2 : 1)`; (5)
+**every L1 row's `unitIds` are drawn from its scope's `codeUnitIds`** — standard/deep = the full
+`codeUnitIds`, light = the pinned every-3rd sample of it — so no non-code unit is ever scheduled.
+Schema validation **plus** the semantic check is the
 canonical contract gate — on any failure STOP loudly; never present a view of an invalid plan.
 Then **derive** the sibling `reviews/audit-plan-<YYYY-MM-DD>T<HHMMSS>.md` (same stamp) from the
 JSON, fixed sections in order: **Source · Target profile ·

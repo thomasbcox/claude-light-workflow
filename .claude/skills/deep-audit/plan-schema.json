@@ -44,7 +44,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["group", "files", "loc", "chunkUnits", "unitIds", "signals"],
+        "required": ["group", "files", "loc", "chunkUnits", "unitIds", "codeUnitIds", "signals"],
         "properties": {
           "group": { "type": "string", "minLength": 1, "description": "Top-level (or split second-level) directory path, or (root)." },
           "files": { "type": "integer", "minimum": 1 },
@@ -53,7 +53,12 @@
           "unitIds": {
             "type": "array",
             "minItems": 1,
-            "description": "The group's stable unit IDs, lexicographically ordered: repo-relative file paths; chunked files as path#1..#n. The ID registry rows and the engine address; also the pinned sampling input for light-depth rows.",
+            "description": "The group's stable unit IDs, lexicographically ordered: repo-relative file paths; chunked files as path#1..#n. The ID registry rows and the engine address.",
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "codeUnitIds": {
+            "type": "array",
+            "description": "The ordered subset of unitIds that are CODE (belong to a detected code ecosystem — a Table A row with a linter). L1 rows schedule only these; non-code units (unitIds minus these) are summarised in coverage.notCovered. May be empty (a fully non-code group emits no L1/L2 rows). Must be an order-preserved subset of unitIds (plan semantic check).",
             "items": { "type": "string", "minLength": 1 }
           },
           "signals": {

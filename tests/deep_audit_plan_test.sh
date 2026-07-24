@@ -71,6 +71,11 @@ has "schema requires the source block" "$SCHEMA" '"required": ["revision", "dirt
 has "chunk threshold" "$SKILL" "400 LOC"
 has "root files form the (root) group" "$SKILL" '`(root)`'
 has "non-code groups emit no L1/L2 rows" "$SKILL" "non-code"
+has "code/non-code is per-unit not per-group" "$SKILL" "per-UNIT property, not per-group"
+has "each group stores codeUnitIds" "$SKILL" "the code subset of \`unitIds\`"
+has "L1 rows schedule only code units" "$SKILL" "non-code units are out of scope"
+has "semantic check: L1 unitIds drawn from codeUnitIds" "$SKILL" "are drawn from its scope's \`codeUnitIds\`"
+has "schema requires codeUnitIds" "$SCHEMA" '"codeUnitIds"'
 has "collision rule: highest depth wins" "$SKILL" "highest** depth wins"
 has "whys accumulate" "$SKILL" "accumulates on the row"
 has "determinism invariant stated" "$SKILL" "same overrides ⇒ same plan"
@@ -115,9 +120,9 @@ has "schema: set-depth op const" "$SCHEMA" '"const": "set-depth"'
 has "schema: add carries complete rowIntent" "$SCHEMA" '"rowIntent"'
 has "schema: remove/restrict selector-only branch" "$SCHEMA" '"enum": ["remove", "restrict"]'
 has "schema: rows pin unitIds" "$SCHEMA" '"required": ["lens", "altitude", "scope", "depth", "units", "unitIds", "runs", "estTokens", "omissionRisk", "why"]'
-has "schema: unitMap pins unitIds" "$SCHEMA" '"required": ["group", "files", "loc", "chunkUnits", "unitIds", "signals"]'
+has "schema: unitMap pins unitIds + codeUnitIds" "$SCHEMA" '"required": ["group", "files", "loc", "chunkUnits", "unitIds", "codeUnitIds", "signals"]'
 has "skill: rows record resolved unit IDs" "$SKILL" "ordered \`unitIds\` list"
-has "skill: pinned every-3rd light sample" "$SKILL" "every 3rd entry"
+has "skill: pinned every-3rd light sample" "$SKILL" "pinned every-3rd sample"
 has "skill: globs act before unit-map compilation" "$SKILL" "before unit-map compilation"
 has "skill: semantic check covers unit identity" "$SKILL" 'chunkUnits = |unitIds|'
 
