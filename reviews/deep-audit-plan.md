@@ -782,3 +782,30 @@ linter pinning the un-corrected claim.)*
   carries "Table B tier" from steps 1–2, but round 6 deleted that input (it lives at `/dev-audit`
   step 5). Leftover from that deletion; invites an invented value. **Fix:** drop it from the schema
   description; extend round 6's `absent` check to cover the schema, not just the skill.
+
+## Decisions (2026-07-24, correctness round)
+
+Thomas: **"fix all"** — all four correctness findings approved as fixes. These are **line-level**
+fixes (not shape redesigns), so `/close`'s fork will offer **re-review OR merge**, not re-review only.
+
+- **F1 BLOCKER — same-second stamp collision → FIX.** Make the no-overwrite guarantee real: **fail
+  closed if the computed artifact path already exists** (a fresh invocation in the same second stops
+  loudly rather than overwriting), and pin the *mechanism* in the linter, not the bare claim. (Chosen
+  over lengthening the filename with sub-second precision — fail-closed keeps the stamp readable and
+  is the stronger guarantee.)
+- **F2 IMPORTANT — determinism overclaim → FIX.** Replace `SKILL.md`'s absolute "same repo state ⇒
+  same plan" with the settled round-4 wording (replayability from recorded inputs; same-source
+  reproducibility only for a clean tree); re-pin the linter to the qualified invariant, not the
+  overclaim. Finishes round 4's fix in the skill + linter.
+- **F3 IMPORTANT — `omissionRisk` not deterministic → FIX.** Scope the "derives deterministically"
+  claim to the **structural** fields (`unitIds/units/runs/estTokens`); mark `omissionRisk` and `why`
+  as **descriptive** prose explicitly excluded from byte-reproducibility. (Cheaper and honest vs
+  building an omission-risk template; the replayable contract is the structural plan.)
+- **F4 NIT — schema leftover → FIX.** Remove "Table B tier" from `plan-schema.json`'s `profile`
+  description; extend round 6's `absent` check to cover the schema as well as the skill.
+
+**Meta-note (recorded, not a fix here):** findings 1–3 each caught the **drift linter pinning the
+wrong thing** — it enforced the determinism overclaim and only checked the collision *claim's
+presence*. A text-pinning linter guards against change, not against the pinned text being wrong to
+begin with; the correctness pass is the backstop. No action beyond re-pinning to the corrected
+claims (part of F1/F2 above).
