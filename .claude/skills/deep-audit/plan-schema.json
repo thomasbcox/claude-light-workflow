@@ -1,0 +1,194 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "deep-audit plan (v1)",
+  "description": "Canonical contract for the /deep-audit plan artifact (reviews/audit-plan-<date>.json). The JSON IS the plan — the markdown consult view is derived from it and regenerated on divergence. The canonical contract gate = this schema PLUS the named plan semantic check (row-identity uniqueness; totals.runs and totals.estTokens equal the row sums) which Draft-7 cannot express — both must pass before the view derives. planVersion is pinned so the engine story and the eventual differential (C-ledger) mode extend this contract only via an explicit version bump. All properties are required (the repo's schema convention).",
+  "type": "object",
+  "additionalProperties": false,
+  "definitions": {
+    "selector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lens", "altitude", "scope"],
+      "properties": {
+        "lens": { "type": "string", "enum": ["hidden-failure", "security-data-loss", "test-adequacy", "architecture-coherence", "*"] },
+        "altitude": { "type": "string", "enum": ["L0", "L1", "L2", "L3", "*"] },
+        "scope": { "type": "string", "minLength": 1, "description": "Unit-group path, subsystem:<dir>, app, a glob, or '*'." }
+      }
+    }
+  },
+  "required": ["planVersion", "date", "compiledAt", "target", "source", "profile", "unitMap", "rows", "overrides", "totals", "assumptions", "coverage", "status"],
+  "properties": {
+    "planVersion": { "const": 1 },
+    "date": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", "description": "YYYY-MM-DD compile date." },
+    "compiledAt": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}", "description": "ISO compile instant; its <YYYY-MM-DD>T<HHMMSS> form is the artifact filename key. Distinct from source.evaluatedAt (the signal cutoff). Minting cadence and the fail-closed collision guard are defined in SKILL.md step 6 — not restated here." },
+    "target": { "type": "string", "minLength": 1, "description": "Absolute path of the audited repo root." },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["revision", "dirty", "evaluatedAt"],
+      "description": "Source snapshot binding: one approval ↔ one code state ↔ one signal window. Every time-relative predicate (churn) derives from evaluatedAt, never from run time. The engine MUST fail closed if the target's revision/tree no longer matches.",
+      "properties": {
+        "revision": { "type": "string", "minLength": 7, "description": "git rev-parse HEAD at compile time." },
+        "dirty": { "type": "boolean", "description": "Whether the working tree had uncommitted changes at compile time." },
+        "evaluatedAt": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}", "description": "ISO evaluation cutoff; the churn window is the 90 days ending here." }
+      }
+    },
+    "profile": {
+      "type": "object",
+      "description": "Detection snapshot carried from /dev-audit steps 1–2 (ecosystems, frameworks, tests, CI, secret signals — redacted, domain). Free-form object; informational. Does NOT carry a Table B maturity tier — that is produced at /dev-audit step 5, outside this skill's steps-1–2 recon boundary (see round-6 decision).",
+      "additionalProperties": true
+    },
+    "unitMap": {
+      "type": "array",
+      "description": "Deterministic unit groups with their fixed-predicate signals.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["group", "files", "loc", "chunkUnits", "unitIds", "codeUnitIds", "signals"],
+        "properties": {
+          "group": { "type": "string", "minLength": 1, "description": "Top-level (or split second-level) directory path, or (root)." },
+          "files": { "type": "integer", "minimum": 1 },
+          "loc": { "type": "integer", "minimum": 0 },
+          "chunkUnits": { "type": "integer", "minimum": 1, "description": "Chunk-adjusted unit count (files >400 LOC count as ceil(LOC/400)). Must equal |unitIds| (plan semantic check)." },
+          "unitIds": {
+            "type": "array",
+            "minItems": 1,
+            "description": "The group's stable unit IDs, lexicographically ordered: repo-relative file paths; chunked files as path#1..#n. The ID registry rows and the engine address.",
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "codeUnitIds": {
+            "type": "array",
+            "description": "The ordered subset of unitIds that are CODE (belong to a detected code ecosystem — a Table A row with a linter). L1 rows schedule only these; non-code units (unitIds minus these) are summarised in coverage.notCovered. May be empty (a fully non-code group emits no L1/L2 rows). Must be an order-preserved subset of unitIds (plan semantic check).",
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "signals": {
+            "type": "array",
+            "items": { "type": "string", "enum": ["churn-high", "sensitive", "untested", "legacy", "non-code"] }
+          }
+        }
+      }
+    },
+    "rows": {
+      "type": "array",
+      "description": "The plan. One row per (lens, altitude, scope) identity — uniqueness is enforced by the plan semantic check. The oneOf branches pin Table L's per-lens altitude pairings: a lens can only appear at the altitudes the catalog allows.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["lens", "altitude", "scope", "depth", "units", "unitIds", "runs", "estTokens", "omissionRisk", "why"],
+        "properties": {
+          "lens": { "type": "string", "enum": ["hidden-failure", "security-data-loss", "test-adequacy", "architecture-coherence"] },
+          "altitude": { "type": "string", "enum": ["L0", "L1", "L2", "L3"] },
+          "scope": { "type": "string", "minLength": 1, "description": "Unit-group path, subsystem:<dir> (L2), or app (L3)." },
+          "depth": { "type": "string", "enum": ["light", "standard", "deep"] },
+          "units": { "type": "integer", "minimum": 1, "description": "Resolved chunk-adjusted units in scope." },
+          "unitIds": {
+            "type": "array",
+            "minItems": 1,
+            "description": "The exact ordered units this row runs — the engine executes these, never re-derives. standard/deep: the scope's full ordered list; light: the pinned every-3rd sample (indices 0,3,6,…) of it. Consistency with runs/units is the plan semantic check.",
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "runs": { "type": "integer", "minimum": 1, "description": "units × depth factor (light ceil(units/3), standard units, deep 2×units)." },
+          "estTokens": { "type": "integer", "minimum": 1, "description": "runs × per-run token assumption (see assumptions)." },
+          "omissionRisk": { "type": "string", "minLength": 1, "description": "One line: what goes unexamined if this row is cut." },
+          "why": {
+            "type": "array",
+            "minItems": 1,
+            "description": "Accumulated Table P rule reasons and/or patches, e.g. 'P8: legacy', 'patch: security-data-loss:standard (add)'.",
+            "items": { "type": "string", "minLength": 1 }
+          }
+        },
+        "oneOf": [
+          { "properties": { "lens": { "const": "hidden-failure" }, "altitude": { "const": "L1" } } },
+          { "properties": { "lens": { "const": "security-data-loss" }, "altitude": { "enum": ["L1", "L3"] } } },
+          { "properties": { "lens": { "const": "test-adequacy" }, "altitude": { "const": "L1" } } },
+          { "properties": { "lens": { "const": "architecture-coherence" }, "altitude": { "enum": ["L2", "L3"] } } }
+        ]
+      }
+    },
+    "overrides": {
+      "type": "array",
+      "description": "Told-edits as a DISCRIMINATED PATCH UNION by op — the schema rejects op/payload mismatches (no depth on remove/restrict; depth required on set-depth; add carries a complete rowIntent, no selector). Glob patches (exclude/only) apply before unit-map compilation; row patches after Phase C, in array order. The approved plan is replayable from repo state + these patches; direct consult edits use the same union (source: consult). Empty array when none.",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["token", "selector", "op", "source"],
+            "properties": {
+              "token": { "type": ["string", "null"], "description": "The CLI token as given; null for a direct consult edit." },
+              "selector": { "$ref": "#/definitions/selector" },
+              "op": { "type": "string", "enum": ["remove", "restrict"] },
+              "source": { "type": "string", "enum": ["cli", "consult"] }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["token", "selector", "op", "depth", "source"],
+            "properties": {
+              "token": { "type": ["string", "null"] },
+              "selector": { "$ref": "#/definitions/selector" },
+              "op": { "type": "string", "const": "set-depth" },
+              "depth": { "type": "string", "enum": ["light", "standard", "deep"] },
+              "source": { "type": "string", "enum": ["cli", "consult"] }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["token", "rowIntent", "op", "source"],
+            "properties": {
+              "token": { "type": ["string", "null"] },
+              "rowIntent": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["lens", "altitude", "scope", "depth"],
+                "description": "Complete row-intent for an added row. How its fields are resolved/priced at replay (and which are structural vs descriptive) is defined in SKILL.md steps 4–5 — not restated here.",
+                "properties": {
+                  "lens": { "type": "string", "enum": ["hidden-failure", "security-data-loss", "test-adequacy", "architecture-coherence"] },
+                  "altitude": { "type": "string", "enum": ["L0", "L1", "L2", "L3"] },
+                  "scope": { "type": "string", "minLength": 1 },
+                  "depth": { "type": "string", "enum": ["light", "standard", "deep"] }
+                },
+                "oneOf": [
+                  { "properties": { "lens": { "const": "hidden-failure" }, "altitude": { "const": "L1" } } },
+                  { "properties": { "lens": { "const": "security-data-loss" }, "altitude": { "enum": ["L1", "L3"] } } },
+                  { "properties": { "lens": { "const": "test-adequacy" }, "altitude": { "const": "L1" } } },
+                  { "properties": { "lens": { "const": "architecture-coherence" }, "altitude": { "enum": ["L2", "L3"] } } }
+                ]
+              },
+              "op": { "type": "string", "const": "add" },
+              "source": { "type": "string", "enum": ["cli", "consult"] }
+            }
+          }
+        ]
+      }
+    },
+    "totals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runs", "estTokens", "wallClockMinutes"],
+      "properties": {
+        "runs": { "type": "integer", "minimum": 0, "description": "Must equal Σ rows[].runs (plan semantic check)." },
+        "estTokens": { "type": "integer", "minimum": 0, "description": "Must equal Σ rows[].estTokens (plan semantic check)." },
+        "wallClockMinutes": { "type": "integer", "minimum": 0, "description": "ceil(runs / concurrency) × per-run minutes (see assumptions)." }
+      }
+    },
+    "assumptions": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Every pricing constant, printed: per-run tokens, concurrency, per-run minutes, chunk size, churn window/threshold.",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["covered", "notCovered"],
+      "properties": {
+        "covered": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "notCovered": { "type": "array", "description": "Explicit exclusions: excluded globs, dropped lenses/altitudes, non-code groups, L0 reserved.", "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "status": { "type": "string", "enum": ["proposed", "approved"] }
+  }
+}
