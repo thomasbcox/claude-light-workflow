@@ -731,3 +731,16 @@ again withheld per the step-7 gate (approved fix = redesign).
   as non-code, so the plan now covers only its 3 shell files at L1 — correct by the rule, and the
   gap **OPS-15** (skill/prompt instructions as auditable code, `merge: backlog-ops15`) exists to
   close. The L2/L3 architecture rows still cover the whole design.
+
+## Codex approach review — round 8 (2026-07-24, base main, HEAD 7a1353d)
+
+**Verdict:** The scoped plan-stage shape is **sound and ready to ship**. The per-unit code
+classification closes the remaining architectural gap — eligibility, L1 scheduling, pricing,
+coverage reporting, schema, and semantic validation now share one `codeUnitIds` invariant. The
+canonical priced plan, consult boundary, deployment/gate wiring, and loud engine stop are coherent.
+The recorded OPS-13 engine work and OPS-15 prompts-as-code work remain properly deferred and were not
+reopened.
+
+**Findings: none (empty array).** Eighth approach round; the first with zero findings. Per the
+step-7 gate a clean approach pass **blesses the shape** and continues to the correctness pass in the
+same round — no redesign, no menu stop.
