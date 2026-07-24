@@ -109,6 +109,11 @@ has "fail-closed collision guard (mechanism, not claim)" "$SKILL" "already exist
 has "one-second resolution acknowledged, not overclaimed" "$SKILL" "not collision-proof on its own"
 has "consult edits do not re-mint the stamp" "$SKILL" "never minting a new stamp"
 has "schema requires compiledAt" "$SCHEMA" '"compiledAt"'
+# OPS-17 root fix (RR-1/RR-2): schema descriptions must NOT restate skill rules — reference, don't duplicate.
+absent "schema doesn't restate the collision overclaim" "$SCHEMA" "can never overwrite"
+absent "schema doesn't restate omissionRisk-is-deterministic" "$SCHEMA" "omissionRisk derive deterministically"
+has "schema references SKILL.md for the rule (compiledAt)" "$SCHEMA" "defined in SKILL.md step 6 — not restated here"
+has "schema references SKILL.md for the rule (rowIntent)" "$SCHEMA" "defined in SKILL.md steps 4–5 — not restated here"
 has "parse-check before use" "$SKILL" "Parse-check"
 has "plan semantic check named" "$SKILL" "plan semantic check"
 has "uniqueness invariant" "$SKILL" "are **unique**"

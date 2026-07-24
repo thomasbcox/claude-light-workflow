@@ -886,3 +886,17 @@ round-8 F2); round-6 tier removal (fixed skill+smoke, missed schema → round-8 
 worst offender: they are **unenforced prose** that restates skill rules, and the drift linter pins
 only the *skill* text, so schema descriptions drift freely. Filed systemically as OPS-17; the fix
 above applies its lesson locally (stop restating; reference).
+
+## Fixes (2026-07-24, correctness re-review round)
+
+- **RR-1 / RR-2 fixed at the root (not patched-and-pinned).** Both schema `description` fields that
+  restated skill rules are trimmed to describe the field's shape and **reference the skill for the
+  rule**: `compiledAt` → "…the artifact filename key… Minting cadence and the fail-closed collision
+  guard are defined in SKILL.md step 6 — not restated here"; `rowIntent` → "…How its fields are
+  resolved/priced at replay (and which are structural vs descriptive) is defined in SKILL.md
+  steps 4–5 — not restated here". No behavioural claim is duplicated, so there is nothing to drift.
+- **Recurrence guard (the OPS-17 lesson, applied locally).** The linter gains **`absent`** checks
+  rejecting the two removed overclaims (`can never overwrite`, `omissionRisk derive deterministically`)
+  in the schema, plus `has` checks that the descriptions **reference** SKILL.md — so a future edit
+  can neither reintroduce the overclaim nor silently drop the reference.
+- Schema re-validates; smoke artifact still conforms; full gate green.
