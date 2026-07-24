@@ -744,3 +744,41 @@ reopened.
 **Findings: none (empty array).** Eighth approach round; the first with zero findings. Per the
 step-7 gate a clean approach pass **blesses the shape** and continues to the correctness pass in the
 same round — no redesign, no menu stop.
+
+## Codex review (2026-07-24, base main, HEAD 724c373) — correctness pass (first)
+
+**Summary:** The drift linter passes all 89 checks, but the branch has one AC5 overwrite violation
+and three contract inconsistencies affecting determinism, patch replay, and the declared recon
+boundary. *(All four confirmed against the tree; none re-raise a settled/deferred decision — each is
+line-level drift between an earlier round's stated fix and what the artifacts actually say, plus the
+linter pinning the un-corrected claim.)*
+
+### BLOCKER
+- **Same-second stamp is not collision-proof** — `SKILL.md:203/205`. The artifact key is
+  `YYYY-MM-DDTHHMMSS` (1-second resolution), yet the skill claims collisions are "impossible by
+  construction" and a later run "can never overwrite an earlier — approved — plan" (AC5's
+  guarantee). Two invocations in the same second collide. The linter only pins the *claim*, so it
+  passes the broken invariant. **Fix:** make identity genuinely unique (fractional seconds / nonce)
+  **or** fail closed if the computed path exists; pin the mechanism, not the claim.
+
+### IMPORTANT
+- **Skill still asserts absolute determinism, contradicting the dirty-tree rule** — `SKILL.md:27`
+  vs `72–74`. Round 4 downgraded AC4 to *replayability*, but `SKILL.md:27` still reads "Same repo
+  state + same overrides ⇒ same plan," while step 2 gives a dirty tree a fresh wall-clock
+  `evaluatedAt` and calls it non-reproducible — a self-contradiction. Worse, the linter (`:81`) pins
+  the **overclaim**, so a corrected skill would fail the gate. Round 4's fix was applied to the story
+  AC but not to this skill line or its pin. **Fix:** state the settled qualified invariant
+  (replayability from recorded inputs; same-source reproducibility only for a clean tree) and re-pin.
+- **`add` patches can't reconstruct `omissionRisk` deterministically** — `SKILL.md:160–161`. The
+  patch-union design claims a row's `unitIds/units/runs/estTokens/omissionRisk` all "derive
+  deterministically" from the intent, but `omissionRisk` (`:196`) is a free-text one-liner with no
+  template — replaying the same `add` needs fresh judgment, so the canonical plan isn't
+  byte-reproducible. **Fix:** scope the determinism claim to the *structural* fields (units/runs/
+  tokens) and treat `omissionRisk`/`why` as descriptive prose, **or** carry `omissionRisk` in the
+  `add` payload.
+
+### NIT
+- **Schema profile still lists a removed input** — `plan-schema.json:38`. The `profile` description
+  carries "Table B tier" from steps 1–2, but round 6 deleted that input (it lives at `/dev-audit`
+  step 5). Leftover from that deletion; invites an invented value. **Fix:** drop it from the schema
+  description; extend round 6's `absent` check to cover the schema, not just the skill.
