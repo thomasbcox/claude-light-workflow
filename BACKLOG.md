@@ -243,6 +243,34 @@ under `OPS-`, and the first that is about the loop's **unit of work** rather tha
 OPS-12/OPS-13 each strengthened, now has a fourth data point. Still a **one-way door** left for
 Thomas.)
 
+OPS-15 — **Treat skill/prompt instructions as a first-class "code" ecosystem for auditing.** Filed
+2026-07-23 at Thomas's request during `deep-audit-plan`'s round-7 review; evaluate-and-decide (kin to
+OPS-9/11/12/13/14), not committed work. Today `/dev-audit` detection (and, by reference,
+`/deep-audit`) treats Markdown as **docs**, not code. That is fine for most repos but **wrong for
+this estate**, whose real product is Markdown **skill instructions** (`.claude/skills/*/SKILL.md`,
+`AGENTS.md`, `workflow-protocol.md`) — the thing seven rounds of this very review spent their effort
+scrutinising. Under `/deep-audit`'s unit-granularity classification (R7-F1), those files sort as
+non-code and drop out of L1 critic scheduling, so a deep-audit of *this* repo would examine its shell
+files and skip its actual logic.
+
+- **The tension to resolve.** "Prompt instructions are code" is true **here** but not universally — a
+  random repo's `README.md` is genuinely docs. So this is not "reclassify Markdown globally"; it is
+  "**a repo may declare that certain prompt/instruction files are auditable code**." Likely shapes:
+  (a) a per-repo config marker (e.g. a `deep-audit`/`dev-audit` setting listing prompt-code globs);
+  (b) a new detection signal keyed on `.claude/skills/**` + agent-instruction filenames; (c) rely on
+  the existing `only=<glob>` override each run (cheapest, but re-typed every time and easy to forget).
+- **Interacts with OPS-11's boundary.** A prompt-code lens is *judgment* work (does this instruction
+  hide failure, contradict itself, drift from the contract?), not mechanical lint — consistent with
+  OPS-11's judgment/mechanical split. It also composes with OPS-13's lens catalog: "prompt-coherence"
+  could be a lens, or hidden-failure/test-adequacy could simply apply to prompt-code units once they
+  classify as code.
+- **Provenance.** Surfaced concretely: `deep-audit-plan`'s smoke plan, after R7-F1, prices this repo
+  at ~18 L1 runs over its 3 shell files — correct by the rule, but it skips every `SKILL.md`. That
+  gap is the evidence this item exists to close.
+
+(Logged 2026-07-23. A **fifth** evaluate-and-decide item under `OPS-`; the prefix-revisit question
+OPS-11 opened keeps accruing data points — still a one-way door left for Thomas.)
+
 _(OPS-10 shipped — see [Done](#done).)_
 
 ---
