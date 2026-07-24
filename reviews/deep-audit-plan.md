@@ -862,3 +862,27 @@ re-run below verified against the current file contents and found the two genuin
 **Meta:** both are the same class as round 8 — a claim living in **two** source-of-truth files
 (skill + schema) where fixing one copy missed the other; the drift linter pinned the skill text but
 not the schema descriptions. The fix should add schema-side pins so skill/schema can't drift again.
+
+## Decisions (2026-07-24, correctness re-review round)
+
+Thomas: **"fix both"** — plus diagnose the recurrence. Line-level fixes, so `/close`'s fork offers
+re-review or merge.
+
+- **RR-1 / RR-2 — schema descriptions contradict the fixed skill → FIX, at the root not the symptom.**
+  Do **not** merely restate the corrected rule in the schema descriptions and add pins (that just
+  adds another copy to keep in sync). Instead **trim the schema `description` fields to describe the
+  field's *shape/meaning* and reference the skill for the *rule*** — `compiledAt`: "ISO compile
+  instant; also the `<date>T<HHMMSS>` filename key (collision handling: SKILL.md step 6)";
+  `rowIntent`: "complete row-intent; the row's schedule/price derive via steps 2+5 (SKILL.md
+  step 4)". No behavioral claim duplicated ⇒ nothing to drift. Add a small linter `absent` check for
+  the two removed overclaims so they can't return.
+
+**Root cause of the recurrence (the "why"):** every rule in this story is stated in **multiple
+artifacts** — the skill prose, the schema `description` fields, the story ACs, the linter pins, and
+the smoke artifact — and a fix updates the copy the finding cited but not its siblings; nothing
+cross-checks the copies. Confirmed pattern: round-4 replayability (fixed AC, missed skill+linter →
+round-8 F2); round-6 tier removal (fixed skill+smoke, missed schema → round-8 F4); round-8 F1/F3
+(fixed skill, missed schema → RR-1/RR-2). The schema's human-readable `description` fields are the
+worst offender: they are **unenforced prose** that restates skill rules, and the drift linter pins
+only the *skill* text, so schema descriptions drift freely. Filed systemically as OPS-17; the fix
+above applies its lesson locally (stop restating; reference).
