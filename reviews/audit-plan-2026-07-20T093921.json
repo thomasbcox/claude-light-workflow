@@ -1,0 +1,387 @@
+{
+  "planVersion": 1,
+  "date": "2026-07-20",
+  "target": "/Users/thomasbcox/Projects/claude-light-workflow",
+  "profile": {
+    "ecosystems": [
+      "shell",
+      "markdown",
+      "json",
+      "github-actions"
+    ],
+    "domain": "developer tooling \u2014 Claude\u2194Codex review-loop skills (no auth/payments/PII)",
+    "tests": "tests/*.sh drift linters, run by testCommand and CI gate",
+    "ci": ".github/workflows/ci.yml (gate job) + scheduled.yml",
+    "secretSignals": "none detected (0 sensitive path matches; no tracked .env)"
+  },
+  "unitMap": [
+    {
+      "group": "(root)",
+      "files": 8,
+      "loc": 1422,
+      "chunkUnits": 9,
+      "signals": [
+        "churn-high",
+        "untested"
+      ],
+      "unitIds": [
+        ".gitignore",
+        "AGENTS.md",
+        "ARCHITECTURE.md",
+        "BACKLOG.md",
+        "README.md",
+        "ai-dev-workflow-architecture.md#1",
+        "ai-dev-workflow-architecture.md#2",
+        "install.sh",
+        "workflow-skill-defects.story.md"
+      ],
+      "codeUnitIds": [
+        "install.sh"
+      ]
+    },
+    {
+      "group": ".claude",
+      "files": 13,
+      "loc": 1172,
+      "chunkUnits": 13,
+      "signals": [
+        "churn-high",
+        "untested"
+      ],
+      "unitIds": [
+        ".claude/hooks/block-main-writes.sh",
+        ".claude/settings.json",
+        ".claude/skills/close/SKILL.md",
+        ".claude/skills/deep-audit/SKILL.md",
+        ".claude/skills/deep-audit/plan-schema.json",
+        ".claude/skills/dev-audit/SKILL.md",
+        ".claude/skills/frame/SKILL.md",
+        ".claude/skills/review/SKILL.md",
+        ".claude/skills/review/design-review-schema.json",
+        ".claude/skills/review/finding-schema.json",
+        ".claude/skills/review/hidden-failure-schema.json",
+        ".claude/workflow-protocol.md",
+        ".claude/workflow.json"
+      ],
+      "codeUnitIds": [
+        ".claude/hooks/block-main-writes.sh"
+      ]
+    },
+    {
+      "group": "tests",
+      "files": 4,
+      "loc": 437,
+      "chunkUnits": 4,
+      "signals": [
+        "churn-high"
+      ],
+      "unitIds": [
+        "tests/deep_audit_plan_test.sh",
+        "tests/dev_audit_test.sh",
+        "tests/guard_test.sh",
+        "tests/reviewer_test.sh"
+      ],
+      "codeUnitIds": [
+        "tests/deep_audit_plan_test.sh",
+        "tests/dev_audit_test.sh",
+        "tests/guard_test.sh",
+        "tests/reviewer_test.sh"
+      ]
+    },
+    {
+      "group": ".github",
+      "files": 2,
+      "loc": 92,
+      "chunkUnits": 2,
+      "signals": [
+        "non-code"
+      ],
+      "unitIds": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/scheduled.yml"
+      ],
+      "codeUnitIds": []
+    },
+    {
+      "group": "reviews",
+      "files": 86,
+      "loc": 6451,
+      "chunkUnits": 90,
+      "signals": [
+        "churn-high",
+        "non-code"
+      ],
+      "unitIds": [
+        "reviews/.gitkeep",
+        "reviews/add-changelog.codex.json",
+        "reviews/add-changelog.md",
+        "reviews/antipattern-lens.approach.json",
+        "reviews/antipattern-lens.codex.json",
+        "reviews/antipattern-lens.design.json",
+        "reviews/antipattern-lens.md#1",
+        "reviews/antipattern-lens.md#2",
+        "reviews/audit-plan-2026-07-20T093921.json#1",
+        "reviews/audit-plan-2026-07-20T093921.json#2",
+        "reviews/auto-merge-close.codex.json",
+        "reviews/auto-merge-close.md",
+        "reviews/backlog-bookkeeping.codex.json",
+        "reviews/backlog-bookkeeping.md",
+        "reviews/backlog-ops5-ops6-bookkeeping.codex.json",
+        "reviews/backlog-ops5-ops6-bookkeeping.md",
+        "reviews/bookkeeping-pr11-pr12.codex.json",
+        "reviews/bookkeeping-pr11-pr12.md",
+        "reviews/bookkeeping-pr14-bug5.codex.json",
+        "reviews/bookkeeping-pr14-bug5.md",
+        "reviews/bookkeeping-pr8-pr9.codex.json",
+        "reviews/bookkeeping-pr8-pr9.md",
+        "reviews/ci-setup.approach.json",
+        "reviews/ci-setup.codex.json",
+        "reviews/ci-setup.design.json",
+        "reviews/ci-setup.md",
+        "reviews/close-folds-in-records.codex.json",
+        "reviews/close-folds-in-records.md#1",
+        "reviews/close-folds-in-records.md#2",
+        "reviews/close-gate-and-backlog.codex.json",
+        "reviews/close-gate-and-backlog.md",
+        "reviews/conditional-changelog.approach.json",
+        "reviews/conditional-changelog.codex.json",
+        "reviews/conditional-changelog.design.json",
+        "reviews/conditional-changelog.md",
+        "reviews/consult-presentation.approach.json",
+        "reviews/consult-presentation.codex.json",
+        "reviews/consult-presentation.design.json",
+        "reviews/consult-presentation.md",
+        "reviews/deep-audit-plan.approach.json",
+        "reviews/deep-audit-plan.design.json",
+        "reviews/deep-audit-plan.md#1",
+        "reviews/deep-audit-plan.md#2",
+        "reviews/defer-to-native.codex.json",
+        "reviews/defer-to-native.md",
+        "reviews/design-review-loop.codex.json",
+        "reviews/design-review-loop.md",
+        "reviews/dev-audit.approach.json",
+        "reviews/dev-audit.codex.json",
+        "reviews/dev-audit.design.json",
+        "reviews/dev-audit.md",
+        "reviews/drop-shipped-tag.codex.json",
+        "reviews/drop-shipped-tag.md",
+        "reviews/harden-merge-and-guard.codex.json",
+        "reviews/harden-merge-and-guard.md",
+        "reviews/honest-system-docs.approach.json",
+        "reviews/honest-system-docs.codex.json",
+        "reviews/honest-system-docs.design.json",
+        "reviews/honest-system-docs.md",
+        "reviews/install-drift-check.codex.json",
+        "reviews/install-drift-check.md",
+        "reviews/markdown-row.approach.json",
+        "reviews/markdown-row.codex.json",
+        "reviews/markdown-row.design.json",
+        "reviews/markdown-row.md",
+        "reviews/ops12-begun.md",
+        "reviews/ops5-ops7-ergonomics.codex.json",
+        "reviews/ops5-ops7-ergonomics.md",
+        "reviews/ops5-reqchecks-fallback.codex.json",
+        "reviews/ops5-reqchecks-fallback.md",
+        "reviews/parallel-critic.approach.json",
+        "reviews/parallel-critic.codex.json",
+        "reviews/parallel-critic.design.json",
+        "reviews/parallel-critic.md",
+        "reviews/pluggable-reviewer.approach.json",
+        "reviews/pluggable-reviewer.codex.json",
+        "reviews/pluggable-reviewer.design.json",
+        "reviews/pluggable-reviewer.md",
+        "reviews/review-codex-stdin.codex.json",
+        "reviews/review-codex-stdin.md",
+        "reviews/review-schema-abs-path.codex.json",
+        "reviews/review-schema-abs-path.md",
+        "reviews/shell-tooling.approach.json",
+        "reviews/shell-tooling.codex.json",
+        "reviews/shell-tooling.design.json",
+        "reviews/shell-tooling.md",
+        "reviews/shfmt-format.approach.json",
+        "reviews/shfmt-format.codex.json",
+        "reviews/shfmt-format.design.json",
+        "reviews/shfmt-format.md"
+      ],
+      "codeUnitIds": []
+    }
+  ],
+  "rows": [
+    {
+      "lens": "hidden-failure",
+      "altitude": "L1",
+      "scope": "(root)",
+      "depth": "deep",
+      "units": 1,
+      "runs": 2,
+      "estTokens": 120000,
+      "omissionRisk": "install.sh's deploy/overwrite paths go unexamined for swallowed failure",
+      "why": [
+        "P1: baseline",
+        "P9: churn-high (43 commits/90d to evaluatedAt)"
+      ],
+      "unitIds": [
+        "install.sh"
+      ]
+    },
+    {
+      "lens": "hidden-failure",
+      "altitude": "L1",
+      "scope": ".claude",
+      "depth": "deep",
+      "units": 1,
+      "runs": 2,
+      "estTokens": 120000,
+      "omissionRisk": "the skills + guard hook (the loop's own machinery) go unexamined for silent degradation",
+      "why": [
+        "P1: baseline",
+        "P9: churn-high (48 commits/90d to evaluatedAt)"
+      ],
+      "unitIds": [
+        ".claude/hooks/block-main-writes.sh"
+      ]
+    },
+    {
+      "lens": "hidden-failure",
+      "altitude": "L1",
+      "scope": "tests",
+      "depth": "deep",
+      "units": 4,
+      "runs": 8,
+      "estTokens": 480000,
+      "omissionRisk": "linters that silently pass on drift would themselves hide failure",
+      "why": [
+        "P1: baseline",
+        "P9: churn-high (25 commits/90d to evaluatedAt)"
+      ],
+      "unitIds": [
+        "tests/deep_audit_plan_test.sh",
+        "tests/dev_audit_test.sh",
+        "tests/guard_test.sh",
+        "tests/reviewer_test.sh"
+      ]
+    },
+    {
+      "lens": "test-adequacy",
+      "altitude": "L1",
+      "scope": "(root)",
+      "depth": "standard",
+      "units": 1,
+      "runs": 1,
+      "estTokens": 60000,
+      "omissionRisk": "install.sh has no test coverage question answered",
+      "why": [
+        "P4: untested (no test-pattern files in group)"
+      ],
+      "unitIds": [
+        "install.sh"
+      ]
+    },
+    {
+      "lens": "test-adequacy",
+      "altitude": "L1",
+      "scope": ".claude",
+      "depth": "standard",
+      "units": 1,
+      "runs": 1,
+      "estTokens": 60000,
+      "omissionRisk": "whether the linters actually pin the skills' load-bearing phrases stays unasked",
+      "why": [
+        "P4: untested (no test-pattern files in group)"
+      ],
+      "unitIds": [
+        ".claude/hooks/block-main-writes.sh"
+      ]
+    },
+    {
+      "lens": "test-adequacy",
+      "altitude": "L1",
+      "scope": "tests",
+      "depth": "light",
+      "units": 4,
+      "runs": 2,
+      "estTokens": 120000,
+      "omissionRisk": "sampled only \u2014 a linter with a dead check could slip",
+      "why": [
+        "P5: has test-pattern files"
+      ],
+      "unitIds": [
+        "tests/deep_audit_plan_test.sh",
+        "tests/reviewer_test.sh"
+      ]
+    },
+    {
+      "lens": "architecture-coherence",
+      "altitude": "L2",
+      "scope": "subsystem:.claude",
+      "depth": "standard",
+      "units": 1,
+      "runs": 1,
+      "estTokens": 60000,
+      "omissionRisk": "cross-skill pattern drift (stop patterns, consult rules) unexamined",
+      "why": [
+        "P6: \u22652 top-level groups; .claude has \u22655 files"
+      ],
+      "unitIds": [
+        "subsystem:.claude"
+      ]
+    },
+    {
+      "lens": "architecture-coherence",
+      "altitude": "L3",
+      "scope": "app",
+      "depth": "standard",
+      "units": 1,
+      "runs": 1,
+      "estTokens": 60000,
+      "omissionRisk": "no systemic view: whether the loop's error model coheres end-to-end",
+      "why": [
+        "P7: always"
+      ],
+      "unitIds": [
+        "app"
+      ]
+    }
+  ],
+  "overrides": [],
+  "totals": {
+    "runs": 18,
+    "estTokens": 1080000,
+    "wallClockMinutes": 9
+  },
+  "assumptions": [
+    "\u224860k tokens per critic-run (all-in); refine from observed engine data",
+    "concurrency 8; \u22483 min per run \u2192 wallClock = ceil(78/8)\u00d73",
+    "chunk size 400 LOC; churn window 90 days, high \u2265 20 commits",
+    "depth factors: light ceil(units/3), standard units, deep 2\u00d7units"
+  ],
+  "coverage": {
+    "covered": [
+      "architecture-coherence L2 @ subsystem:.claude",
+      "architecture-coherence L3 @ app",
+      "hidden-failure L1 @ (root)",
+      "hidden-failure L1 @ .claude",
+      "hidden-failure L1 @ tests",
+      "test-adequacy L1 @ (root)",
+      "test-adequacy L1 @ .claude",
+      "test-adequacy L1 @ tests"
+    ],
+    "notCovered": [
+      "L0 (lines) \u2014 reserved, no v1 lens",
+      "security-data-loss \u2014 no sensitive paths/domain detected; add via override 'security-data-loss:standard' if wanted",
+      "(root): 8 non-code unit(s) not scheduled for L1",
+      ".claude: 12 non-code unit(s) not scheduled for L1",
+      ".github: 2 non-code unit(s) not scheduled for L1",
+      "reviews: 90 non-code unit(s) not scheduled for L1",
+      "L0 (lines) \u2014 reserved, no v1 lens",
+      "security-data-loss \u2014 no sensitive paths/domain detected (add via override security-data-loss:standard)"
+    ]
+  },
+  "status": "proposed",
+  "source": {
+    "revision": "6584a7ccb86503896c4ae4d5073b4c2a52977fd3",
+    "dirty": true,
+    "evaluatedAt": "2026-07-20T09:39:21-0700"
+  },
+  "compiledAt": "2026-07-20T09:39:21-0700"
+}

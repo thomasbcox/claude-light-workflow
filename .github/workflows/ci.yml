@@ -20,7 +20,7 @@ jobs:
           fetch-depth: 0
 
       - name: Gate (workflow test suites)
-        run: bash tests/guard_test.sh && bash tests/reviewer_test.sh && bash tests/dev_audit_test.sh
+        run: bash tests/guard_test.sh && bash tests/reviewer_test.sh && bash tests/dev_audit_test.sh && bash tests/deep_audit_plan_test.sh
 
       - name: ShellCheck (tracked *.sh; preinstalled on ubuntu runners)
         run: shellcheck --severity=warning $(git ls-files '*.sh')
