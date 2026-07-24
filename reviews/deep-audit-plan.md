@@ -833,3 +833,32 @@ claims (part of F1/F2 above).
 - **Meta-fix applied:** the drift linter no longer pins two overclaims (F1 collision-claim, F2
   determinism-overclaim); it pins the corrected mechanisms/qualifiers and asserts the overclaims are
   absent. Full gate green (93 deep-audit checks); smoke artifact re-validates.
+
+## Codex review (2026-07-24, base 724c373, HEAD faf960d) — correctness re-review of the four fixes
+
+**Summary:** The linter passes all 93 checks, and the dirty-tree, Table B, and fail-closed
+*operational* wording is correct. Two **schema field descriptions** still contradict the revised
+skill contract — the F1/F3 fixes updated the skill prose but not the canonical schema's descriptions.
+
+**Process note (recorded honestly):** the *first* re-review run echoed round 8's four findings
+verbatim — it read the story's recorded `## Codex review` / `## Decisions` sections (which quote the
+pre-fix findings) instead of the current files, and even reported "89 checks" (the pre-fix count).
+Caught by content-diffing its output against the committed round-8 artifact and by grepping the
+current files (all four fixes provably in place); that run was **discarded, not recorded**. The
+re-run below verified against the current file contents and found the two genuine residuals.
+
+### IMPORTANT
+- **Schema still makes `omissionRisk` deterministic** — `plan-schema.json:146`. The skill now says
+  `omissionRisk`/`why` are descriptive prose outside byte-reproducibility, but the `rowIntent`
+  description still reads "unitIds/units/runs/estTokens/**omissionRisk** derive deterministically."
+  The canonical contract preserves the exact claim F3 removed from the skill. **Fix:** limit the
+  schema's deterministic list to `unitIds/units/runs/estTokens`; pin/absent-check it.
+- **Schema still attributes uniqueness to the timestamp itself** — `plan-schema.json:23`. The skill
+  now says the one-second stamp "is not collision-proof on its own" + fail-closed guard, but
+  `compiledAt`'s description still says the form means "every invocation writes a **unique path and
+  can never overwrite**" — false for same-second invocations. **Fix:** state the one-second key may
+  collide and fresh writes fail closed when the path exists; pin/absent-check it.
+
+**Meta:** both are the same class as round 8 — a claim living in **two** source-of-truth files
+(skill + schema) where fixing one copy missed the other; the drift linter pinned the skill text but
+not the schema descriptions. The fix should add schema-side pins so skill/schema can't drift again.
