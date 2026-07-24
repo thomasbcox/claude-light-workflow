@@ -35,7 +35,7 @@
     },
     "profile": {
       "type": "object",
-      "description": "Detection snapshot carried from /dev-audit steps 1–2 (ecosystems, frameworks, tests, CI, secret signals — redacted, domain, Table B tier). Free-form object; informational.",
+      "description": "Detection snapshot carried from /dev-audit steps 1–2 (ecosystems, frameworks, tests, CI, secret signals — redacted, domain). Free-form object; informational. Does NOT carry a Table B maturity tier — that is produced at /dev-audit step 5, outside this skill's steps-1–2 recon boundary (see round-6 decision).",
       "additionalProperties": true
     },
     "unitMap": {

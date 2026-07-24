@@ -58,6 +58,7 @@ has "Table P present (phased)" "$SKILL" "Table P (phased, deterministic)"
 has "three declared phases" "$SKILL" "three declared phases"
 has "Phase C is the declared extension point" "$SKILL" "Phase C — named post-resolution transforms (declared order): _none in v1_"
 absent "no rule reads the unavailable dev-audit tier" "$SKILL" "Table B tier = \`mature\`"
+absent "schema no longer lists tableBTier as carried data" "$SCHEMA" "domain, Table B tier)"
 has "transforms run after resolution" "$SKILL" "running **after** resolution"
 has "downgrade cannot be a Phase-B upgrade (why the phase exists)" "$SKILL" "can never resolve downward"
 has "row identity pinned" "$SKILL" '`(lens, altitude, scope)`'
@@ -78,7 +79,9 @@ has "semantic check: L1 unitIds drawn from codeUnitIds" "$SKILL" "are drawn from
 has "schema requires codeUnitIds" "$SCHEMA" '"codeUnitIds"'
 has "collision rule: highest depth wins" "$SKILL" "highest** depth wins"
 has "whys accumulate" "$SKILL" "accumulates on the row"
-has "determinism invariant stated" "$SKILL" "same overrides ⇒ same plan"
+has "replayability (not absolute determinism) stated" "$SKILL" "replayable from its recorded"
+has "clean-tree-only reproducibility qualifier" "$SKILL" "guaranteed only for a clean tree"
+absent "no lingering absolute-determinism overclaim" "$SKILL" "same overrides ⇒ same plan"
 
 echo "== told patch model (the approach-round F2 redesign) =="
 has "patch model named" "$SKILL" "patch model"
@@ -102,7 +105,8 @@ has "JSON is canonical" "$SKILL" "JSON is canonical"
 has "artifact path token" "$SKILL" "reviews/audit-plan-"
 has "stamped artifact identity (collision-proof)" "$SKILL" "reviews/audit-plan-<YYYY-MM-DD>T<HHMMSS>.json"
 has "one stamp per invocation" "$SKILL" "one stamp per invocation"
-has "never overwrites an approved plan" "$SKILL" "can never overwrite an earlier"
+has "fail-closed collision guard (mechanism, not claim)" "$SKILL" "already exists, STOP loudly"
+has "one-second resolution acknowledged, not overclaimed" "$SKILL" "not collision-proof on its own"
 has "consult edits do not re-mint the stamp" "$SKILL" "never minting a new stamp"
 has "schema requires compiledAt" "$SCHEMA" '"compiledAt"'
 has "parse-check before use" "$SKILL" "Parse-check"

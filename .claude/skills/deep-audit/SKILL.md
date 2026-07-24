@@ -23,8 +23,11 @@ Invoked `/deep-audit [path] [overrides…]`. Target = `[path]` if given, else th
 - **Redact secret evidence** (the `/dev-audit` rule, verbatim): detection may surface secret
   *signals* — report detector/type · path:line · count only, **never a value**, in chat and in both
   artifacts.
-- **Determinism:** every profile→plan decision lives in **Table L** (lens catalog) and **Table P**
-  (plan rules) — prose adds no judgment. Same repo state + same overrides ⇒ same plan.
+- **Determinism / replayability:** every profile→plan decision lives in **Table L** (lens catalog)
+  and **Table P** (plan rules) — prose adds no judgment. The plan is **replayable from its recorded
+  inputs** (source revision, dirty flag, `evaluatedAt` cutoff, overrides); **same-source
+  reproducibility is guaranteed only for a clean tree** (where `evaluatedAt` derives from the bound
+  revision) — a dirty tree takes a wall-clock cutoff and is explicitly non-reproducible (step 2).
 - **JSON is canonical:** `reviews/audit-plan-<date>.json` (contract: `plan-schema.json` v1, shipped
   in this skill dir) **is** the plan; the `.md` is a derived consult view. On any divergence the
   JSON wins — regenerate the view, never hand-edit it apart.
@@ -157,9 +160,11 @@ to one patch from a **discriminated union**; the schema rejects any op/payload m
 - **`set-depth`** — `{token, selector, op, depth, source}` — **depth required**, applied to every
   row the selector matches.
 - **`add`** — `{token, rowIntent: {lens, altitude, scope, depth}, op, source}` — a **complete
-  row-intent** (no selector); the row's `unitIds`, `units`, `runs`, `estTokens`, and `omissionRisk`
-  derive **deterministically** from the intent via steps 2 and 5, so nothing about an added row
-  rests on fresh judgment at replay time.
+  row-intent** (no selector); the row's **structural** fields (`unitIds`, `units`, `runs`,
+  `estTokens`) derive **deterministically** from the intent via steps 2 and 5, so an added row's
+  *schedule and price* need no fresh judgment at replay. `omissionRisk` and `why` are **descriptive
+  prose**, written per row, and are **not** part of the byte-reproducibility contract (the replayable
+  guarantee is the structural plan — which units run, at what depth, for what count and cost).
 
 Patches are recorded verbatim in the plan's `overrides` block and apply in given order — glob
 patches (`exclude`/`only`) act at **step 2, before unit-map compilation** (file granularity); row
@@ -198,14 +203,19 @@ precedent).
   ≈ 3 min/run). Print every assumption in the plan's `assumptions` block.
 
 ### 6. Write the artifacts (JSON canonical → md derived)
-**Artifact identity — one stamp per invocation.** Mint `compiledAt` (the compile instant) **once**,
-at the start of this invocation, and write to
+**Artifact identity — one stamp per invocation, fail-closed on collision.** Mint `compiledAt` (the
+compile instant) **once**, at the start of this invocation, and write to
 **`reviews/audit-plan-<YYYY-MM-DD>T<HHMMSS>.json`** (compact, colon-free so it is filesystem- and
-shell-safe, and sorts chronologically as plain text). Because every invocation gets its own path, a
-later run **can never overwrite an earlier — approved — plan**; collisions are impossible by
-construction rather than guarded against. The accumulating series is the target's plan history.
-**Consult edits do NOT re-mint the stamp:** a step-7 edit recompiles into the *same* file, so one
-invocation leaves exactly one plan and "which plan was approved" is never ambiguous. (`compiledAt`
+shell-safe, and sorts chronologically as plain text). The `<HHMMSS>` stamp has **one-second
+resolution**, so it is not collision-proof on its own — **before writing, if the computed path
+already exists, STOP loudly** ("an audit plan already exists at that timestamp — re-run in the next
+second") rather than overwrite. That guard, not the timestamp alone, is what makes the no-overwrite
+guarantee real: a later invocation can **never** clobber an earlier — possibly approved — plan. The
+accumulating series is the target's plan history.
+The collision guard applies only to a fresh invocation's **initial** write; **consult edits do NOT
+re-mint the stamp** — a step-7 edit recompiles into *this invocation's* same file (an expected
+rewrite, not a collision), so one invocation leaves exactly one plan and "which plan was approved"
+is never ambiguous. (`compiledAt`
 is *when compiled*; `source.evaluatedAt` is *the signal cutoff* — for a clean tree the bound
 revision's commit time. Different facts; both recorded.)
 The artifact conforms to **`plan-schema.json` v1** (all fields

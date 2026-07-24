@@ -809,3 +809,27 @@ wrong thing** — it enforced the determinism overclaim and only checked the col
 presence*. A text-pinning linter guards against change, not against the pinned text being wrong to
 begin with; the correctness pass is the backstop. No action beyond re-pinning to the corrected
 claims (part of F1/F2 above).
+
+## Fixes (2026-07-24, correctness round)
+
+- **F1 BLOCKER — collision guard.** Step 6 now states the `<HHMMSS>` stamp is one-second resolution
+  and **not collision-proof on its own**, and adds a **fail-closed guard**: if the computed path
+  already exists, STOP loudly rather than overwrite. That guard (not the timestamp) makes the
+  no-overwrite guarantee real. The collision guard applies to a fresh invocation's initial write;
+  consult edits still rewrite this invocation's own file. Linter now pins the **mechanism**, not the
+  claim.
+- **F2 IMPORTANT — determinism → replayability.** The skill's `Determinism` hard-constraint bullet
+  now states the settled round-4 invariant (replayable from recorded inputs; same-source
+  reproducibility only for a clean tree, dirty trees explicitly non-reproducible). Linter re-pinned:
+  `has` the qualified wording, **`absent`** the old absolute overclaim ("same overrides ⇒ same
+  plan") — so a correct skill passes and the overclaim can't return.
+- **F3 IMPORTANT — omissionRisk not in the reproducibility contract.** The `add`-patch text now
+  scopes deterministic derivation to the **structural** fields (`unitIds/units/runs/estTokens`) and
+  marks `omissionRisk` + `why` as **descriptive prose**, explicitly excluded from
+  byte-reproducibility (the replayable guarantee is the structural plan).
+- **F4 NIT — schema leftover.** `plan-schema.json`'s `profile` description no longer lists a "Table B
+  tier" as carried data (it says the tier is *not* carried, with the round-6 reason). Linter's
+  `absent` check extended to the schema.
+- **Meta-fix applied:** the drift linter no longer pins two overclaims (F1 collision-claim, F2
+  determinism-overclaim); it pins the corrected mechanisms/qualifiers and asserts the overclaims are
+  absent. Full gate green (93 deep-audit checks); smoke artifact re-validates.
