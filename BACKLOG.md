@@ -204,9 +204,11 @@ practice. Recorded so whoever builds it doesn't rebuild the wrong shape:
 - **Build note.** The orchestration runtime (parallel fan-out, budgets, adversarial verify,
   completeness critic) already exists in the session harness's workflow engine — the build is the
   recon/plan compiler, the lens catalog, and prompts/schemas, not orchestration infrastructure.
-  **First slice:** the recon → plan-artifact consult, standalone-valuable ("what would a
-  comprehensive audit cost on this repo" as a one-page decision) — story
-  [reviews/deep-audit-plan.md](reviews/deep-audit-plan.md) (`/deep-audit`, plan stage only).
+  **First slice: SHIPPED** — the recon → plan-artifact consult (`/deep-audit`, plan stage only),
+  standalone-valuable ("what would a comprehensive audit cost on this repo" as a one-page decision) —
+  story [reviews/deep-audit-plan.md](reviews/deep-audit-plan.md), `PR #35 / merge: deep-audit-plan`.
+  OPS-13 stays **open** (BEGUN, not done): the execution-engine slice remains, carrying the deferred
+  ACs below.
   **Engine-slice opening ACs (deferred there from the first slice's round-3 review, Thomas
   2026-07-19):** (a) patch-phase structural ops — dedicated `exclude-files`/`only-files` union
   branches, selector `remove`/`restrict` reserved for compiled rows; (b) the full executability
