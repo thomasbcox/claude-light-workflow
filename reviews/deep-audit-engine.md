@@ -337,6 +337,25 @@ manifest** (DR-3), **evidence records + an adjudication table** (DR-1), and an *
 (DR-2) — rather than implicit iteration and set arithmetic. That is one coherent correction to the
 sketch, and it strengthens exactly the one-way-door contracts lenses 2–4 will copy.
 
+## Build note (2026-07-25)
+
+AC → file map:
+
+- **AC1** (skill + frontmatter, stand-down, approval guard) → `.claude/skills/deep-audit-run/SKILL.md`
+  (steps 0–1).
+- **AC2** (source-identity gate, deferred AC c) → `SKILL.md` step 2.
+- **AC3** (executability gate, deferred AC b) → `SKILL.md` step 3.
+- **AC4** (run manifest → fleet, DR-3) → `SKILL.md` step 4; `hidden-failure-unit-schema.json`.
+- **AC5** (claim-blind evidence record + adjudication, DR-1) → `SKILL.md` step 5; `evidence-schema.json`.
+- **AC6** (execution ledger synthesis, DR-2) → `SKILL.md` step 6; `audit-report-schema.json`.
+- **AC7** (failure ≠ planned omission) → `SKILL.md` hard constraints + steps 4/6.
+- **AC8** (contract handling) → `SKILL.md` "Contract handling"; `audit-report-schema.json`.
+- **AC9** (read-only + posture + scope enumeration) → `SKILL.md` hard constraints; the In-scope file list.
+- **AC10** (drift linter + gate) → `tests/deep_audit_engine_test.sh`; `.claude/workflow.json`;
+  `.github/workflows/ci.yml`; `install.sh`.
+- **Hand-off** (`/deep-audit` loud stop → point at the engine) → `.claude/skills/deep-audit/SKILL.md`;
+  `tests/deep_audit_plan_test.sh` (pin update).
+
 ## Design decisions (2026-07-25)
 
 Thomas's frame-consult decisions — **binding on implementation**:
