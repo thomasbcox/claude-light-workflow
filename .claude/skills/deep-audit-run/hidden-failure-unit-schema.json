@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "description": "FINDER output for the hidden-failure lens at UNIT scope (a whole file or chunk-unit), used by the /deep-audit-run engine. Its own file per the OPS-12 standing rule (every critic owns its schema + artifact). Same finding shape as review/hidden-failure-schema.json so a finding renders identically, but grounded in the unit's CURRENT contents (whole-unit audit), not a diff. The charter, run identity, and the claim-blind verify contract this feeds are defined in SKILL.md — not restated here.",
+  "properties": {
+    "summary": {
+      "type": "string",
+      "description": "One-paragraph assessment of this unit's failure handling: does it surface its own failures, or can it continue in a degraded state nothing reports?"
+    },
+    "findings": {
+      "type": "array",
+      "description": "Empty array if the unit hides no failure. Report ONLY hidden-failure findings, grounded in the unit's current contents. The engine assigns each finding a stable findingId (runId + index) after collection; the finder does not.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": ["BLOCKER", "IMPORTANT", "QUESTION", "NIT"]
+          },
+          "title": { "type": "string", "description": "Short label for the hidden-failure finding." },
+          "file": { "type": "string", "description": "Repo-relative path the finding is about (the unit's file)." },
+          "line": { "type": ["integer", "null"], "description": "1-indexed line the finding anchors to, or null." },
+          "claim": { "type": "string", "description": "How this unit swallows/absorbs/silently degrades on error (bare or blind except|catch, catch-log-continue where propagating is correct, silent fallback, deleted assertion or safety check) and why letting it continue unsurfaced matters." },
+          "suggestion": { "type": ["string", "null"], "description": "Concrete way to surface the failure instead (propagate, assert, fail loudly), or null." }
+        },
+        "required": ["severity", "title", "file", "line", "claim", "suggestion"]
+      }
+    }
+  },
+  "required": ["summary", "findings"]
+}

@@ -135,10 +135,12 @@ has "skill: pinned every-3rd light sample" "$SKILL" "pinned every-3rd sample"
 has "skill: globs act before unit-map compilation" "$SKILL" "before unit-map compilation"
 has "skill: semantic check covers unit identity" "$SKILL" 'chunkUnits = |unitIds|'
 
-echo "== consult stop + loud engine stop =="
+echo "== consult stop + hand-off to the engine (slice 1 exists) =="
 has "consult-presentation rule invoked" "$SKILL" "consult-presentation rule"
 has "approval approves the plan, not execution" "$SKILL" "not execution"
-has "loud engine stop" "$SKILL" "execution engine is not yet built"
+has "hands off to /deep-audit-run" "$SKILL" "To execute it, run"
+has "engine slice ledgers other rows as not-yet-covered" "$SKILL" "not-yet-covered"
+absent "no stale 'engine not yet built' claim (slice 1 shipped)" "$SKILL" "execution engine is not yet built"
 
 echo "== deploy + gate wiring =="
 has "install.sh ships the skill" "$INSTALL" ".claude/skills/deep-audit::skills/deep-audit"

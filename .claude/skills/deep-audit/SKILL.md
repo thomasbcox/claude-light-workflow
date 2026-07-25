@@ -1,6 +1,6 @@
 ---
 name: deep-audit
-description: OPS-13 first slice — compile a priced, deterministic whole-app audit plan (altitudes × lenses × depth × cost) for one repository, present it for Thomas's edit/approval, and stop. Plan stage only; the execution engine (critic fleet, adversarial verification, synthesis) is a follow-up story and this skill stops loudly at that boundary. Use when sizing or commissioning a comprehensive multi-lens audit of a repo.
+description: OPS-13 first slice — compile a priced, deterministic whole-app audit plan (altitudes × lenses × depth × cost) for one repository, present it for Thomas's edit/approval, and stop. Plan stage only — execution is the separate /deep-audit-run skill (OPS-13 engine slice 1: hidden-failure L1 today, further lenses following); this skill compiles and hands off, it never executes. Use when sizing or commissioning a comprehensive multi-lens audit of a repo.
 ---
 
 # /deep-audit — compile the audit plan, consult, stop
@@ -13,11 +13,12 @@ future engine will execute exactly.
 Invoked `/deep-audit [path] [overrides…]`. Target = `[path]` if given, else the current repo.
 
 ## Hard constraints
-- **Plan stage only — the execution engine is not yet built** (follow-up story: the OPS-13 engine
-  slice). After the consult, STOP with: *"The deep-audit execution engine is not yet built. The
-  approved plan is recorded at reviews/audit-plan-<date>.json; the engine story will execute exactly
-  that artifact."* Do **not** improvise execution — no critics, no workflow runs, no partial sweeps,
-  no fallback. (The `llm`-backend loud-stop pattern applied to a missing engine.)
+- **Plan stage only — this skill never executes.** Execution is a **separate** skill,
+  `/deep-audit-run` (OPS-13 engine slice 1: the `hidden-failure` L1 lens end-to-end; further lenses
+  are follow-on slices). Plan approval is **not** execution authorization — after the consult, STOP
+  and hand off (step 8). Do **not** improvise execution inside this skill — no critics, no workflow
+  runs, no partial sweeps, no fallback. (The plan/execute split keeps the human-in-the-loop gate:
+  Thomas approves the plan here, then explicitly runs `/deep-audit-run`.)
 - **Read-only against the target** except the two plan artifacts. `BACKLOG.md` only on explicit
   instruction. Install nothing.
 - **Redact secret evidence** (the `/dev-audit` rule, verbatim): detection may surface secret
@@ -252,7 +253,9 @@ invocation's existing artifacts, never minting a new stamp** — or approves. On
 approval set `"status": "approved"` in the JSON and regenerate the view. **Approval approves the
 plan, not execution.**
 
-### 8. Loud stop (terminal)
-*"The deep-audit execution engine is not yet built (follow-up story: the OPS-13 engine slice). The
-approved plan is recorded at `reviews/audit-plan-<date>.json` — the engine story will execute
-exactly that artifact."* Nothing else runs.
+### 8. Hand off to the engine (terminal)
+Plan approval is **not** execution. STOP with: *"Plan approved and recorded at
+`reviews/audit-plan-<date>.json`. To execute it, run `/deep-audit-run
+reviews/audit-plan-<date>.json`."* `/deep-audit-run` (OPS-13 engine slice 1) executes exactly that
+artifact for the `hidden-failure` L1 lens and **ledgers every other row as not-yet-covered** (honest
+slice scope). This skill runs nothing else.

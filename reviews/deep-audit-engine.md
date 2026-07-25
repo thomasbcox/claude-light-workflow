@@ -62,6 +62,14 @@ adding lens 2–4 afterward is prompt + schema + a plan-row filter, not new arch
 - A **drift linter** `tests/deep_audit_engine_test.sh` pinning the new skill's load-bearing phrases,
   wired into `workflow.json` `testCommand` + `ci.yml` (matching the existing linters).
 
+**Files this story touches (the AC9 scope enumeration — plus anything under `reviews/`):**
+`.claude/skills/deep-audit-run/` (`SKILL.md` + `hidden-failure-unit-schema.json` +
+`evidence-schema.json` + `audit-report-schema.json`); `.claude/skills/deep-audit/SKILL.md` (the
+loud-stop → hand-off replacement, no compile change); `tests/deep_audit_engine_test.sh` (new linter);
+`tests/deep_audit_plan_test.sh` (pin update tracking `/deep-audit`'s changed hand-off text, OPS-17);
+`.claude/workflow.json` + `.github/workflows/ci.yml` (gate wiring); `install.sh` (deploy the skill
+estate-wide).
+
 ## Non-goals
 
 - **Lenses 2–4** (`security-data-loss`, `test-adequacy`, `architecture-coherence`) — follow-on

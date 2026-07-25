@@ -1,0 +1,98 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "deep-audit report (v1)",
+  "description": "Canonical contract for the /deep-audit-run report artifact (reviews/audit-report-<date>.json). The JSON IS the report; the .md view is derived from it. Verified-only (precision-first): a finding appears here ONLY after adversarial verify + adjudication promoted it. Coverage is driven off the execution ledger (DR-2), never off finding yield. A report is written ONLY on a fully completed run — any failed row suppresses the whole report and stops loudly (AC7), so a written report is always complete. reportVersion is pinned so the engine and the eventual differential (C-ledger) mode extend this contract only via an explicit version bump. All properties required (repo convention). The ledger states, the promote/refute adjudication, and the coverage derivation are defined in SKILL.md — not restated here.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["reportVersion", "date", "generatedAt", "target", "planRef", "source", "engineSlice", "ledger", "findings", "coverage", "assumptions", "priorReportRef", "status"],
+  "properties": {
+    "reportVersion": { "const": 1 },
+    "date": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", "description": "YYYY-MM-DD run date." },
+    "generatedAt": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}", "description": "ISO instant the report was written; its <YYYY-MM-DD>T<HHMMSS> form is the artifact filename key (same fail-closed collision guard as the plan — see SKILL.md)." },
+    "target": { "type": "string", "minLength": 1, "description": "Absolute path of the audited repo root." },
+    "planRef": { "type": "string", "minLength": 1, "description": "Repo-relative path of the approved plan artifact this run executed." },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["revision", "dirty", "evaluatedAt"],
+      "description": "The plan's source binding, echoed — the code state this run verified it still matched before executing (SKILL.md step 2). dirty is always false here: the engine refuses dirty-tree plans in slice 1.",
+      "properties": {
+        "revision": { "type": "string", "minLength": 7 },
+        "dirty": { "type": "boolean" },
+        "evaluatedAt": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}" }
+      }
+    },
+    "engineSlice": {
+      "type": "array",
+      "minItems": 1,
+      "description": "The lens@altitude pairs THIS engine build can execute (slice 1: ['hidden-failure@L1']). Plan rows outside this set are ledgered 'omitted' with reason 'lens not built in engine slice' and named in coverage.notCovered — honest slice scope, not a silent skip.",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "ledger": {
+      "type": "array",
+      "description": "One entry PER PLAN ROW — the execution ledger (DR-2). notCovered is derived from this: only 'omitted' rows (plus out-of-slice altitudes/lenses) are uncovered; an 'executed' row with zero survivors is COVERED with a negative result.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["lens", "altitude", "scope", "state", "verifiedFindingCount", "reason"],
+        "properties": {
+          "lens": { "type": "string", "enum": ["hidden-failure", "security-data-loss", "test-adequacy", "architecture-coherence"] },
+          "altitude": { "type": "string", "enum": ["L0", "L1", "L2", "L3"] },
+          "scope": { "type": "string", "minLength": 1 },
+          "state": { "type": "string", "enum": ["executed", "omitted"], "description": "'executed' = ran to completion (survivors may be zero). 'omitted' = not run this slice (out-of-slice lens/altitude). 'failed' is never persisted — a failed row suppresses the whole report (AC7)." },
+          "verifiedFindingCount": { "type": "integer", "minimum": 0, "description": "Post-verify survivors for this row; 0 on an executed row is a clean negative result, not a gap." },
+          "reason": { "type": ["string", "null"], "description": "Why omitted (e.g. 'lens not built in engine slice'), or null for an executed row." }
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "description": "VERIFIED findings only — each promoted by adjudication (finder claim corroborated by claim-blind verifier evidence). Empty array is a valid, clean result. Provenance joins each back to its run + evidence.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["findingId", "lens", "altitude", "scope", "unitId", "file", "line", "severity", "claim", "suggestion", "evidenceId", "provenance", "disposition"],
+        "properties": {
+          "findingId": { "type": "string", "minLength": 1, "description": "Stable id the engine assigned (runId + index)." },
+          "lens": { "type": "string", "enum": ["hidden-failure", "security-data-loss", "test-adequacy", "architecture-coherence"] },
+          "altitude": { "type": "string", "enum": ["L0", "L1", "L2", "L3"] },
+          "scope": { "type": "string", "minLength": 1 },
+          "unitId": { "type": "string", "minLength": 1, "description": "The plan unit ID this finding is in." },
+          "file": { "type": "string", "minLength": 1 },
+          "line": { "type": ["integer", "null"] },
+          "severity": { "type": "string", "enum": ["BLOCKER", "IMPORTANT", "QUESTION", "NIT"] },
+          "claim": { "type": "string", "minLength": 1 },
+          "suggestion": { "type": ["string", "null"] },
+          "evidenceId": { "type": "string", "minLength": 1, "description": "The evidence record that corroborated this finding (join to the verify stage)." },
+          "provenance": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["runId", "pass"],
+            "properties": {
+              "runId": { "type": "string", "minLength": 1, "description": "The run-manifest record that produced the finder finding." },
+              "pass": { "type": "integer", "minimum": 1, "description": "Which depth pass (1, or 2 on a deep row)." }
+            }
+          },
+          "disposition": { "type": ["string", "null"], "description": "C-ledger stub (OPS-13): reserved for the future differential mode's durable disposition; always null in slice 1." }
+        }
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["covered", "notCovered"],
+      "properties": {
+        "covered": { "type": "array", "items": { "type": "string", "minLength": 1 }, "description": "Executed rows (incl. clean negative results)." },
+        "notCovered": { "type": "array", "items": { "type": "string", "minLength": 1 }, "description": "Omitted rows + out-of-slice lenses/altitudes + L0 reserved. Derived from the ledger, never from finding yield." }
+      }
+    },
+    "assumptions": {
+      "type": "array",
+      "minItems": 1,
+      "description": "The pricing/execution constants actually used (echoed from the plan + any engine constants).",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "priorReportRef": { "type": ["string", "null"], "description": "C-ledger stub (OPS-13): the prior report a future differential re-audit would diff against; always null in slice 1." },
+    "status": { "const": "complete", "description": "A report exists only for a completed run; a failed row produces a loud stop and NO report (AC7)." }
+  }
+}

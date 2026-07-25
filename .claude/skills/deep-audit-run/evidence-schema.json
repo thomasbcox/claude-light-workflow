@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "description": "VERIFIER output for the /deep-audit-run adversarial verify stage (DR-1). The verifier is CLAIM-BLIND: it is given a code location + the lens charter but NEVER the finder's claim, and describes what the code actually does there. A separate deterministic adjudication step (SKILL.md step 5) scores the stored finder claim against this evidence — the verifier never sees the proposition it would otherwise just echo. Its own file per the OPS-12 standing rule. Cross-model, kill-mandate, and the promote/refute decision table are defined in SKILL.md — not restated here.",
+  "properties": {
+    "locationConfirmed": {
+      "type": "boolean",
+      "description": "Whether an error-handling / control-flow construct actually exists at the cited location (a finding pointing at nothing is refuted downstream)."
+    },
+    "controlFlow": {
+      "type": "string",
+      "description": "Observed control flow at and around the cited location, described from a fresh read — branches, early returns, loops, the construct's actual behaviour."
+    },
+    "errorHandling": {
+      "type": "string",
+      "enum": ["propagated", "logged-and-continued", "swallowed", "asserted", "none-present", "unclear"],
+      "description": "How an error arising at the cited location is actually handled, by direct observation. 'swallowed' = caught and neither rethrown nor surfaced; 'none-present' = no error path exists here; 'unclear' = the read could not determine it (drives a refuted default)."
+    },
+    "reachableOutcomes": {
+      "type": "string",
+      "description": "What states the code can reach from here, including any degraded state that nothing surfaces — or an explicit statement that failures are surfaced."
+    },
+    "mechanicalChecks": {
+      "type": "array",
+      "description": "Results of any mechanical confirmation run first where the claim class is mechanically checkable (e.g. grep/AST for a bare except|catch at the cited block). Empty array if none applied.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "check": { "type": "string", "description": "What was checked mechanically." },
+          "result": { "type": "string", "enum": ["confirmed", "not-found", "inconclusive"] }
+        },
+        "required": ["check", "result"]
+      }
+    },
+    "uncertainty": {
+      "type": "string",
+      "enum": ["low", "medium", "high"],
+      "description": "The verifier's confidence in this evidence. Adjudication defaults to REFUTED on medium/high uncertainty (kill-mandate)."
+    },
+    "notes": {
+      "type": ["string", "null"],
+      "description": "Anything else observed that bears on whether this location can hide a failure, or null."
+    }
+  },
+  "required": ["locationConfirmed", "controlFlow", "errorHandling", "reachableOutcomes", "mechanicalChecks", "uncertainty", "notes"]
+}
