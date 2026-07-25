@@ -337,6 +337,59 @@ manifest** (DR-3), **evidence records + an adjudication table** (DR-1), and an *
 (DR-2) — rather than implicit iteration and set arithmetic. That is one coherent correction to the
 sketch, and it strengthens exactly the one-way-door contracts lenses 2–4 will copy.
 
+## Codex approach review (2026-07-25, base main, HEAD da6b7ec)
+
+Artifact: `reviews/deep-audit-engine.approach.json`. First review; approach pass run against the
+built shape.
+
+**Verdict:** *"The slice-first Workflow pipeline is the right overall architecture, but I would not
+ship this as the reusable harness future lenses copy. The source binding rejects artifacts the
+planner permits, the supposedly deterministic adjudication still requires semantic AI judgment, and
+execution lifecycle state remains split across prose-only structures. I would retain Workflow, Git,
+and Draft-7 — the repo has no conventional dependency manifest — but drive them from versioned source,
+claim/evidence, and run-state contracts."*
+
+Three findings, **all BLOCKER, all one-way** — each names a cross-cutting contract future lenses
+inherit. The consistent thrust (echoing the frame-time review): *drive the harness off typed
+contracts, not prose.*
+
+### BLOCKER
+
+- **AR-1 — Source identity has two incompatible contracts** — *one-way · kludgy.* (locus
+  `SKILL.md:49`.) The planner can compile and approve a **dirty-tree** plan, but the engine
+  **categorically refuses** one — an approved artifact the hand-off cannot execute (contradicts AC2),
+  and it splits source-identity into revision-compare (clean) + a deferred dirty mechanism with
+  bespoke hashing around the split. **Alternative:** extend `plan-schema` v1 **now** with one
+  canonical `source.contentFingerprint` over the audited non-`reviews/**` tracked set, computed for
+  **both** clean and dirty; recompute + compare that same digest at execution; keep `revision`/`dirty`
+  as provenance. **Win:** deletes the dirty-refusal path and the clean/dirty branch, one field + one
+  comparison, every approved plan executable.
+
+- **AR-2 — The deterministic adjudicator has no deterministic inputs** — *one-way · kludgy.* (locus
+  `SKILL.md:115`; both finder + evidence schemas.) The finder emits **unrestricted prose** `claim`;
+  the evidence record leaves `controlFlow`/`reachableOutcomes` as **prose**; the "decision table" just
+  says promote when they "corroborate the claim's mechanism" — **no deterministic operation can do
+  that semantic comparison.** So the adjudicator step reintroduces **model judgment (and the
+  echo-chamber risk) at the very stage meant to remove it.** **Alternative:** make finder claims and
+  verifier observations **discriminated unions** — a small claim taxonomy + decisive facts
+  (construct-present, handler action, error propagation, degraded continuation, mechanical-check
+  result); one declarative **claim-class × evidence-facts** promote/refute table; prose only
+  explanatory. **Win:** removes the adjudicator agent + its error path, makes promotion mechanically
+  reproducible, preserves claim-blindness, and gives every future lens an explicit extension point.
+
+- **AR-3 — Manifest and ledger are postulated, not modeled as one execution contract** — *one-way ·
+  nonstandard.* (locus `SKILL.md:89` & `:139`; `audit-report-schema.json`.) The run manifest is
+  prose, validates cardinality but **not AC4's est-cost equality**; execution state is then
+  **reconstructed after the run** in a separate report ledger with only `executed`/`omitted` —
+  `planned`/`failed` deliberately absent. So the orchestrator hand-rolls lifecycle + failure
+  accounting, and **a failed run leaves no record distinguishing it from one that never began.**
+  **Alternative:** **one versioned run artifact** initialized before spawning (row identity, child run
+  records, approved est-cost, model provenance, `planned`/`executed`/`omitted`/`failed` +
+  verifiedFindingCount); validate cardinality + cost + model-separation before launch; transition it
+  during the run; derive the report only when **no row is `failed`**. **Win:** centralizes
+  manifest/failure/provenance/coverage, kills post-hoc reconstruction, makes AC4/AC6/AC7 checkable
+  from one artifact, and gives failures an observable record without publishing a partial report.
+
 ## Build note (2026-07-25)
 
 AC → file map:
