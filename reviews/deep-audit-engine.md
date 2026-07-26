@@ -390,6 +390,38 @@ contracts, not prose.*
   manifest/failure/provenance/coverage, kills post-hoc reconstruction, makes AC4/AC6/AC7 checkable
   from one artifact, and gives failures an observable record without publishing a partial report.
 
+## Decisions (2026-07-25, approach round 1)
+
+All three approach BLOCKERs → **FIX** (a redesign). Per the approach short-circuit, the correctness
+pass did **not** run this round; the redesign goes through `/close` and comes back for a fresh review
+(next round re-runs the approach pass on the new shape). The exact scope `/close` will apply:
+
+- **AR-1 → FIX** (Thomas: *"Fix — one contentFingerprint field"*). Extend `plan-schema` v1 with a
+  canonical **`source.contentFingerprint`** over the audited non-`reviews/**` tracked-file set,
+  computed for **both** clean and dirty at plan time; `/deep-audit` step 2 computes + stores it;
+  `/deep-audit-run` step 2 **recomputes + compares that one digest** and **drops the dirty-plan
+  refusal** (dirty plans become executable). `revision`/`dirty` stay as provenance. Touches
+  `plan-schema.json`, `deep-audit/SKILL.md` step 2, `deep-audit-run/SKILL.md` step 2,
+  `audit-report-schema.json` (dirty may now be true), and both drift linters. *(Scope note: this adds
+  `.claude/skills/deep-audit/plan-schema.json` to the AC9 enumeration — approved here.)*
+
+- **AR-2 → FIX, option C — honest hybrid** (Thomas: *"C — honest hybrid (mechanical + judgment)"*,
+  after weighing the determinism question). Adjudication stops claiming blanket determinism: **mechanical
+  confirmation decides where it can** (deterministic, reproducible, no model — driven by the evidence
+  record's `errorHandling` / `mechanicalChecks` / `locationConfirmed` enums); where a claim is **not**
+  mechanically decidable, a **cross-model, kill-mandate, evidence-grounded adjudicator judges** it
+  (default refute). `deep-audit-run/SKILL.md` step 5 states the split honestly; the finder keeps its
+  prose claim (no rigid claim taxonomy — option A was declined). Decision rationale recorded:
+  determinism was never the echo-chamber defense (context-asymmetry + cross-model + kill-mandate are);
+  it bought partial reproducibility + gate-inspectability, which C keeps exactly where it is real.
+
+- **AR-3 → FIX, core only** (Thomas: *"Fix core only — est-cost + failed record"*). `/deep-audit-run`
+  step 4 manifest validation also asserts **AC4's est-cost equality** (Σ in-scope `estTokens`); and a
+  **failed run leaves a durable observable record** (a `failed`-state artifact distinguishing
+  "failed midway" from "never ran") **without** publishing a partial findings report. Manifest and
+  report-ledger stay separate structures (the full unified run-artifact — option "fix fully" — was
+  declined for slice 1).
+
 ## Build note (2026-07-25)
 
 AC → file map:
