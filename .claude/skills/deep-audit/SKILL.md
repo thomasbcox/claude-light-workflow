@@ -73,11 +73,21 @@ profile record). Carry the profile forward; do **not** duplicate its detection l
   clean tree, `evaluatedAt` = the bound revision's committer timestamp** (`git show -s
   --format=%cI HEAD`), so recompiling the same committed source yields the same cutoff, the same
   churn window, and the same plan — reproducibility comes from the source, not the wall clock. For
-  a **dirty tree**, fall back to the wall-clock instant and note it: an uncommitted tree is not
-  uniquely reproducible (the `dirty` boolean does not capture *what* changed — the content-level
-  fingerprint that would is the engine story's, per OPS-13). **Every time-relative predicate
-  derives from the stored `evaluatedAt`, never from run time.** All three land in the `source`
-  block (step 6).
+  a **dirty tree**, fall back to the wall-clock instant and note it: an uncommitted tree's *churn
+  window* is not uniquely reproducible (the `dirty` boolean does not capture *what* changed). **Also
+  capture `contentFingerprint`** — a content digest of the audited non-`reviews/**` tracked file set
+  (working-tree content), computed **identically for clean and dirty trees**:
+  ```bash
+  fp() { git ls-files | grep -v '^reviews/' | LC_ALL=C sort \
+    | while IFS= read -r f; do printf '%s ' "$f"; git hash-object "$f"; done \
+    | shasum -a 256 | cut -d' ' -f1; }
+  ```
+  This is the **source identity the engine verifies** (recompute + compare, fail closed): it captures
+  the dirty content the `dirty` boolean cannot, so *every* approved plan — clean **or** dirty — is
+  engine-verifiable; excluding `reviews/**` stops the plan's own in-repo commit from self-invalidating
+  it. **Every time-relative predicate derives from the stored `evaluatedAt`, never from run time.**
+  All four (`revision`, `dirty`, `evaluatedAt`, `contentFingerprint`) land in the `source` block
+  (step 6).
 - **Scope filter first:** `exclude=<glob>` / `only=<glob>` patches (step 4) apply **here, before
   unit-map compilation** — they filter the `git ls-files` list itself, so group membership is
   addressable at file granularity.
@@ -221,13 +231,12 @@ is *when compiled*; `source.evaluatedAt` is *the signal cutoff* — for a clean 
 revision's commit time. Different facts; both recorded.)
 The artifact conforms to **`plan-schema.json` v1** (all fields
 required; the schema also pins per-lens altitude pairings, positive counts, and the date format),
-including the **`source` block** — `{revision, dirty, evaluatedAt}` from step 2 — which records the
-code state and signal window the plan was compiled against. The plan **identifies** its source; the
-engine's exact **verification policy** — how it confirms the target still matches `source.revision`
-(note the plan artifact lives *in* the audited repo, so committing it advances HEAD past the bound
-revision; the engine operates on `source.revision` itself, excluding generated plan/review
-artifacts), and how it fingerprints a dirty tree — is the **engine story's** (OPS-13, with the
-deferred executability gate). This story records the binding; it does not define the check.
+including the **`source` block** — `{revision, dirty, evaluatedAt, contentFingerprint}` from step 2 —
+which records the code state and signal window the plan was compiled against. The plan **identifies**
+its source via `contentFingerprint` (excluding generated `reviews/**` artifacts, so the plan's own
+in-repo commit does not self-invalidate the binding); the engine's exact **verification policy** —
+how it recomputes that digest and fails closed on drift — is the **engine story's** (OPS-13). This
+story records the binding (including the fingerprint); it does not define the check.
 **Parse-check it** (`jq -e . file` or `python3 -c 'import json;json.load(...)'`), then run the
 **plan semantic check** — the named contract check Draft-7 cannot express: (1) row identities
 `(lens, altitude, scope)` are **unique**; (2) `totals.runs = Σ rows[].runs` and

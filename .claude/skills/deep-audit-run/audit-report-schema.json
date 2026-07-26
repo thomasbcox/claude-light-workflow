@@ -14,12 +14,13 @@
     "source": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["revision", "dirty", "evaluatedAt"],
-      "description": "The plan's source binding, echoed — the code state this run verified it still matched before executing (SKILL.md step 2). dirty is always false here: the engine refuses dirty-tree plans in slice 1.",
+      "required": ["revision", "dirty", "evaluatedAt", "contentFingerprint"],
+      "description": "The plan's source binding, echoed — the code state this run verified it still matched (by recomputing contentFingerprint) before executing (SKILL.md step 2). dirty MAY be true: a dirty plan is executable, verified via contentFingerprint (AR-1).",
       "properties": {
         "revision": { "type": "string", "minLength": 7 },
         "dirty": { "type": "boolean" },
-        "evaluatedAt": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}" }
+        "evaluatedAt": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}" },
+        "contentFingerprint": { "type": "string", "minLength": 16 }
       }
     },
     "engineSlice": {

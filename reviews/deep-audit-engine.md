@@ -64,11 +64,13 @@ adding lens 2–4 afterward is prompt + schema + a plan-row filter, not new arch
 
 **Files this story touches (the AC9 scope enumeration — plus anything under `reviews/`):**
 `.claude/skills/deep-audit-run/` (`SKILL.md` + `hidden-failure-unit-schema.json` +
-`evidence-schema.json` + `audit-report-schema.json`); `.claude/skills/deep-audit/SKILL.md` (the
-loud-stop → hand-off replacement, no compile change); `tests/deep_audit_engine_test.sh` (new linter);
-`tests/deep_audit_plan_test.sh` (pin update tracking `/deep-audit`'s changed hand-off text, OPS-17);
-`.claude/workflow.json` + `.github/workflows/ci.yml` (gate wiring); `install.sh` (deploy the skill
-estate-wide).
+`evidence-schema.json` + `audit-report-schema.json`); `.claude/skills/deep-audit/SKILL.md` (loud-stop
+→ hand-off; **AR-1**: step 2/6 compute + record `contentFingerprint`) and
+`.claude/skills/deep-audit/plan-schema.json` (**AR-1**: the `source.contentFingerprint` field);
+`tests/deep_audit_engine_test.sh` (new linter); `tests/deep_audit_plan_test.sh` (pin updates: hand-off
+text + `contentFingerprint`); `.claude/workflow.json` + `.github/workflows/ci.yml` (gate wiring);
+`install.sh` (deploy the skill estate-wide). Under `reviews/` (exempt): the story + design/approach
+artifacts, and the smoke-plan fixture patched with a `contentFingerprint`.
 
 ## Non-goals
 
@@ -91,12 +93,13 @@ estate-wide).
    description frontmatter only, OPS-9 convention) with a **step-0 stand-down** (defer to
    `docs/ai-protocol.md` repos) and a **refuse-unless-approved** guard: a plan whose `status` is not
    `approved` stops loudly, unexecuted.
-2. **Source-identity gate (deferred AC c).** Before any critic runs, the engine recomputes a content
-   fingerprint of the audited file set **excluding generated plan/review artifacts** (`reviews/**`,
-   so an in-repo plan commit does not self-invalidate the bound revision), and **fails closed** if
-   the target no longer matches the plan's `source` — clean tree: the bound `revision`; dirty tree: a
-   content fingerprint that uniquely identifies the tree (the boolean `dirty` alone does not). No
-   silent "run anyway."
+2. **Source-identity gate (deferred AC c; AR-1).** Before any critic runs, the engine recomputes the
+   plan's **`source.contentFingerprint`** — a content digest of the audited file set **excluding
+   generated plan/review artifacts** (`reviews/**`, so an in-repo plan commit does not
+   self-invalidate the binding) over **working-tree content**, computed **identically for clean and
+   dirty trees** — and **fails closed** if it no longer matches. One mechanism covers both: a **dirty
+   plan is executable** (the digest captures its uncommitted content), so there is no dirty-plan
+   refusal. `revision`/`dirty` are provenance. No silent "run anyway."
 3. **Executability gate (deferred AC b).** Before any critic runs, the engine re-runs the plan
    semantic check against the *loaded artifact* — row-identity uniqueness; `totals.runs` /
    `totals.estTokens` equal the row sums; per row `runs = |unitIds| × (deep?2:1)`; every L1 row's
@@ -112,18 +115,21 @@ estate-wide).
    time). Each critic owns its prompt, schema, and artifact (OPS-12), keyed by run identity; each is
    launched to a fresh temp and **promoted only on {clean exit AND valid JSON}** — any critic failing
    **stops the round** (the parallel-critic fail-closed template, scaled).
-5. **Adversarial verify — evidence record + deterministic adjudication (DR-1).** The verifier stays
-   **claim-blind and cross-model**: given the **location + lens but never the finder's claim/
+5. **Adversarial verify — evidence record + mechanical-first adjudication (DR-1, AR-2).** The verifier
+   stays **claim-blind and cross-model**: given the **location + lens but never the finder's claim/
    argument** (context asymmetry), run by **a different model from the finder** (echo-chamber
    defense), it reads the cited code fresh and emits a **structured, claim-independent evidence
    record** — observable control flow, error-propagation behaviour, reachable outcomes, uncertainty —
    with **mechanical confirmation** run first wherever the lens's claim class is mechanically
-   checkable. A separate **deterministic adjudication step** then evaluates the *stored finder claim*
-   against that evidence via an explicit promote/refute decision table (default **refuted** on
-   uncertainty). Stable `findingId`/`evidenceId` join the two. A finding reaches the report **only
-   if adjudication confirms it**; refuted or uncertain findings are dropped. (This preserves context
-   asymmetry as a real property, not a leak-through — the verifier never sees the proposition it
-   would otherwise just echo.)
+   checkable. Adjudication then runs in **two tiers, without claiming blanket determinism (AR-2)**: a
+   **mechanical tier** decides deterministically where the claim class is mechanically checkable (the
+   evidence enums settle promote/refute, no model), and a **judgment tier** — a cross-model,
+   kill-mandate, evidence-grounded adjudicator — judges the rest as **honest model judgment** (default
+   **refuted** on uncertainty). Stable `findingId`/`evidenceId` join finder to evidence. A finding
+   reaches the report **only if its adjudication tier promotes it**; refuted or uncertain findings
+   are dropped. (What closes the echo chamber is the claim-blind cross-model verifier **upstream** —
+   not the adjudicator; the mechanical tier keeps determinism exactly where it is real, and the
+   judgment tier is honest about being judgment.)
 6. **Synthesis is precision-first, off a per-row execution ledger (DR-2).** The report is built from
    a **declarative execution ledger** — one entry per plan row in a distinct state
    (`planned` / `executed` / `omitted` / `failed`) plus a `verifiedFindingCount`. It records **only
@@ -133,15 +139,21 @@ estate-wide).
    zero survivors is *covered* with a negative result, never listed as uncovered** (a clean sweep and
    a scope gap must be mechanically distinguishable). Volume is never the headline; the coverage
    account is mandatory.
-7. **Failure ≠ planned omission.** A **failure** (critic crash, unparseable output, verify-stage
-   error, gate mismatch) **stops the round loudly** — a partial sweep is *never* presented as a whole
-   one (the exact hidden-failure disease the audit exists to catch). A **planned omission** (a lens
-   the plan didn't schedule) is reported honestly in the coverage account. The report never conflates
-   the two, and never silently downgrades a failure into an omission.
-8. **Contract handling.** The engine consumes `plan-schema.json` v1. Any field the engine must record
-   (e.g., the source fingerprint) either extends v1 **in place** (permitted — v1 has no other
-   consumers) or bumps `planVersion`; the choice is documented once in the skill, JSON stays
-   canonical, and the plan semantic check is updated in lockstep.
+7. **Failure ≠ planned omission (+ durable failure record, AR-3).** A **failure** (critic crash,
+   unparseable output, verify-stage error, gate mismatch) **stops the round loudly and writes no
+   findings report** — a partial sweep is *never* presented as a whole one (the exact hidden-failure
+   disease the audit exists to catch) — **but records a durable failure diagnostic**
+   (`reviews/audit-run-<date>.failed.json`: the stage that failed + each in-scope row's reached
+   state) so a run that **failed midway** is distinguishable from one that **never began**. A
+   **planned omission** (a lens the plan didn't schedule) is reported honestly in the coverage
+   account. The report never conflates the two, and never silently downgrades a failure into an
+   omission.
+8. **Contract handling (AR-1).** The engine **extends `plan-schema` v1 in place** (permitted — v1 has
+   no other consumers): it adds **`source.contentFingerprint`**, the one digest that identifies the
+   audited code for clean and dirty trees. The report is its own contract (`audit-report-schema.json`
+   v1). Only the differential C-ledger mode bumps a `planVersion`/`reportVersion`; the choice is
+   documented once in the skill, JSON stays canonical, and the plan semantic check moves in lockstep
+   with the added field.
 9. **Read-only + posture + scope containment.** The engine is **read-only against the target** except
    its own output artifacts under `reviews/`; secret redaction is inherited (detector/type ·
    path:line · count, **never a value**). `git diff --name-only main...HEAD` shows no file beyond
@@ -224,11 +236,13 @@ on the existing Workflow engine, not a new runtime.** Stages, in order:
    `plan-schema.json` v1, and refuses anything not `status: approved`. (Reuses the plan skill's
    parse-check + semantic-check code path — the executability gate is that same check re-run on the
    loaded file, so there is one implementation of "is this plan sound," not two.)
-2. **Entry gates (deferred ACs b + c).** *Source-identity:* `git`-fingerprint the audited file set
-   with `reviews/**` excluded (so the plan's own in-repo commit doesn't self-invalidate), compare to
-   `source` — clean tree keys on `revision`, dirty tree on the content fingerprint; mismatch → loud
-   stop. *Executability:* the semantic check + scope registry (`unitIds` ⊆ `unitMap`). Both are
-   **fail-closed pre-flight**; nothing spawns until both pass.
+2. **Entry gates (deferred ACs b + c).** *Source-identity (AR-1):* recompute the plan's **one
+   `source.contentFingerprint`** over the non-`reviews/**` tracked working-tree content (excluding
+   `reviews/**` so the plan's own in-repo commit doesn't self-invalidate), compare to `source`;
+   mismatch → loud stop. Computed identically for clean **and** dirty trees, so a **dirty plan is
+   executable** — no refusal, one mechanism. *Executability:* the semantic check + scope registry
+   (`unitIds` ⊆ `unitMap`) **+ cardinality/est-cost equality**. Both are **fail-closed pre-flight**;
+   nothing spawns until both pass.
 3. **Run manifest → fleet (DR-3).** First materialize a **run manifest**: expand every in-scope row
    into run-records keyed by `(row identity, unitId, pass index)`, pass count = the depth factor
    (`deep` → 2, else 1); **assert the manifest's cardinality and est-cost equal the approved plan's
@@ -239,13 +253,15 @@ on the existing Workflow engine, not a new runtime.** Stages, in order:
    whole-unit scope rather than a diff). Fail-closed promotion per finder, keyed by run identity (the
    review-SKILL temp→validate→promote template is the invariant; the Workflow's per-agent error
    handling enforces it).
-4. **Adversarial verify — evidence record + adjudication (DR-1).** The verifier is **claim-blind and
-   cross-model**: given the **location + lens only, never the finder's claim**, run by **a different
-   model**, it reads the cited code fresh and emits a **structured evidence record** (control flow,
-   error propagation, reachable outcomes, uncertainty), with mechanical confirmation run first where
-   the lens's claim class is mechanically checkable (e.g. "this `catch` swallows" → grep/AST the
-   cited block). A separate **deterministic adjudication** step then scores the *stored finder claim*
-   against that evidence via an explicit promote/refute table (default **refuted** on uncertainty),
+4. **Adversarial verify — evidence record + mechanical-first adjudication (DR-1, AR-2).** The verifier
+   is **claim-blind and cross-model**: given the **location + lens only, never the finder's claim**,
+   run by **a different model**, it reads the cited code fresh and emits a **structured evidence
+   record** (control flow, error propagation, reachable outcomes, uncertainty), with mechanical
+   confirmation run first where the lens's claim class is mechanically checkable (e.g. "this `catch`
+   swallows" → grep/AST the cited block). Adjudication then runs in **two tiers, with no
+   blanket-determinism claim (AR-2)**: a **mechanical tier** decides deterministically from the
+   evidence enums where it can (no model), and a **judgment tier** — cross-model, kill-mandate,
+   evidence-grounded — judges the rest as **honest judgment** (default **refuted** on uncertainty),
    joined by `findingId`/`evidenceId`. Survivors — and only survivors — pass to synthesis. Teams stay
    **small (3–4)** with hierarchical summarization as the repo-scale context substrate (the OPS-13
    evidence bullet).
@@ -255,8 +271,9 @@ on the existing Workflow engine, not a new runtime.** Stages, in order:
    view-derived split): verified findings grouped by lens/altitude/scope, and a coverage account
    **derived from the ledger** — `notCovered` = `omitted` rows + out-of-slice lenses/altitudes
    **only**; an `executed` row with zero survivors is *covered* (negative result), never uncovered.
-   Any `failed` row suppresses the whole report (stage 7 below). Report-first stop; no `AUDIT-` write
-   without an explicit instruction.
+   Any `failed` row suppresses the whole findings report — **but writes a durable
+   `audit-run-<date>.failed.json`** (AR-3) so the failure is observable, distinct from a run that
+   never began (stage 7 below). Report-first stop; no `AUDIT-` write without an explicit instruction.
 
 **Cross-cutting patterns (these are the one-way doors the design review should weigh):**
 - **Fail-closed everywhere, and *failure ≠ omission*.** A crash/invalid-output/gate-mismatch stops
@@ -422,7 +439,31 @@ pass did **not** run this round; the redesign goes through `/close` and comes ba
   report-ledger stay separate structures (the full unified run-artifact — option "fix fully" — was
   declined for slice 1).
 
-## Build note (2026-07-25)
+## Fixes (2026-07-25, approach round 1)
+
+Applied the three approved redesigns; gate green.
+
+- **AR-1 (one contentFingerprint).** `plan-schema` v1 gains **`source.contentFingerprint`** (required);
+  `/deep-audit` step 2 computes it over the non-`reviews/**` tracked working-tree content (clean *and*
+  dirty), step 6 records it; step 6's binding text now points at the fingerprint. `/deep-audit-run`
+  step 2 **recomputes + compares that one digest** and **drops the dirty-plan refusal** — dirty plans
+  are now executable via the fingerprint. Report schema echoes `contentFingerprint` and no longer
+  claims dirty is always false. Both drift linters + the smoke-plan fixture updated. AC2/AC8, sketch
+  stage 2, and the file enumeration follow.
+- **AR-2 (honest hybrid adjudication).** `/deep-audit-run` step 5 now states the split: a **mechanical
+  tier** decides deterministically from the evidence enums where it can (no model, reproducible), and
+  a **judgment tier** — cross-model, kill-mandate, evidence-grounded — judges the rest as **honest
+  model judgment, explicitly not claimed deterministic** (default refuted). The skill states that the
+  echo chamber is closed *upstream* by the claim-blind verifier, not by the adjudicator. AC5 + sketch
+  stage 4 + the engine linter follow. (Option A's rigid claim taxonomy was declined.)
+- **AR-3 (est-cost + failed record).** `/deep-audit-run` step 4 manifest validation now asserts
+  **est-cost equality** (Σ in-scope `estTokens`), not just cardinality; and a failure writes a durable
+  **`reviews/audit-run-<date>.failed.json`** (stage that failed + per-row reached state) so a run that
+  failed midway is distinguishable from one that never began — without publishing a partial findings
+  report. AC7 + the hard constraint + sketch stage 5 + the engine linter follow. (The full unified
+  run-artifact was declined for slice 1.)
+
+
 
 AC → file map:
 

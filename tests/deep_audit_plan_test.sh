@@ -68,7 +68,10 @@ has "snapshot pinned at compile start" "$SKILL" "Pin the snapshot first"
 has "clean-tree evaluatedAt from bound revision" "$SKILL" "the bound revision's committer timestamp"
 has "plan replayable from recorded inputs" "$SKILL" "reproducibility comes from the source"
 has "engine owns the verification policy (this story records only)" "$SKILL" "it does not define the check"
-has "schema requires the source block" "$SCHEMA" '"required": ["revision", "dirty", "evaluatedAt"]'
+has "schema requires the source block incl contentFingerprint (AR-1)" "$SCHEMA" '"required": ["revision", "dirty", "evaluatedAt", "contentFingerprint"]'
+has "schema defines contentFingerprint" "$SCHEMA" '"contentFingerprint"'
+has "skill computes contentFingerprint (clean + dirty)" "$SKILL" "contentFingerprint"
+has "fingerprint excludes reviews (no self-invalidation)" "$SKILL" "self-invalidat"
 has "chunk threshold" "$SKILL" "400 LOC"
 has "root files form the (root) group" "$SKILL" '`(root)`'
 has "non-code groups emit no L1/L2 rows" "$SKILL" "non-code"

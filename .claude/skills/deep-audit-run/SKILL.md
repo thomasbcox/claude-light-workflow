@@ -1,6 +1,6 @@
 ---
 name: deep-audit-run
-description: OPS-13 engine slice 1 — execute an APPROVED /deep-audit plan end-to-end for the hidden-failure L1 lens: verify source identity + plan executability, expand a run manifest, run the critic fleet, adversarially verify every finding with a claim-blind cross-model verifier, and synthesize a precision-first report with coverage accounting. Report-first; stops loudly on any failure or on an unapproved/dirty plan. Use after /deep-audit has produced and Thomas has approved a plan.
+description: OPS-13 engine slice 1 — execute an APPROVED /deep-audit plan end-to-end for the hidden-failure L1 lens: verify source identity (recompute the plan's contentFingerprint) + plan executability, expand a run manifest, run the critic fleet, adversarially verify every finding with a claim-blind cross-model verifier + mechanical-first adjudication, and synthesize a precision-first report with coverage accounting. Report-first; stops loudly on any failure or on an unapproved plan. Use after /deep-audit has produced and Thomas has approved a plan.
 ---
 
 # /deep-audit-run — execute the approved audit plan
@@ -22,9 +22,11 @@ verify + adjudication, the execution ledger) are what those lenses will copy.
   nothing. `BACKLOG.md` (`AUDIT-` graduation) only on an **explicit** instruction — report-first.
 - **Fail-closed everywhere, and failure ≠ planned omission.** A *failure* — a critic crash, an
   unparseable artifact, a verify/adjudication error, or a source/executability gate mismatch —
-  **stops the round loudly and writes no report**; a partial sweep is **never** presented as a whole
-  one (the exact hidden-failure disease this audit exists to catch). A *planned omission* (an
-  out-of-slice lens, L0) is coverage data. The two are never conflated (see step 5 vs step 6).
+  **stops the round loudly and writes no findings report**, but records a durable **failure
+  diagnostic** (`reviews/audit-run-<date>.failed.json`, AR-3) so the failure is observable and
+  distinct from a run that never began; a partial sweep is **never** presented as a whole one (the
+  exact hidden-failure disease this audit exists to catch). A *planned omission* (an out-of-slice
+  lens, L0) is coverage data. The two are never conflated (see step 5 vs step 6).
 - **Cross-model, claim-blind verification is a contract, not a per-lens choice** (the OPS-13
   echo-chamber evidence: same-model panels validate each other's hallucinations). Every future lens
   inherits it verbatim.
@@ -47,31 +49,25 @@ the **plan semantic check** (step 3 below folds this into the executability gate
 before running."* Never execute a `proposed` plan.
 
 ### 2. Source-identity gate (deferred AC c — fail closed)
-The plan was priced against a specific code state; the engine must confirm the target **still matches
-it** before spending a token.
-- **Refuse a dirty-tree plan.** If `source.dirty` is `true`, STOP loudly: *"this plan was compiled
-  against a dirty tree and is not reproducibly verifiable — recompile /deep-audit on a clean tree."*
-  (The plan records only `dirty: true`, not the uncommitted content, so there is nothing to verify
-  against. Dirty-tree support — which needs a recorded content fingerprint — is a follow-on with
-  lenses 2–4.)
-- **Fingerprint the audited file set, excluding generated plan/review artifacts.** Compute a content
-  fingerprint of the tracked files **excluding `reviews/**`** at both the current working tree and at
-  `source.revision`, and require them **equal**. Excluding `reviews/**` is what stops the plan's own
-  in-repo commit from self-invalidating the bound revision (committing the plan touches only
-  `reviews/`, so the audited-code fingerprint is unchanged). Reference:
-  ```bash
-  fp() { # $1 = revision; hash the non-reviews tracked tree at that revision
-    git -C "$T" ls-tree -r "$1" --format='%(path) %(objectname)' \
-      | grep -v '^reviews/' | LC_ALL=C sort | shasum -a 256 | cut -d' ' -f1; }
-  wt() { # current WORKING-TREE content of non-reviews tracked files (catches uncommitted edits)
-    git -C "$T" ls-files | grep -v '^reviews/' | LC_ALL=C sort \
-      | while IFS= read -r f; do printf '%s ' "$f"; git -C "$T" hash-object "$f"; done \
-      | shasum -a 256 | cut -d' ' -f1; }
-  ```
-  If `wt` ≠ `fp(source.revision)`, the audited code has moved since the plan was priced — **STOP
-  loudly** (*"target has changed since this plan was compiled — recompile /deep-audit"*). No silent
-  "run anyway." (The plan artifact **identifies** its source; this is the engine's **check** — the
-  responsibility `/deep-audit` step 6 explicitly deferred here.)
+The plan was priced against a specific code state; the engine confirms the target **still matches it**
+before spending a token, by recomputing the plan's **`source.contentFingerprint`** — the one digest
+the plan records for clean **and** dirty trees alike (AR-1), computed over the **non-`reviews/**`
+tracked working-tree content**:
+```bash
+fp() { # recompute the plan's contentFingerprint — MUST match /deep-audit step 2 byte-for-byte
+  git -C "$T" ls-files | grep -v '^reviews/' | LC_ALL=C sort \
+    | while IFS= read -r f; do printf '%s ' "$f"; git -C "$T" hash-object "$f"; done \
+    | shasum -a 256 | cut -d' ' -f1; }
+```
+Require `fp()` **equal** `source.contentFingerprint`. Excluding `reviews/**` is what stops the plan's
+own in-repo commit from **self-invalidating** the binding (committing the plan touches only
+`reviews/`, so the audited-code digest is unchanged); computing over **working-tree content** is what
+lets a **dirty** plan be verified too — the digest captures the uncommitted content the `dirty`
+boolean cannot, so there is **no dirty-plan refusal**, one mechanism covers both. If `fp()` ≠
+`source.contentFingerprint`, the audited code has changed since the plan was priced — **STOP loudly**
+(*"target has changed since this plan was compiled — recompile /deep-audit"*). No silent "run anyway."
+(`revision`/`dirty` are provenance; `contentFingerprint` is the identity. The plan records it; this
+is the engine's **check** — the responsibility `/deep-audit` step 6 defers here.)
 
 ### 3. Executability gate (deferred AC b — fail closed)
 Before any critic runs, re-run the **plan semantic check** against the loaded artifact — the same
@@ -95,10 +91,12 @@ iterating `unitIds` once would launch **half** a deep row's priced runs. Instead
 > for each in-scope row, for each `unitId` in `row.unitIds`, for `pass` in `1..(deep ? 2 : 1)` →
 > one record `{ runId, lens, altitude, scope, unitId, pass }` (`runId` = `<scope>::<unitId>::p<pass>`).
 
-**Validate the manifest before spawning:** the record count for each row equals that row's `runs`,
-and the manifest total equals **the sum of the in-scope rows' `runs`** (once all four lenses are
-built this equals the plan's `totals.runs`; in slice 1 it is the hidden-failure subtotal). A mismatch
-is a build error — STOP.
+**Validate the manifest before spawning:** (i) **cardinality** — the record count for each row
+equals that row's `runs`, and the manifest total equals **the sum of the in-scope rows' `runs`**;
+(ii) **est-cost equality (AC4, AR-3)** — the manifest's implied cost (Σ in-scope `estTokens`) equals
+the plan's in-scope `estTokens` subtotal. (Once all four lenses are built, both cardinality and cost
+equal the plan's `totals`; in slice 1 they are the hidden-failure subtotals.) A mismatch on **either**
+is a build error — **STOP** (and record it per the failed-run rule, step 6).
 
 Then **author a Workflow** that fans the fleet over exactly those records (orchestration on the
 session harness's Workflow engine — the OPS-13 build-note substrate; concurrency per the plan's
@@ -112,7 +110,7 @@ passes are independent finder runs; union their findings and **de-duplicate by `
 before verification. The engine assigns each surviving candidate a stable `findingId` (`runId` +
 index).
 
-### 5. Adversarial verify — evidence record + adjudication (AC5, DR-1)
+### 5. Adversarial verify — mechanical confirmation + honest judgment (AC5, DR-1, AR-2)
 Every candidate finding is checked in two parts that keep verification honest:
 
 - **Claim-blind, cross-model verifier.** Spawn a verifier that is **a different model from the
@@ -125,16 +123,28 @@ Every candidate finding is checked in two parts that keep verification honest:
   (Model split is enforced by the orchestration: finders and verifiers use different models — codex
   is the ready cross-vendor verifier, reusing the review loop's read-only harness; a different Claude
   tier is the in-engine fallback. Different **vendor** is preferred over different tier.)
-- **Deterministic adjudication.** A separate step — the join point, keyed by `findingId`/`evidenceId`
-  — scores the **stored finder claim** against the evidence via an explicit **promote/refute decision
-  table**: promote only when the evidence's `errorHandling`/`reachableOutcomes` **corroborate the
-  claim's specific mechanism**; **default REFUTED** when evidence is absent, `locationConfirmed` is
-  false, a mechanical check returned `not-found`, or `uncertainty` is medium/high. Nearby-but-different
-  behaviour never corroborates.
+- **Adjudication — mechanical tier first, then honest judgment (AR-2).** The join point, keyed by
+  `findingId`/`evidenceId`, scores the **stored finder claim** against the evidence in two tiers; the
+  engine **does not claim blanket-deterministic adjudication** — determinism holds only where it is
+  real:
+  - **Mechanical tier — deterministic where it fires.** Where the claim class is mechanically
+    checkable, the evidence's **enum facts decide** by a fixed rule, reproducibly and with **no
+    model**: `locationConfirmed=false` or a `mechanicalChecks` result of `not-found` → **refute**; a
+    `confirmed` mechanical check whose `errorHandling` is `swallowed` with `uncertainty=low` →
+    **promote**. This tier is the reproducible, inspectable gate.
+  - **Judgment tier — where the mechanical tier does not settle it.** A **cross-model, kill-mandate,
+    evidence-grounded adjudicator** judges the claim against the evidence record — **honest model
+    judgment, explicitly NOT claimed deterministic** — and **defaults to REFUTED** on any uncertainty
+    (evidence absent, `uncertainty` medium/high, nearby-but-different behaviour). It is grounded in
+    the *independent* evidence, never the finder's argument.
 
-A finding reaches the report **only if adjudication promotes it**; refuted or uncertain findings are
-dropped (precision-first — protect the human triage budget). Keep verifier/adjudicator teams **small
-(3–4)** with hierarchical summarization as the repo-scale context substrate.
+  What closes the echo chamber is **upstream** — the claim-blind, cross-model verifier — **not** the
+  adjudicator; the mechanical tier keeps determinism exactly where it is real, and the judgment tier
+  is honest about being judgment.
+
+A finding reaches the report **only if its adjudication tier promotes it**; refuted or uncertain
+findings are dropped (precision-first — protect the human triage budget). Keep verifier/adjudicator
+teams **small (3–4)** with hierarchical summarization as the repo-scale context substrate.
 
 ### 6. Synthesis off an execution ledger (AC6, DR-2)
 Build the **per-row execution ledger** — one entry for **every** plan row, in a distinct state:
@@ -143,8 +153,14 @@ Build the **per-row execution ledger** — one entry for **every** plan row, in 
 - `omitted` — out of this engine slice (any non-`hidden-failure`-L1 row), `reason` recorded (e.g.
   *"lens not built in engine slice"*).
 
-`failed` is **never persisted**: a failed row means the whole report is suppressed (step 4 / the
-fail-closed constraint) — so a *written* report is always complete. Write
+`failed` is **never persisted in the report**: a failed row means the findings report is suppressed
+(step 4 / the fail-closed constraint) — so a *written* `audit-report` is always complete. **But the
+failure is not silent (AR-3):** before stopping, write a durable
+**`reviews/audit-run-<YYYY-MM-DD>T<HHMMSS>.failed.json`** — the plan ref, the stage that failed, and
+each in-scope row's reached state (`planned` / `executed` / `failed`) — so a run that **failed
+midway** is mechanically distinguishable from one that **never began**. This diagnostic carries **no
+findings** (it is not the report) and is parse-checked, not schema-pinned (a minimal failure record,
+per the "core only" scope). Then, for a clean run, write
 **`reviews/audit-report-<YYYY-MM-DD>T<HHMMSS>.json`** (mint the stamp once; **if the path already
 exists, STOP loudly** rather than overwrite — the plan's collision guard) conforming to
 `audit-report-schema.json`, carrying: the echoed `source` binding, `engineSlice`, the ledger, the
@@ -162,10 +178,10 @@ account — what ran and **what was not covered**). **Do not** graduate findings
 deliverable; the loop (`/frame`) is where any resulting fix becomes work.
 
 ## Contract handling (AC8)
-Slice 1 consumes `plan-schema.json` **v1 unchanged** — the clean-tree source check recomputes from
-`source.revision`, so no new plan field is needed. The report is its **own** contract
-(`audit-report-schema.json` v1). Dirty-tree verification (which would need a recorded
-`source.fingerprint`) and the differential C-ledger mode are the extensions that will bump a
-`planVersion`/`reportVersion`; slice 1 stubs the C-ledger report fields (`disposition`,
-`priorReportRef`) but adds no plan field. JSON stays canonical; the semantic checks move in lockstep
-with any future bump.
+Slice 1 **extends `plan-schema` v1 in place** (permitted — v1 has no other consumers): it adds
+**`source.contentFingerprint`**, the single digest that identifies the audited code for clean **and**
+dirty trees (AR-1), so every approved plan is engine-verifiable through one mechanism. The report is
+its **own** contract (`audit-report-schema.json` v1). Only the differential **C-ledger** mode will
+bump a `planVersion`/`reportVersion`; slice 1 stubs the C-ledger report fields (`disposition`,
+`priorReportRef`). JSON stays canonical; the plan semantic check moves in lockstep with the added
+field.

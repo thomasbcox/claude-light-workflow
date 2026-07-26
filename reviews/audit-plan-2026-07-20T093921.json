@@ -9,7 +9,7 @@
       "json",
       "github-actions"
     ],
-    "domain": "developer tooling \u2014 Claude\u2194Codex review-loop skills (no auth/payments/PII)",
+    "domain": "developer tooling — Claude↔Codex review-loop skills (no auth/payments/PII)",
     "tests": "tests/*.sh drift linters, run by testCommand and CI gate",
     "ci": ".github/workflows/ci.yml (gate job) + scheduled.yml",
     "secretSignals": "none detected (0 sensitive path matches; no tracked .env)"
@@ -301,7 +301,7 @@
       "units": 4,
       "runs": 2,
       "estTokens": 120000,
-      "omissionRisk": "sampled only \u2014 a linter with a dead check could slip",
+      "omissionRisk": "sampled only — a linter with a dead check could slip",
       "why": [
         "P5: has test-pattern files"
       ],
@@ -320,7 +320,7 @@
       "estTokens": 60000,
       "omissionRisk": "cross-skill pattern drift (stop patterns, consult rules) unexamined",
       "why": [
-        "P6: \u22652 top-level groups; .claude has \u22655 files"
+        "P6: ≥2 top-level groups; .claude has ≥5 files"
       ],
       "unitIds": [
         "subsystem:.claude"
@@ -350,10 +350,10 @@
     "wallClockMinutes": 9
   },
   "assumptions": [
-    "\u224860k tokens per critic-run (all-in); refine from observed engine data",
-    "concurrency 8; \u22483 min per run \u2192 wallClock = ceil(78/8)\u00d73",
-    "chunk size 400 LOC; churn window 90 days, high \u2265 20 commits",
-    "depth factors: light ceil(units/3), standard units, deep 2\u00d7units"
+    "≈60k tokens per critic-run (all-in); refine from observed engine data",
+    "concurrency 8; ≈3 min per run → wallClock = ceil(78/8)×3",
+    "chunk size 400 LOC; churn window 90 days, high ≥ 20 commits",
+    "depth factors: light ceil(units/3), standard units, deep 2×units"
   ],
   "coverage": {
     "covered": [
@@ -367,21 +367,22 @@
       "test-adequacy L1 @ tests"
     ],
     "notCovered": [
-      "L0 (lines) \u2014 reserved, no v1 lens",
-      "security-data-loss \u2014 no sensitive paths/domain detected; add via override 'security-data-loss:standard' if wanted",
+      "L0 (lines) — reserved, no v1 lens",
+      "security-data-loss — no sensitive paths/domain detected; add via override 'security-data-loss:standard' if wanted",
       "(root): 8 non-code unit(s) not scheduled for L1",
       ".claude: 12 non-code unit(s) not scheduled for L1",
       ".github: 2 non-code unit(s) not scheduled for L1",
       "reviews: 90 non-code unit(s) not scheduled for L1",
-      "L0 (lines) \u2014 reserved, no v1 lens",
-      "security-data-loss \u2014 no sensitive paths/domain detected (add via override security-data-loss:standard)"
+      "L0 (lines) — reserved, no v1 lens",
+      "security-data-loss — no sensitive paths/domain detected (add via override security-data-loss:standard)"
     ]
   },
   "status": "proposed",
   "source": {
     "revision": "6584a7ccb86503896c4ae4d5073b4c2a52977fd3",
     "dirty": true,
-    "evaluatedAt": "2026-07-20T09:39:21-0700"
+    "evaluatedAt": "2026-07-20T09:39:21-0700",
+    "contentFingerprint": "a25f7e262807ee21831efb2f2226e4f82d99cfb5960d2cef5eab3df131862e64"
   },
   "compiledAt": "2026-07-20T09:39:21-0700"
 }

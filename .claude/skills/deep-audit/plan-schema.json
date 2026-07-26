@@ -25,12 +25,13 @@
     "source": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["revision", "dirty", "evaluatedAt"],
-      "description": "Source snapshot binding: one approval ↔ one code state ↔ one signal window. Every time-relative predicate (churn) derives from evaluatedAt, never from run time. The engine MUST fail closed if the target's revision/tree no longer matches.",
+      "required": ["revision", "dirty", "evaluatedAt", "contentFingerprint"],
+      "description": "Source snapshot binding: one approval ↔ one code state ↔ one signal window. Every time-relative predicate (churn) derives from evaluatedAt, never from run time. contentFingerprint is the identity the engine verifies; revision/dirty are provenance. The engine MUST fail closed if the target no longer matches contentFingerprint.",
       "properties": {
-        "revision": { "type": "string", "minLength": 7, "description": "git rev-parse HEAD at compile time." },
-        "dirty": { "type": "boolean", "description": "Whether the working tree had uncommitted changes at compile time." },
-        "evaluatedAt": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}", "description": "ISO evaluation cutoff; the churn window is the 90 days ending here." }
+        "revision": { "type": "string", "minLength": 7, "description": "git rev-parse HEAD at compile time (provenance)." },
+        "dirty": { "type": "boolean", "description": "Whether the working tree had uncommitted changes at compile time (provenance)." },
+        "evaluatedAt": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}", "description": "ISO evaluation cutoff; the churn window is the 90 days ending here." },
+        "contentFingerprint": { "type": "string", "minLength": 16, "description": "Content digest of the audited non-reviews/** tracked file set (working-tree content), computed identically for clean AND dirty trees so every approved plan is verifiable. The engine recomputes and compares it to fail closed on drift; the canonical algorithm lives in deep-audit/SKILL.md step 2 — not restated here (OPS-17)." }
       }
     },
     "profile": {
