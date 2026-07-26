@@ -503,3 +503,51 @@ Thomas's frame-consult decisions — **binding on implementation**:
   **in place** (no other consumers); (4) deferred AC (a) patch-phase structural ops is **plan-compiler
   work, split to a separate plan-stage follow-up** — not this execution story; (5) report artifact
   **`audit-report-<date>.json`** confirmed, with C-ledger disposition fields stubbed.
+
+## Codex approach review (2026-07-26, base main, HEAD e36b9d5 — re-review round 2)
+
+Artifact: `reviews/deep-audit-engine.approach.json`. Re-review after the accepted AR-1/2/3 redesign.
+
+**Verdict:** *"The accepted AR-2 hybrid adjudication and AR-3 durable failure record are sound, and
+AR-1 now uses one fingerprint contract. I would retain this architecture, but three new contract
+defects should be resolved before future lenses copy it: run IDs omit part of row identity, the
+est-cost check is tautological, and the fingerprint misses executable-mode changes."*
+
+The redesign is **confirmed sound** on the AR-1/2/3 axes; these are **new** one-way defects the
+reshaped contracts exposed (not re-raises). Both drift linters pass — they check wording, not these
+semantics, so they could not have caught them.
+
+### BLOCKER
+
+- **RR2-1 — Run IDs omit lens and altitude** — *one-way · kludgy.* (locus `deep-audit-run/SKILL.md`
+  step 4.) The run-record is correctly keyed by `(row identity, unitId, pass)`, but `runId` is built
+  as `<scope>::<unitId>::p<pass>` — **dropping lens + altitude.** Latent in slice 1 (one lens), but
+  when lenses 2–4 add another L1 lens over the same scope+unit, their run IDs, stable artifacts,
+  finding IDs, and report provenance **collide** — a defect baked into the reusable fleet contract.
+  **Alternative:** `runId = <lens>::<altitude>::<scope>::<unitId>::p<pass>` (or a canonical hash of
+  the full identity), keeping the structured fields alongside. **Win:** no cross-lens artifact
+  overwrites, no per-lens collision handling later — one canonical identity rule.
+
+### IMPORTANT
+
+- **RR2-2 — Manifest cost validation compares a subtotal to itself** — *one-way · kludgy.* (locus
+  `deep-audit-run/SKILL.md` step 4; `deep-audit/SKILL.md` steps 5–6.) The AR-3 est-cost check
+  compares `Σ in-scope estTokens` to the plan's in-scope `estTokens` subtotal — **the same row fields
+  on both sides.** The plan semantic check verifies `totals = Σ rows` but **never** `row.estTokens =
+  row.runs × per-run cost`, so a plan with arbitrary internally-summed prices passes both gates: the
+  accepted est-cost check **establishes no new invariant.** **Alternative:** record the per-run token
+  estimate as a **structured plan constant**, require every row's `estTokens = runs × tokensPerRun`,
+  assign that cost to each manifest record, and compare the manifest-record sum to the approved
+  subtotal (no unified run artifact needed). **Win:** turns a tautology into one enforceable pricing
+  invariant; kills malformed-price plans and future per-lens cost drift.
+
+- **RR2-3 — Content fingerprint ignores executable-mode changes** — *one-way · nonstandard.* (locus
+  `deep-audit/SKILL.md` step 2; `deep-audit-run/SKILL.md` step 2.) The canonical stream is path +
+  `git hash-object` (content bytes) **only** — a tracked script can gain/lose its **executable bit**
+  with no digest change, so the engine can accept a target whose runtime behaviour no longer matches
+  the approved state. **This repo has tracked executable scripts**, so it's material, not theoretical
+  — a **fail-open** source-identity path. **Alternative:** define the fingerprint over a canonical,
+  NUL-safe tracked-entry stream carrying path + working-tree **mode** (at least the exec bit) +
+  content hash + an explicit deletion marker; use the **identical helper** in plan and engine. **Win:**
+  closes the fail-open path while keeping the single-fingerprint mechanism; one shared helper removes
+  the duplicated shell-format assumption.
