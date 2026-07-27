@@ -148,12 +148,13 @@ artifacts, and the smoke-plan fixture patched with a `contentFingerprint`.
    **planned omission** (a lens the plan didn't schedule) is reported honestly in the coverage
    account. The report never conflates the two, and never silently downgrades a failure into an
    omission.
-8. **Contract handling (AR-1).** The engine **extends `plan-schema` v1 in place** (permitted — v1 has
-   no other consumers): it adds **`source.contentFingerprint`**, the one digest that identifies the
-   audited code for clean and dirty trees. The report is its own contract (`audit-report-schema.json`
-   v1). Only the differential C-ledger mode bumps a `planVersion`/`reportVersion`; the choice is
-   documented once in the skill, JSON stays canonical, and the plan semantic check moves in lockstep
-   with the added field.
+8. **Contract handling (AR-1, RR2-2).** The engine **extends `plan-schema` v1 in place** (permitted —
+   v1 has no other consumers): it adds **`source.contentFingerprint`** (the one digest identifying the
+   audited code, clean or dirty) and a structured **`tokensPerRun`** pricing constant (so
+   `estTokens = runs × tokensPerRun` is an *enforced* per-row invariant, not a re-summed number). The
+   report is its own contract (`audit-report-schema.json` v1). Only the differential C-ledger mode
+   bumps a `planVersion`/`reportVersion`; the choice is documented once in the skill, JSON stays
+   canonical, and the plan semantic check moves in lockstep with the added fields.
 9. **Read-only + posture + scope containment.** The engine is **read-only against the target** except
    its own output artifacts under `reviews/`; secret redaction is inherited (detector/type ·
    path:line · count, **never a value**). `git diff --name-only main...HEAD` shows no file beyond
@@ -575,7 +576,34 @@ redesign goes through `/close` and comes back for a fresh review. The architectu
 
 - **RR2-3 → FIX** (Thomas: *"mode in the fingerprint"*). Replace the content-only `fp()` in **both**
   `/deep-audit` step 2 and `/deep-audit-run` step 2 with an **identical** canonical, NUL-safe stream
-  carrying **`<index-mode> <working-tree-content-hash> <path>`** per non-`reviews/**` tracked entry
-  (`git ls-files -s -z -- ':!reviews/'` for mode+path; `git hash-object` for working-tree content, so
-  unstaged edits still register; a `DELETED` marker when the working file is gone), sorted, hashed.
-  Captures the executable bit + content, closing the fail-open. Update the engine linter's fp pin.
+  carrying **`<exec-bit> <working-tree-content-hash> <path>`** per non-`reviews/**` tracked entry
+  (`git ls-files -z -- ':!reviews/'` for paths; the **working-tree** exec bit via `test -x`;
+  `git hash-object` for working-tree content, so unstaged edits still register; a `DELETED` marker
+  when the working file is gone), sorted, hashed. Captures the executable bit + content, closing the
+  fail-open. Update the engine linter's fp pin.
+
+## Fixes (2026-07-27, approach round 2)
+
+Applied the three approved round-2 redesigns; gate green.
+
+- **RR2-1 (full-identity runId).** `/deep-audit-run` step 4: `runId =
+  <lens>::<altitude>::<scope>::<unitId>::p<pass>` (was `<scope>::<unitId>::p<pass>`), so run IDs,
+  artifacts, finding IDs, and report provenance never collide when lenses 2–4 run the same scope+unit.
+  Report schema's `provenance.runId` description + the engine linter pin follow.
+- **RR2-2 (real pricing invariant).** `plan-schema` v1 gains a structured **`tokensPerRun`** field.
+  `/deep-audit` step 5 prices from it; step 6's semantic check adds **(6) `estTokens = runs ×
+  tokensPerRun`** per row. `/deep-audit-run` step 3 executability gate re-verifies the same identity;
+  step 4 now assigns each manifest record its `tokensPerRun` cost and compares the **manifest-record
+  cost sum** to the approved subtotal — a real recompute, not the old subtotal-vs-itself tautology.
+  Both linters + the smoke-plan fixture updated (`tokensPerRun: 60000`; every row already satisfies
+  `estTokens = runs × 60000`). AC8 follows.
+- **RR2-3 (mode-aware fingerprint).** `fp()` in **both** `/deep-audit` step 2 and `/deep-audit-run`
+  step 2 replaced with the identical canonical NUL-safe stream **`<exec-bit>
+  <working-tree-content-hash> <path>`** (`git ls-files -z -- ':!reviews/'`; exec-bit read from the
+  **working tree** via `test -x`; `DELETED` marker for a removed working file), sorted + hashed — so
+  an exec-bit flip on a tracked script changes the digest. Closes the fail-open. Both linters' fp pins
+  follow.
+  **Dogfood correction:** the first attempt read the **index** mode (`git ls-files -s`), which a
+  behavioral dogfood proved *still fail-open* on an unstaged `chmod` (the index mode doesn't move
+  until staged). Switched to the working-tree `test -x`, then re-verified: an unstaged exec-bit flip
+  now changes the fingerprint; content edits still register; the helper is deterministic.

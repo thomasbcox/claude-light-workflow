@@ -70,7 +70,7 @@
             "additionalProperties": false,
             "required": ["runId", "pass"],
             "properties": {
-              "runId": { "type": "string", "minLength": 1, "description": "The run-manifest record that produced the finder finding." },
+              "runId": { "type": "string", "minLength": 1, "description": "The run-manifest record that produced the finder finding — carries the full row identity <lens>::<altitude>::<scope>::<unitId>::p<pass> so provenance never collides across lenses (RR2-1). Format defined in SKILL.md step 4." },
               "pass": { "type": "integer", "minimum": 1, "description": "Which depth pass (1, or 2 on a deep row)." }
             }
           },

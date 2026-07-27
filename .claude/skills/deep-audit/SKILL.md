@@ -78,9 +78,17 @@ profile record). Carry the profile forward; do **not** duplicate its detection l
   capture `contentFingerprint`** — a content digest of the audited non-`reviews/**` tracked file set
   (working-tree content), computed **identically for clean and dirty trees**:
   ```bash
-  fp() { git ls-files | grep -v '^reviews/' | LC_ALL=C sort \
-    | while IFS= read -r f; do printf '%s ' "$f"; git hash-object "$f"; done \
-    | shasum -a 256 | cut -d' ' -f1; }
+  # Canonical NUL-safe stream: <exec-bit> <working-tree-content-hash> <path>, non-reviews tracked.
+  # exec-bit = x|- read from the WORKING TREE (test -x) — so even an UNSTAGED chmod registers (RR2-3;
+  # the index mode from `ls-files -s` would not); hash-object captures working-tree content; DELETED
+  # marks a removed working file. The engine recomputes this SAME stream — keep it byte-for-byte
+  # identical.
+  fp() {
+    git ls-files -z -- ':!reviews/' \
+      | while IFS= read -r -d '' p; do
+          if [ -x "$p" ]; then x=x; else x=-; fi
+          printf '%s %s %s\0' "$x" "$(git hash-object -- "$p" 2>/dev/null || printf DELETED)" "$p"
+        done | LC_ALL=C sort -z | shasum -a 256 | cut -d' ' -f1; }
   ```
   This is the **source identity the engine verifies** (recompute + compare, fail closed): it captures
   the dirty content the `dirty` boolean cannot, so *every* approved plan — clean **or** dirty — is
@@ -207,8 +215,10 @@ precedent).
 - `units` — the scope's schedulable count: L1 → `|codeUnitIds|`; L2/L3 → 1.
 - `runs` — `|unitIds| ×` (deep ? 2 : 1); equivalently light `ceil(units/3)`, standard `units`,
   deep `2×units`.
-- `estTokens` — `runs × 60k` (assumption: ≈ 60k tokens per critic-run, all-in; refine from observed
-  engine data).
+- `estTokens` — `runs × tokensPerRun`, the plan's **structured pricing constant**
+  (`tokensPerRun = 60000` — ≈ 60k tokens per critic-run, all-in; refine from observed engine data).
+  It is a top-level plan field (not just an `assumptions` string) **so the semantic check can enforce
+  `estTokens = runs × tokensPerRun` per row (RR2-2)**, not merely `totals = Σ`.
 - `omissionRisk` — one line: what goes unexamined if this row is cut.
 - **Totals** = Σ rows; **wall-clock** ≈ `ceil(totalRuns / 8) × 3 min` (assumptions: concurrency 8,
   ≈ 3 min/run). Print every assumption in the plan's `assumptions` block.
@@ -243,7 +253,9 @@ story records the binding (including the fingerprint); it does not define the ch
 `totals.estTokens = Σ rows[].estTokens`; (3) per unit-map group, `chunkUnits = |unitIds|` and
 `codeUnitIds ⊆ unitIds` (order-preserved); (4) per row, `runs = |unitIds| × (deep ? 2 : 1)`; (5)
 **every L1 row's `unitIds` are drawn from its scope's `codeUnitIds`** — standard/deep = the full
-`codeUnitIds`, light = the pinned every-3rd sample of it — so no non-code unit is ever scheduled.
+`codeUnitIds`, light = the pinned every-3rd sample of it — so no non-code unit is ever scheduled;
+(6) **per row, `estTokens = runs × tokensPerRun`** (RR2-2) — the pricing is a real invariant, not an
+arbitrary internally-summed number that happens to total correctly.
 Schema validation **plus** the semantic check is the
 canonical contract gate — on any failure STOP loudly; never present a view of an invalid plan.
 Then **derive** the sibling `reviews/audit-plan-<YYYY-MM-DD>T<HHMMSS>.md` (same stamp) from the

@@ -16,7 +16,7 @@
       }
     }
   },
-  "required": ["planVersion", "date", "compiledAt", "target", "source", "profile", "unitMap", "rows", "overrides", "totals", "assumptions", "coverage", "status"],
+  "required": ["planVersion", "date", "compiledAt", "target", "source", "profile", "unitMap", "rows", "overrides", "totals", "tokensPerRun", "assumptions", "coverage", "status"],
   "properties": {
     "planVersion": { "const": 1 },
     "date": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", "description": "YYYY-MM-DD compile date." },
@@ -175,6 +175,7 @@
         "wallClockMinutes": { "type": "integer", "minimum": 0, "description": "ceil(runs / concurrency) × per-run minutes (see assumptions)." }
       }
     },
+    "tokensPerRun": { "type": "integer", "minimum": 1, "description": "The structured per-run token estimate. Every row's estTokens = runs × tokensPerRun (enforced by the plan semantic check and re-verified by the engine's executability gate); the assumptions array carries its human-readable note. Defined in SKILL.md step 5 — not restated here (OPS-17)." },
     "assumptions": {
       "type": "array",
       "minItems": 1,

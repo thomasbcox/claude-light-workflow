@@ -72,6 +72,7 @@ has "schema requires the source block incl contentFingerprint (AR-1)" "$SCHEMA" 
 has "schema defines contentFingerprint" "$SCHEMA" '"contentFingerprint"'
 has "skill computes contentFingerprint (clean + dirty)" "$SKILL" "contentFingerprint"
 has "fingerprint excludes reviews (no self-invalidation)" "$SKILL" "self-invalidat"
+has "fingerprint is mode-aware (working-tree exec bit), NUL-safe (RR2-3)" "$SKILL" "ls-files -z"
 has "chunk threshold" "$SKILL" "400 LOC"
 has "root files form the (root) group" "$SKILL" '`(root)`'
 has "non-code groups emit no L1/L2 rows" "$SKILL" "non-code"
@@ -100,6 +101,8 @@ has "unknown token is an error" "$SKILL" "unknown token is an error"
 echo "== per-row pricing (the F3 fix) =="
 has "depth factors stated" "$SKILL" "deep \`2×units\`"
 has "per-run token assumption" "$SKILL" "60k"
+has "schema defines structured tokensPerRun (RR2-2)" "$SCHEMA" '"tokensPerRun"'
+has "semantic check enforces estTokens = runs × tokensPerRun (RR2-2)" "$SKILL" "estTokens = runs × tokensPerRun"
 has "omission risk per row" "$SKILL" "omissionRisk"
 has "concurrency-batched wall-clock" "$SKILL" "totalRuns / 8"
 

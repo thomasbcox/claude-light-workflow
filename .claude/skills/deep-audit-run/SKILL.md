@@ -54,10 +54,14 @@ before spending a token, by recomputing the plan's **`source.contentFingerprint`
 the plan records for clean **and** dirty trees alike (AR-1), computed over the **non-`reviews/**`
 tracked working-tree content**:
 ```bash
-fp() { # recompute the plan's contentFingerprint — MUST match /deep-audit step 2 byte-for-byte
-  git -C "$T" ls-files | grep -v '^reviews/' | LC_ALL=C sort \
-    | while IFS= read -r f; do printf '%s ' "$f"; git -C "$T" hash-object "$f"; done \
-    | shasum -a 256 | cut -d' ' -f1; }
+fp() { # recompute the plan's contentFingerprint — the SAME canonical stream as /deep-audit step 2
+  # (<exec-bit> <working-tree-content-hash> <path>, non-reviews tracked; exec-bit = x|- from the
+  # WORKING TREE via test -x, so even an unstaged chmod registers, RR2-3), byte-for-byte identical.
+  git -C "$T" ls-files -z -- ':!reviews/' \
+    | while IFS= read -r -d '' p; do
+        if [ -x "$T/$p" ]; then x=x; else x=-; fi
+        printf '%s %s %s\0' "$x" "$(git -C "$T" hash-object -- "$p" 2>/dev/null || printf DELETED)" "$p"
+      done | LC_ALL=C sort -z | shasum -a 256 | cut -d' ' -f1; }
 ```
 Require `fp()` **equal** `source.contentFingerprint`. Excluding `reviews/**` is what stops the plan's
 own in-repo commit from **self-invalidating** the binding (committing the plan touches only
@@ -76,7 +80,9 @@ named contract check `/deep-audit` writes, re-verified on consumption:
 2. `totals.runs = Σ rows[].runs` and `totals.estTokens = Σ rows[].estTokens`;
 3. per unit-map group, `chunkUnits = |unitIds|` and `codeUnitIds ⊆ unitIds` (order-preserved);
 4. per row, `runs = |unitIds| × (deep ? 2 : 1)`;
-5. every L1 row's `unitIds` are drawn from its scope's `codeUnitIds`.
+5. every L1 row's `unitIds` are drawn from its scope's `codeUnitIds`;
+6. per row, `estTokens = runs × tokensPerRun` (the plan's structured pricing constant), so a
+   malformed-price plan is rejected here — not silently accepted (RR2-2).
 
 Plus a **scope registry**: every row's `unitIds` resolve in `unitMap` — an L1 row's units appear in
 some group's `unitIds`; an L2/L3 row's synthetic scope (`subsystem:<dir>` / `app`) is well-formed.
@@ -89,14 +95,21 @@ iterating `unitIds` once would launch **half** a deep row's priced runs. Instead
 **in-scope** row (`hidden-failure` L1) into run-records:
 
 > for each in-scope row, for each `unitId` in `row.unitIds`, for `pass` in `1..(deep ? 2 : 1)` →
-> one record `{ runId, lens, altitude, scope, unitId, pass }` (`runId` = `<scope>::<unitId>::p<pass>`).
+> one record `{ runId, lens, altitude, scope, unitId, pass }` — `runId` carries the **full row
+> identity** `<lens>::<altitude>::<scope>::<unitId>::p<pass>` (RR2-1), so run IDs, stable artifacts,
+> finding IDs, and report provenance **never collide across lenses** when lenses 2–4 run the same
+> scope+unit.
 
 **Validate the manifest before spawning:** (i) **cardinality** — the record count for each row
 equals that row's `runs`, and the manifest total equals **the sum of the in-scope rows' `runs`**;
-(ii) **est-cost equality (AC4, AR-3)** — the manifest's implied cost (Σ in-scope `estTokens`) equals
-the plan's in-scope `estTokens` subtotal. (Once all four lenses are built, both cardinality and cost
-equal the plan's `totals`; in slice 1 they are the hidden-failure subtotals.) A mismatch on **either**
-is a build error — **STOP** (and record it per the failed-run rule, step 6).
+(ii) **est-cost (AC4, RR2-2)** — assign each manifest record its `tokensPerRun` cost, then require the
+**manifest-record cost sum** (`|records| × tokensPerRun`) to equal the approved plan's in-scope
+`estTokens` subtotal. This recomputes cost from record-count × the **structured constant** — **not** a
+re-sum of `row.estTokens` against itself (the old tautology) — so a plan whose `estTokens` ≠ `runs ×
+tokensPerRun` is caught (step 3 pins that same identity per row). (Once all four lenses are built,
+both cardinality and cost equal the plan's `totals`; in slice 1 they are the hidden-failure
+subtotals.) A mismatch on **either** is a build error — **STOP** (and record it per the failed-run
+rule, step 6).
 
 Then **author a Workflow** that fans the fleet over exactly those records (orchestration on the
 session harness's Workflow engine — the OPS-13 build-note substrate; concurrency per the plan's
