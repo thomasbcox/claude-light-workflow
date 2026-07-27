@@ -693,3 +693,76 @@ scope `/close` will apply:
   **structure** (required/enum/additionalProperties) + a concise **SKILL.md reference**, and
   **`absent`-checks** the duplicated load-bearing wording (e.g. `absent` "deterministic adjudication"
   in the evidence schema). Rules stay pinned **once**, in SKILL.md. Fixing C-5 this way subsumes C-4.
+
+## Design pivot (2026-07-27) — extract deterministic mechanics to tested shell
+
+**Supersedes the "fix all 5 in prose" correctness decisions above.** A skeptical read of all 14
+review findings (frame DR + AR + RR2 + C) showed they are not isolated: they collapse onto **one root
+disease — claims asserted in prose with nothing to enforce them** — in three faces: **(A)** duplicated
+facts that drift (the fingerprint, the unit-resolution rule, the pricing, the adjudication rule all
+live in ≥2 places with no cross-check — literally OPS-17 recurring); **(B)** vacuous guards that admit
+the case they exclude (tautological est-cost, subset-not-exact gate, empty-`complete` report,
+index-mode fingerprint); **(C)** properties asserted but never established (deep run count, unique
+runId, "deterministic"). They surface one-per-round because **the drift linters pin prose *presence*,
+not behaviour** — 96/96 green while the schema contradicted the skill. The generators stay loaded, so
+prose-fixing is whack-a-mole. Thomas's call (2026-07-27): **extract the deterministic mechanics to a
+tested shell library; leave the LLM orchestration as prose.**
+
+### What extracts (deterministic → one tested shell lib) vs stays prose
+
+| Stays **prose** (genuinely LLM) | Extracts to **shell** (deterministic, testable) |
+|---|---|
+| finder / verifier prompts; Workflow authoring; the **judgment-tier** adjudicator; the report's narrative view | source **fingerprint**; **exact unit-resolution** (full vs every-3rd); **plan semantic check**; **run-manifest** expand+validate (incl. runId, cardinality, est-cost); **report semantic check**; the **mechanical-tier** adjudication table |
+
+### Design sketch — HOW
+
+- **One library, one source of each fact.** `deep-audit-lib.sh` (deployed by `install.sh` beside the
+  skills), exposing subcommands both skills invoke: `fingerprint <root>`, `resolve-units <depth>
+  <codeUnitIds…>`, `check-plan <plan.json>`, `build-manifest <plan.json>`, `check-report <report.json>
+  <plan.json>`. The skills' prose **calls** these ("run `deep-audit-lib.sh check-plan <plan>`; on
+  nonzero exit STOP loudly") instead of restating the algorithm — so the fingerprint and the
+  resolution rule exist **exactly once** (kills Face A: C-1, C-2, RR2-2, AR-1, C-4/C-5's schema copies
+  lose their reason to exist).
+- **Every invariant becomes a real assertion, not a claim.** `check-plan` enforces — as executable
+  code — row-identity uniqueness, `totals = Σ`, `runs = |unitIds| × factor`, `estTokens = runs ×
+  tokensPerRun`, and **`unitIds` = the exact `resolve-units` output** (not a subset). `check-report`
+  enforces non-empty ledger, ledger identities = plan-row identities, coverage derived from ledger,
+  `verifiedFindingCount` = findings. (Kills Face B: C-2, C-3, RR2-2.)
+- **A genuine behavioural test suite** — `tests/deep_audit_lib_test.sh` — feeds **tampered fixtures**
+  and asserts the lib rejects them: a thinned standard row, wrong totals, `estTokens ≠ runs × const`,
+  a duplicate identity, an empty-`complete` report → each a nonzero exit; a mode flip / content edit
+  changes the fingerprint, a `reviews/` touch does not. **This is the net the prose-pin linters could
+  never be** (kills the meta-generator; the 96/96-green-while-wrong class becomes impossible for the
+  deterministic core).
+- **The drift linters shrink to their honest job:** pin the prose that is *genuinely* prose (the
+  orchestration/adjudication rules, stated once in `SKILL.md`), reference the lib for the mechanics,
+  and `absent`-check duplicated rule prose in schemas. Schemas describe *shape*, reference `SKILL.md`
+  for *rules*.
+- **Fits the repo's nature:** shell **is** this estate's real code (`install.sh`, the linters) — under
+  the estate standard (`shellcheck` + `shfmt -i 2 -ci`, CI). This is OPS-15 ("prompt-instructions are
+  code") resolved for the one place it truly bites: the engine's algorithms.
+
+### How every finding is resolved by construction (not re-paraphrased)
+
+- **C-1 / AR-1 / RR2-3:** one `fingerprint` subcommand, called by both skills, behaviourally tested.
+- **C-2 / DR-3 / RR2-1:** `resolve-units` + `build-manifest` are the single source; the engine
+  *verifies* with the same code the planner *compiled* with — divergence impossible.
+- **C-3 / DR-2:** `check-report` + schema `minItems`, tested against an empty-report fixture.
+- **RR2-2:** `check-plan` recomputes `runs × tokensPerRun` — no self-comparison.
+- **C-4 / C-5:** schemas reference the lib/skill; the behavioural tests replace prose duplication.
+
+### Open questions (for the consult)
+
+1. **Library boundary — one `deep-audit-lib.sh` (subcommands) vs several small scripts?** Lean: one
+   lib, subcommand-dispatched (fewer deploy artifacts, one shared helper set). Tradeoff: a bigger
+   single file.
+2. **`jq` dependency.** The lib needs JSON parsing; `jq` is already a hard dependency of the workflow
+   (`install.sh`, `/close` use it). Confirm it stays the assumed tool (vs `python3 -c`, also present).
+3. **Scope of this pivot.** Does the extraction stay within `deep-audit-engine` (same branch/story,
+   substrate swap) — or is the lib worth its own story since `/deep-audit` (already shipped) starts
+   depending on it? Lean: same story — the plan skill's dependence on the shared lib is exactly the
+   single-source we want, and splitting it would re-introduce a seam.
+4. **The `mechanical-tier` adjudication** (the deterministic half of AR-2): extract to the lib too, or
+   leave in prose? It *is* deterministic (enum table), so it *can* be shell — but it runs per-finding
+   inside the Workflow. Lean: define the table in the lib (`adjudicate <claim-class> <evidence.json>`)
+   so it is tested, called from the orchestration.
