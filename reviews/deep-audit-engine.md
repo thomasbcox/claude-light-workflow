@@ -551,3 +551,31 @@ semantics, so they could not have caught them.
   content hash + an explicit deletion marker; use the **identical helper** in plan and engine. **Win:**
   closes the fail-open path while keeping the single-fingerprint mechanism; one shared helper removes
   the duplicated shell-format assumption.
+
+## Decisions (2026-07-27, approach round 2)
+
+All three → **FIX** (a redesign). Correctness pass did **not** run (approach short-circuit); the
+redesign goes through `/close` and comes back for a fresh review. The architecture is confirmed sound
+(reviewer: "retain this architecture") — these are bounded contract-precision fixes. Exact scope:
+
+- **RR2-1 → FIX** (Thomas: *"full row identity in runId"*). `/deep-audit-run` step 4: `runId =
+  <lens>::<altitude>::<scope>::<unitId>::p<pass>` (keep the structured fields alongside). Update the
+  report schema's `provenance.runId` description + the engine linter pin. Trivial, one-way, kills the
+  cross-lens collision baked into the fleet contract.
+
+- **RR2-2 → FIX real invariant** (Thomas: *"enforce estTokens = runs × const"*). Add a **structured
+  `tokensPerRun` constant** to `plan-schema` v1 (the per-run token estimate now carried as prose in
+  `assumptions`). `/deep-audit` step 5/6: state + **semantic-check** `row.estTokens = row.runs ×
+  tokensPerRun` (and `totals.estTokens = Σ`). `/deep-audit-run` step 3 executability gate: verify the
+  same per-row identity; step 4 assigns each manifest record its `tokensPerRun` cost and compares the
+  **manifest-record sum** to the approved in-scope subtotal (no longer a subtotal-vs-itself
+  tautology). Touches `plan-schema.json`, `deep-audit/SKILL.md`, `deep-audit-run/SKILL.md`, both
+  linters, and the smoke-plan fixture (add `tokensPerRun: 60000`; its rows already satisfy
+  `estTokens = runs × 60000`). *(Scope note: extends the AR-1 plan-side touch — approved here.)*
+
+- **RR2-3 → FIX** (Thomas: *"mode in the fingerprint"*). Replace the content-only `fp()` in **both**
+  `/deep-audit` step 2 and `/deep-audit-run` step 2 with an **identical** canonical, NUL-safe stream
+  carrying **`<index-mode> <working-tree-content-hash> <path>`** per non-`reviews/**` tracked entry
+  (`git ls-files -s -z -- ':!reviews/'` for mode+path; `git hash-object` for working-tree content, so
+  unstaged edits still register; a `DELETED` marker when the working file is gone), sorted, hashed.
+  Captures the executable bit + content, closing the fail-open. Update the engine linter's fp pin.
