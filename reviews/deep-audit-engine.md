@@ -766,3 +766,44 @@ tested shell library; leave the LLM orchestration as prose.**
    leave in prose? It *is* deterministic (enum table), so it *can* be shell — but it runs per-finding
    inside the Workflow. Lean: define the table in the lib (`adjudicate <claim-class> <evidence.json>`)
    so it is tested, called from the orchestration.
+
+### Codex design review of the pivot (2026-07-27)
+
+Artifact: `reviews/deep-audit-engine.pivot-design.json`.
+
+**Verdict:** *"A single tested Bash library is the right, proportionate shape for this repository:
+Bash is already the local implementation standard, jq is already required, and behavioral rejection
+tests directly address the defect generator that prose-presence linters cannot. The proposed boundary
+is incomplete, however… I would keep one library, but correct these seams before implementation."*
+
+Shape **confirmed**; the boundary is drawn **too narrowly** — 3 one-way findings, all "extract *more*
+of the deterministic logic, not just the arithmetic":
+
+- **PV-1 (BLOCKER) — `check-plan` proves internal consistency, not that the required plan was
+  compiled.** The listed assertions validate only rows that *happen to exist*; a plan can omit a
+  mandatory P1/P7 row (or have zero rows, zero totals) and still pass. Table-P **emission**, signal
+  evaluation, and patch application stay deterministic **prose** — the exact unproven-property defect,
+  now under a stronger-sounding guard. **Alternative:** the lib **compiles** the structural plan (or
+  `check-plan` independently **re-derives the complete expected row set and compares exactly**); only
+  narrative (`omissionRisk`) stays LLM-authored. Fixtures: delete a required row, suppress a firing
+  upgrade, misapply a patch → nonzero. **Win:** the gate proves *completeness*, not just arithmetic.
+- **PV-2 (IMPORTANT) — manifest/report have no canonical engine-slice input.** `build-manifest`
+  can't know which rows slice 1 executes unless `hidden-failure@L1` is hard-coded or repeated in
+  prose; `check-report` can't prove in-slice=executed / out-of-slice=omitted (ledger-identity
+  equality alone lets *every* row be omitted). **Alternative:** a **lens×altitude capability table in
+  the lib**; `build-manifest` emits one envelope (`engineSlice` + records + initial ledger); future
+  slices edit **only** that table. **Win:** kills three copies of slice-membership; false
+  omission/coverage becomes mechanically impossible.
+- **PV-3 (IMPORTANT) — mechanical adjudication dispatched by untyped free-text.** The finder schema
+  has no `claimClass`; evidence `mechanicalChecks.check` is an arbitrary string — so `adjudicate` has
+  no enforced enum or typed class→check map; the "deterministic tier" rests on an unestablished
+  property. **Alternative:** a **closed `claimClass` enum + closed check IDs**, a declarative
+  class→required-facts map, reject mismatches; cases that can't be established mechanically **route to
+  the judgment tier** rather than claim determinism. **Win:** removes free-text dispatch from the
+  precision gate lenses will inherit.
+
+**Common thread:** the deterministic core is **bigger** than the sketch scoped — it includes the plan
+**compilation** (PV-1), **slice-membership** (PV-2), and **typed mechanical dispatch** (PV-3), not
+just the arithmetic checks. Correcting the boundary means the lib owns the *deterministic compiler +
+executor core of both skills*, with the LLM reduced to recon/detection, narrative, orchestration,
+prompts, and the judgment-tier adjudication.
