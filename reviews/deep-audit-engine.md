@@ -618,3 +618,50 @@ passes. I found no genuinely new, high-leverage approach concerns."*
 
 The shape is **blessed** — three approach cycles converged (frame DR-1/2/3 → AR-1/2/3 → RR2-1/2/3 →
 clean). Per the short-circuit invariant, correctness now runs in the same round.
+
+## Codex review (2026-07-27, base main, HEAD 61156c7)
+
+Artifact: `reviews/deep-audit-engine.codex.json`. First correctness pass (rounds 1–2 short-circuited
+at approach; the shape only just cleared). Line-level, grounded in the diff.
+
+**Summary:** *"Three blockers: the planner fingerprint hashes the wrong repository for path-targeted
+audits, the executability gate accepts thinned L1 schedules, and the report contract accepts an empty
+'complete' coverage report. Two additional contract/linter mismatches undermine the accepted
+hybrid-adjudication and OPS-17 drift guarantees. The two deep-audit linters pass, demonstrating that
+their current phrase checks miss these defects."*
+
+### BLOCKER
+
+- **C-1 — Planner fingerprint ignores the resolved target.** (`deep-audit/SKILL.md:87`.) The planner's
+  `fp()` uses **bare** `git ls-files` / `git hash-object` / relative `test -x`, but `/deep-audit
+  [path]` may target a repo other than cwd — so it fingerprints the **caller's** repo (or fails
+  outside one), while the engine uses `git -C "$T"` / `$T/$p`. A path-targeted plan can immediately
+  fail AC2, and the two "identical" helpers are **not** identical. *Suggestion:* bind `T` to the
+  resolved target root and use the engine's exact `git -C "$T"` / `$T/$p` helper in the planner.
+- **C-2 — Executability gate accepts incomplete standard/deep rows.** (`deep-audit-run/SKILL.md:83`.)
+  The loaded-plan check only requires L1 `unitIds` be **drawn from** `codeUnitIds` (a subset). A
+  tampered standard/deep row can **drop units**, reduce `runs`/`estTokens`/totals consistently, and
+  pass every check — the engine then ledgers it `executed` with part of scope skipped: the story's
+  prohibited **"coverage gap that reads as coverage."** *Suggestion:* re-verify the **exact**
+  depth-derived resolution — `units = |codeUnitIds|`; standard/deep `unitIds = codeUnitIds`; light =
+  the ordered every-3rd sample; reject duplicates/order drift.
+- **C-3 — Report schema permits an empty "complete" report.** (`audit-report-schema.json:32`.)
+  `ledger`, `coverage.covered`, `coverage.notCovered` all allow **empty** arrays while `status` =
+  `complete` — a report with no ledger and no coverage validates, contra AC6 (mandatory per-row
+  ledger + non-empty coverage) and AC7 (no absent sweep as complete). *Suggestion:* require a
+  non-empty ledger + coverage, and add a **report semantic check** (ledger identities = plan-row
+  identities; coverage derived from ledger; per-row verified counts = findings).
+
+### IMPORTANT
+
+- **C-4 — Evidence schema still claims blanket-deterministic adjudication.** (`evidence-schema.json:5`.)
+  The description says a *"separate deterministic adjudication step"* — the **rejected** pre-AR-2
+  design; only the mechanical tier is deterministic. The schema describes a design the skill no longer
+  implements. *Suggestion:* reference SKILL.md's two-tier adjudication instead of restating (OPS-17).
+- **C-5 — Drift linter enforces duplicated schema prose.** (`deep_audit_engine_test.sh:132`.) The
+  linter's own header + AC10 require each rule pinned **once** in the skill with schema descriptions
+  merely **referencing** it — yet these checks force the evidence/report schemas to **repeat**
+  claim-blindness, claim-exclusion, default-refute, and report-rule wording. That duplication is what
+  let C-4's contradictory text pass at 96/96 green. *Suggestion:* pin behavioral wording only in
+  SKILL.md; for schemas check structure + a concise SKILL.md reference, and add `absent` checks for
+  duplicated load-bearing prose.
