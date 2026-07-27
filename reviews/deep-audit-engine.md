@@ -665,3 +665,31 @@ their current phrase checks miss these defects."*
   let C-4's contradictory text pass at 96/96 green. *Suggestion:* pin behavioral wording only in
   SKILL.md; for schemas check structure + a concise SKILL.md reference, and add `absent` checks for
   duplicated load-bearing prose.
+
+## Decisions (2026-07-27, correctness round 3)
+
+Approach pass was **clean** (no approach decisions). Correctness — Thomas: **"Fix all 5 — full."**
+These are line-level fixes (not redesigns); `/close` will reach the **re-review-or-merge** fork, and a
+short re-review is recommended before merge because C-2/C-3 touch coverage-integrity logic. Exact
+scope `/close` will apply:
+
+- **C-1 → FIX.** In `/deep-audit` step 2, bind `T` to the resolved target root (from step 0's
+  `git -C <path|.> rev-parse --show-toplevel`) and make the planner `fp()` use `git -C "$T"` /
+  `[ -x "$T/$p" ]` — **byte-identical** to the engine's `fp()`, so a path-targeted plan verifies
+  against its own repo.
+- **C-2 → FIX.** `/deep-audit-run` step 3 gate item 5: replace the subset check with the **exact
+  depth-derived resolution** — `units = |codeUnitIds|`; standard/deep `unitIds = codeUnitIds` (full
+  ordered); light `unitIds` = the ordered every-3rd sample of `codeUnitIds`; reject duplicates/order
+  drift. Closes the "thinned row reads as full coverage" gap.
+- **C-3 → FIX (full).** `audit-report-schema.json`: `ledger` and `coverage.notCovered` get
+  `minItems: 1`. `/deep-audit-run` step 6 gains a named **report semantic check** — ledger identities
+  = plan-row identities; `coverage.notCovered` derived from `omitted` rows + out-of-slice;
+  per-`(lens,altitude,scope)` `verifiedFindingCount` = the count of report findings for it;
+  `status: complete` only when no row is `failed` — mirroring the plan semantic check.
+- **C-4 + C-5 → FIX together (OPS-17 rework).** Schemas **reference** SKILL.md, they do not restate
+  rules: `evidence-schema.json` drops the "deterministic adjudication" wording (and other rule
+  restatements) for a pointer to the two-tier contract; `audit-report-schema.json` likewise. The
+  engine linter stops pinning duplicated schema **prose** — instead it checks each schema's
+  **structure** (required/enum/additionalProperties) + a concise **SKILL.md reference**, and
+  **`absent`-checks** the duplicated load-bearing wording (e.g. `absent` "deterministic adjudication"
+  in the evidence schema). Rules stay pinned **once**, in SKILL.md. Fixing C-5 this way subsumes C-4.
