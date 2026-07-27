@@ -807,3 +807,31 @@ of the deterministic logic, not just the arithmetic":
 just the arithmetic checks. Correcting the boundary means the lib owns the *deterministic compiler +
 executor core of both skills*, with the LLM reduced to recon/detection, narrative, orchestration,
 prompts, and the judgment-tier adjudication.
+
+## Outcome — re-sequenced (2026-07-27)
+
+Thomas's decisions at the pivot consult: **full boundary** (the lib owns the plan *compiler*, PV-1
+fully fixed; PV-2 slice-table + PV-3 typed mechanical dispatch accepted) and **split, lib-first**.
+
+**This `deep-audit-engine` story is parked** — its *prose* engine implementation (the whole
+`SKILL.md` + schemas built here) is **superseded** by the tested-shell architecture and will be
+**rebuilt on the lib**, not shipped as-is. The value it leaves behind is this file: the full
+14-finding review journey and the root-cause analysis that *earned* the pivot. Re-sequenced into two
+stories:
+
+1. **`deep-audit-lib` (foundational, next).** One tested Bash library — `fingerprint`,
+   `resolve-units`, the Table-P **compiler** (signals, emission, patches, pricing), `check-plan`
+   (completeness + consistency), `build-manifest`, `check-report`, the lens×altitude **capability
+   table**, and the **typed mechanical-tier** `adjudicate` — under the estate standard (`shellcheck` +
+   `shfmt -i 2 -ci`, CI), with a **behavioural** test suite (tampered fixtures → nonzero). `/deep-audit`
+   is refactored to **call** the lib (single-sourcing Table P). Kills the claims-without-enforcement
+   generator at its root.
+2. **`deep-audit-engine` (rebuilt on the lib, later).** The LLM orchestration only — Workflow
+   fan-out, finder/verifier prompts, judgment-tier adjudication, synthesis — calling the lib for every
+   deterministic step. Much smaller once the mechanics are a tested dependency.
+
+**Disposition of this branch / PR #41:** superseded — recommend **close** PR #41 (do not merge the
+prose engine). This story file (`reviews/deep-audit-engine.md`) is carried forward as the parked-story
+record so the pivot rationale lands on `main` via the `deep-audit-lib` story.
+The header stays `Status: approved` (declared state; it simply never ships in this shape — observed
+state stays git's, and there will be no `merge: deep-audit-engine`).
