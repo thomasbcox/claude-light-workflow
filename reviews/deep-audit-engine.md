@@ -607,3 +607,14 @@ Applied the three approved round-2 redesigns; gate green.
   behavioral dogfood proved *still fail-open* on an unstaged `chmod` (the index mode doesn't move
   until staged). Switched to the working-tree `test -x`, then re-verified: an unstaged exec-bit flip
   now changes the fingerprint; content edits still register; the helper is deterministic.
+
+## Codex approach review (2026-07-27, base main, HEAD 61156c7 — re-review round 3)
+
+Artifact: `reviews/deep-audit-engine.approach.json`. Third approach cycle, after the round-2 redesign.
+
+**Verdict (empty findings — CLEAN):** *"The current shape is sound and converged. The accepted
+redesigns from rounds 1 and 2 are embodied in the present contracts, and the 96-check drift gate
+passes. I found no genuinely new, high-leverage approach concerns."*
+
+The shape is **blessed** — three approach cycles converged (frame DR-1/2/3 → AR-1/2/3 → RR2-1/2/3 →
+clean). Per the short-circuit invariant, correctness now runs in the same round.
