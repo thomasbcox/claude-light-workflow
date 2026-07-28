@@ -24,6 +24,7 @@ ARTIFACTS=(
   ".claude/skills/close::skills/close"
   ".claude/skills/dev-audit::skills/dev-audit"
   ".claude/skills/deep-audit::skills/deep-audit"
+  ".claude/skills/deep-audit-lib.sh::skills/deep-audit-lib.sh"
   ".claude/hooks/block-main-writes.sh::hooks/block-main-writes.sh"
   ".claude/workflow-protocol.md::workflow-protocol.md"
   "AGENTS.md::workflow-AGENTS-template.md"
