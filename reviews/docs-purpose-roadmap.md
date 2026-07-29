@@ -177,6 +177,42 @@ estate fights, aimed at my sketch:
   roadmap *semantics* to review. **Win:** still stops the next deployed-but-undocumented skill (the
   exact trigger for this story), without brittle phrase pins or false confidence.
 
+## Codex approach review (2026-07-29, base main, HEAD 6a14c5f)
+
+Artifact: `reviews/docs-purpose-roadmap.approach.json`.
+
+**Verdict:** *"The purpose shape is sound: README is canonical and ARCHITECTURE points to it while
+recording architectural consequences. However, I would not ship the roadmap or linter in their
+current shapes: ROADMAP recreates shadow lifecycle state, and the linter can pass on incidental name
+occurrences."*
+
+Purpose single-sourcing **confirmed**. Two findings:
+
+### BLOCKER
+
+- **AP-1 — ROADMAP is still a hand-maintained status dashboard** — *one-way · kludgy.*
+  (`ROADMAP.md`.) Despite the "strategic view" reframe, it **re-asserts mutable lifecycle facts** —
+  "shipped," "parked," "stable," "in-flight," "being rebuilt," + a curated open-work list — which
+  DR-1 assigned to git/BACKLOG/story files. Links don't remove the duplication when the surrounding
+  prose copies status; this is the **second-writer model the story exists to prevent**, recreated in
+  the roadmap itself. (Self-check confirms: shipped×5, parked×3, stable×2, in-flight, staged.)
+  **Alternative:** keep **only durable strategic direction + unresolved choices** (lightweight-loop
+  direction, reviewer diversification, deep-audit core/plugin/park); **remove lifecycle labels,
+  delivery narratives, and the curated OPS inventory**; link once to README/git + BACKLOG + stories
+  for state. **Win:** removes ~15–20 lines of shadow status and the obligation to update ROADMAP on
+  every merge/OPS/story change.
+
+### IMPORTANT
+
+- **AP-2 — the linter checks incidental substrings, not documented commands** — *two-way · kludgy.*
+  (`tests/docs_test.sh`.) Extraction greps the **whole** install script (a skill name in a
+  comment/example outside `ARTIFACTS` would count), and coverage matches the **bare** skill name
+  anywhere — so a skill named `audit` "passes" via "audit trail" prose, with no real feature entry.
+  The gate doesn't reliably enforce its sole invariant. **Alternative:** extract only from **inside
+  the `ARTIFACTS` array**, and require the **structural command token** (`/name`, with delimiters) in
+  both docs — pinning command identity, not prose wording. **Win:** kills both false-green paths while
+  staying minimal + phrase-independent.
+
 ## Build note (2026-07-29)
 
 AC → file map:
