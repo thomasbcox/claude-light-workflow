@@ -213,6 +213,21 @@ Purpose single-sourcing **confirmed**. Two findings:
   both docs — pinning command identity, not prose wording. **Win:** kills both false-green paths while
   staying minimal + phrase-independent.
 
+## Decisions (2026-07-29, approach round 1)
+
+Thomas: **"Fix both."** Both reshape a deliverable (approach short-circuit — correctness did not run;
+redesign goes through `/close`, then re-reviews). Exact scope:
+
+- **AP-1 → FIX.** Strip `ROADMAP.md` to only the **durable** layer: per-theme **direction** (keep the
+  loop lightweight; the reviewer layer diversifies; deep-audit is the big bet) and the **open
+  decisions** (deep-audit core/plugin/park; the `OPS-` prefix taxonomy), plus the one "where current
+  status lives" pointer (git/README + BACKLOG + `reviews/`). **Remove** all lifecycle labels
+  (shipped/parked/stable/in-flight/staged/being-rebuilt), delivery narratives, and the curated `OPS-`
+  inventory — those are git/BACKLOG's to own.
+- **AP-2 → FIX.** `tests/docs_test.sh`: extract skill names **only from inside the `ARTIFACTS=( … )`
+  block** (not the whole file), and require the **structural command token `/<name>`** (with a
+  delimiter) in README **and** ARCHITECTURE — pinning command identity, not incidental prose.
+
 ## Build note (2026-07-29)
 
 AC → file map:
