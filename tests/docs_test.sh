@@ -25,16 +25,22 @@ bad() {
   printf 'FAIL  %s\n' "$1"
 }
 
-echo "== every deployed skill (install.sh ARTIFACTS) is documented in README + ARCHITECTURE =="
-# ARTIFACTS entries for skills look like ".claude/skills/<name>::skills/<name>". Match only
-# directory-skills (no dot in <name>), so the standalone deep-audit-lib.sh library entry —
-# which has no user-facing command to document — is naturally excluded.
-skills="$(grep -oE '\.claude/skills/[a-z0-9-]+::' "$INSTALL" | sed -E 's#\.claude/skills/([a-z0-9-]+)::#\1#' | sort -u)"
-[ -n "$skills" ] && ok "parsed deployed skills from ARTIFACTS" || bad "no skills parsed from install.sh ARTIFACTS"
+echo "== every deployed skill (install.sh ARTIFACTS) is documented as a /command in README + ARCHITECTURE =="
+# Extract skill names ONLY from inside the ARTIFACTS=( … ) block (not the whole file), and only from
+# quoted skill-DIRECTORY records ".claude/skills/<name>::…" — so a name in a comment/example elsewhere
+# can't create a phantom skill (AP-2), and the standalone deep-audit-lib.sh library (a ".sh" entry,
+# not a command) is excluded.
+artifacts="$(sed -n '/^ARTIFACTS=(/,/^)/p' "$INSTALL")"
+skills="$(printf '%s\n' "$artifacts" | grep -oE '"\.claude/skills/[a-z0-9-]+::' | sed -E 's#"\.claude/skills/([a-z0-9-]+)::#\1#' | sort -u)"
+[ -n "$skills" ] && ok "parsed deployed skills from the ARTIFACTS block" || bad "no skills parsed from the ARTIFACTS block"
+
+# Require the structural COMMAND token /<name> — delimited, not a path segment, not incidental prose
+# (AP-2) — so "close" in prose or the path skills/deep-audit/ cannot false-green a coverage check.
+doc_has_cmd() { grep -qE "(^|[^[:alnum:]/._-])/$1([^[:alnum:]-]|\$)" "$2"; }
 while IFS= read -r s; do
   [ -n "$s" ] || continue
-  grep -qF "$s" "$README" && ok "README documents /$s" || bad "README missing deployed skill: /$s"
-  grep -qF "$s" "$ARCH" && ok "ARCHITECTURE documents /$s" || bad "ARCHITECTURE missing deployed skill: /$s"
+  doc_has_cmd "$s" "$README" && ok "README documents /$s" || bad "README missing deployed command: /$s"
+  doc_has_cmd "$s" "$ARCH" && ok "ARCHITECTURE documents /$s" || bad "ARCHITECTURE missing deployed command: /$s"
 done <<<"$skills"
 
 echo "== ROADMAP.md exists =="

@@ -228,6 +228,21 @@ redesign goes through `/close`, then re-reviews). Exact scope:
   block** (not the whole file), and require the **structural command token `/<name>`** (with a
   delimiter) in README **and** ARCHITECTURE — pinning command identity, not incidental prose.
 
+## Fixes (2026-07-29, approach round 1)
+
+Applied both approved fixes; gate green.
+
+- **AP-1.** `ROADMAP.md` stripped to the **durable** layer: a "where status lives" pointer, a
+  **Direction** section (per-theme trajectory, no status), and **Open decisions** (deep-audit
+  core/plugin/park; the `OPS-` prefix taxonomy). Removed all lifecycle labels (shipped/parked/
+  stable/in-flight/staged), the delivery narratives, and the curated `OPS-` inventory — those are
+  git/BACKLOG's to own. (The two remaining "parked" tokens are the routing-category label and the
+  *name* of the core/plugin/**park** decision, not per-item status.)
+- **AP-2.** `tests/docs_test.sh` now extracts skill names **only from inside the `ARTIFACTS=( … )`
+  block** (quoted skill-dir records), and requires the structural **`/command` token** (delimited)
+  in both docs via `doc_has_cmd`. Verified behaviorally: incidental prose ("close") is rejected, the
+  real `/close` matches, and `/dev` is not matched inside `/dev-audit`.
+
 ## Build note (2026-07-29)
 
 AC → file map:
