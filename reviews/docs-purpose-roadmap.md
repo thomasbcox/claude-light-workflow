@@ -177,6 +177,22 @@ estate fights, aimed at my sketch:
   roadmap *semantics* to review. **Win:** still stops the next deployed-but-undocumented skill (the
   exact trigger for this story), without brittle phrase pins or false confidence.
 
+## Build note (2026-07-29)
+
+AC → file map:
+
+- **AC1** (purpose explicit + single-sourced) → `README.md` ("## What this repo is"); `ARCHITECTURE.md`
+  §1.2 (pointer + arch-specific consequences, not a restatement).
+- **AC2** (all five deployed skills documented) → `README.md` (loop table + recon section);
+  `ARCHITECTURE.md` (§2.2 loop, §2.2a recon).
+- **AC3** (`deep-audit` shipped + roadmap status) → `README.md` recon; `ARCHITECTURE.md` §2.2a;
+  `ROADMAP.md`.
+- **AC4** (roadmap = strategic view, DR-1) → `ROADMAP.md`.
+- **AC5** (accuracy / no stale claims) → `README.md`, `ARCHITECTURE.md`.
+- **AC6** (docs linter, DR-2 form) → `tests/docs_test.sh`; `.claude/workflow.json`;
+  `.github/workflows/ci.yml`.
+- **AC7** (scope containment) → the enumerated set above.
+
 ## Design decisions (2026-07-29)
 
 Thomas's frame-consult decisions — **binding on implementation**:
