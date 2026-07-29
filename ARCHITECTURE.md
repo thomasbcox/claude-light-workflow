@@ -26,6 +26,13 @@ drifts from intent, skips edge cases, and accumulates regressions nobody indepen
 scribe specs, run the gate, or babysit Git mechanics. The system should turn a casual request into a
 reviewed, tested, independently-critiqued change with a small, honest audit trail.
 
+*What this repo is* — a **meta-repo** that authors the workflow (skills + guard hook + recon tools)
+and deploys it via `install.sh` to run across **every project on the machine** — is stated
+canonically in [`README.md`](README.md) → *What this repo is*; it is not restated here. Two
+consequences shape this design: the skills must **install globally yet stand down per-repo** (§1.3,
+§3.5), and this repo **self-hosts** the workflow it ships — so its own product is prompt-instructions,
+the one case where the deploy target is atypical.
+
 ### 1.3 Constraints that shape it
 
 - **Lightweight.** It is a deliberate trim of the parent "AI Protocol v3." Keep only what a good
@@ -63,17 +70,25 @@ The loop is three skills, each ending at a human decision:
 | [`/review`](.claude/skills/review/SKILL.md) | gate green → **approach pass** (shape) gates **correctness pass** (diff) → decision menu | **decides per finding** |
 | [`/close`](.claude/skills/close/SKILL.md) | apply approved fixes → re-review or merge → cleanup | **approves merge** |
 
-### 2.2a Before the loop: `/dev-audit` (recon)
+### 2.2a Before the loop: recon (`/dev-audit`, `/deep-audit`)
 
-The three skills above act on *one stated change*. A separate, standalone skill,
-[`/dev-audit`](.claude/skills/dev-audit/SKILL.md), acts *before* there is a change: pointed at a
-repo, it detects type + maturity, selects analysis tools that fit (with rationale), runs a
-zero-dependency core plus any installed heavier tools (installing nothing), and reports findings +
-risk + prioritized next steps. It is **not a loop step** and has no merge gate — it is read-only
-and report-first. Its single seam to the loop is the backlog: on an explicit instruction it
-graduates findings into [`BACKLOG.md`](BACKLOG.md) as `AUDIT-` items, which then flow through
-`/frame → /review → /close` like any other line. It honors the same `docs/ai-protocol.md`
-stand-down (§3.5) as the loop skills.
+The three skills above act on *one stated change*. Two separate, standalone **recon** skills act
+*before* there is a change, pointed at a target repo. Both are **not loop steps**, have no merge gate,
+are read-only and report-first, and honor the same `docs/ai-protocol.md` stand-down (§3.5).
+
+[`/dev-audit`](.claude/skills/dev-audit/SKILL.md) detects type + maturity, selects analysis tools that
+fit (with rationale), runs a zero-dependency core plus any installed heavier tools (installing
+nothing), and reports findings + risk + prioritized next steps. Its single seam to the loop is the
+backlog: on an explicit instruction it graduates findings into [`BACKLOG.md`](BACKLOG.md) as `AUDIT-`
+items, which then flow through `/frame → /review → /close` like any other line.
+
+[`/deep-audit`](.claude/skills/deep-audit/SKILL.md) is a **whole-app, multi-lens** audit that
+complements the diff-scoped review loop with an occasional deep sweep. **Shipped: the plan stage** —
+it compiles a priced, deterministic audit *plan* (judgment lenses × altitudes × depth × token cost)
+and presents it for approval, then stops. Its **execution engine** (critic fleet → adversarial
+verification → synthesis) is **on the roadmap, direction under evaluation** — see
+[`ROADMAP.md`](ROADMAP.md). It is the estate's most substantial in-flight subsystem and the reason a
+clear roadmap exists.
 
 ### 2.3 Reversibility-gated blocking
 
