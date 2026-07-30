@@ -240,6 +240,40 @@ fixed and remain settled; no genuinely new high-leverage shape concerns were fou
 
 Shape **blessed** — correctness runs in the same round.
 
+## Codex review (2026-07-29, base main, HEAD 8a3b116)
+
+Artifact: `reviews/docs-purpose-roadmap.codex.json`. First correctness pass (round 1 short-circuited
+at approach). All four verified against the sources.
+
+**Summary:** *"The deep-audit plan/execution boundary and roadmap status are honest, but the story
+does not meet its accuracy and linter ACs. Canonical docs retain stale inventories, and the linter
+has reproducible false-green paths despite passing shellcheck and shfmt."*
+
+### BLOCKER
+
+- **CR-1 — stale four-skill inventories remain** (`ARCHITECTURE.md:216`, `§3.5–3.6`; `README.md`
+  stand-down). AC2 required removing the "three loop skills plus `/dev-audit`" framing, but
+  `ARCHITECTURE.md:216` still has it, and the **stand-down lists** omit `/deep-audit` while the new
+  recon sections correctly say both recon skills stand down — internally inconsistent, and omits a
+  shipped skill in multiple inventories. *Fix:* update the README + ARCHITECTURE stand-down/inventory
+  spots to "three loop skills + two recon skills" incl. `/deep-audit`.
+
+### IMPORTANT
+
+- **CR-2 — the linter fails OPEN** (`tests/docs_test.sh`, the `<<<` here-string). If the here-string's
+  temp file can't be created (unwritable/exhausted `/tmp` — Codex reproduced it), the per-skill loop
+  is **skipped**, and the script prints `passed=2 failed=0` and exits **0** — enforcing none of its
+  core invariant. *Fix:* feed the loop without a here-string (process substitution) **and** fail
+  closed if enumeration didn't run (assert every parsed skill was checked).
+- **CR-3 — the command regex accepts file paths** (`tests/docs_test.sh`). The trailing boundary
+  excludes only alnum + hyphen, so `/frame/SKILL.md` and `/deep-audit.md` match — a skill mentioned
+  only as a **path/filename** satisfies the "documented as a `/command`" claim (contra AP-2).
+  *(Confirmed: `/deep-audit.md` matches.)* *Fix:* require the docs' actual command form (backtick-
+  wrapped `` `/name` ``) and exclude path separators + extensions from the boundary.
+- **CR-4 — CI suite count is stale** (`README.md:114`, `ARCHITECTURE.md:190`). Both say the gate runs
+  "the three test suites," but this branch wired a **fifth** (`docs_test.sh`). *Fix:* replace the
+  brittle number with an accurate, count-free description ("the configured workflow test suites").
+
 ## Fixes (2026-07-29, approach round 1)
 
 Applied both approved fixes; gate green.
