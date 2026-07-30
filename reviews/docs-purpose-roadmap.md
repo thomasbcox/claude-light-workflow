@@ -274,6 +274,23 @@ has reproducible false-green paths despite passing shellcheck and shfmt."*
   "the three test suites," but this branch wired a **fifth** (`docs_test.sh`). *Fix:* replace the
   brittle number with an accurate, count-free description ("the configured workflow test suites").
 
+## Decisions (2026-07-29, correctness round 2)
+
+Approach pass was clean (no approach decisions). Correctness — Thomas: **"Fix all 4."** Line-level
+fixes (not redesigns); `/close` reaches the re-review-or-merge fork. Exact scope:
+
+- **CR-1 → FIX.** `ARCHITECTURE.md:216`: reword "the three loop skills plus `/dev-audit`" → the loop's
+  three skills **+ two recon skills** (incl. `/deep-audit`). Add `/deep-audit` to the stand-down lists
+  (README stand-down section + `ARCHITECTURE.md §3.5`) so both recon tools are listed consistently.
+- **CR-2 → FIX.** `tests/docs_test.sh`: feed the skill loop via **process substitution** (not a
+  here-string) and add a **fail-closed count guard** — assert every parsed skill was actually checked;
+  `bad` (exit 1) if enumeration didn't run.
+- **CR-3 → FIX.** `doc_has_cmd`: require the **backtick command form** (leading `` ` `` before
+  `/name`) and a trailing boundary that **excludes path separators + extensions** (`/`, `.`), so a
+  filename/path can't satisfy the command check.
+- **CR-4 → FIX.** `README.md:114` + `ARCHITECTURE.md:190`: replace "the three test suites" with a
+  **count-free** description ("the configured workflow test suites").
+
 ## Fixes (2026-07-29, approach round 1)
 
 Applied both approved fixes; gate green.
