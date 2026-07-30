@@ -187,7 +187,7 @@ mechanically catches.
 
 The cooperative hook is now backed by an authoritative server-side gate. Two workflows under
 [`.github/workflows/`](.github/workflows/):
-- **`ci.yml`** — on every PR / push to `main`, runs the **gate** (the three test suites) + `shellcheck`
+- **`ci.yml`** — on every PR / push to `main`, runs the **gate** (the configured workflow test suites) + `shellcheck`
   + a **gitleaks diff** scan. The `gate` job is a **required status check** on `main`.
 - **`scheduled.yml`** — weekly, re-scans the **full history** for secrets (a drift check for new rules
   / out-of-band history changes). Advisory.
@@ -208,13 +208,13 @@ continuously as a zero-maintenance first line.
 
 Because everything installs globally, a repo that runs its own heavier workflow opts out by placing a
 **`docs/ai-protocol.md`** marker at its root. When present, the hook becomes a no-op (the repo's own
-hooks govern) and `/frame`, `/review`, `/close` — and `/dev-audit`, before it reads or writes
-anything — stop and point at the native skills.
+hooks govern) and `/frame`, `/review`, `/close` — and the recon tools `/dev-audit` and `/deep-audit`,
+each before it reads or writes anything — stop and point at the native skills.
 
 ### 3.6 Test here, deploy everywhere
 
-The skills (the three loop skills plus `/dev-audit`) + hook are project-local under `.claude/` so they
-can be exercised here with a real `/frame → /review → /close`. [`install.sh`](install.sh) then copies
+The skills (the three loop skills + two recon skills, `/dev-audit` and `/deep-audit`) + hook are
+project-local under `.claude/` so they can be exercised here with a real `/frame → /review → /close`. [`install.sh`](install.sh) then copies
 them — its `ARTIFACTS` set is the single source of truth for the deployed files — to `~/.claude/` and
 wires the hook into `~/.claude/settings.json` (idempotent, backs up first); `./install.sh --check`
 reports drift.

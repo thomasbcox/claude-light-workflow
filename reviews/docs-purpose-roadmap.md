@@ -291,6 +291,26 @@ fixes (not redesigns); `/close` reaches the re-review-or-merge fork. Exact scope
 - **CR-4 → FIX.** `README.md:114` + `ARCHITECTURE.md:190`: replace "the three test suites" with a
   **count-free** description ("the configured workflow test suites").
 
+## Fixes (2026-07-29, correctness round 2)
+
+Applied all four approved fixes; gate green.
+
+- **CR-1.** Added `/deep-audit` to both stand-down lists (README + `ARCHITECTURE.md §3.5`) and reworded
+  the `§3.6` inventory to "three loop skills + two recon skills (`/dev-audit` and `/deep-audit`)". To
+  keep the stand-down accurate for **two** tools *without* editing the out-of-scope
+  `dev_audit_test.sh` (which pins the exact phrase "before it reads or writes anything"), the reword
+  is the distributive **"each before it reads or writes anything"** — natural, accurate, and it
+  preserves the pin (OPS-16-conscious: a corollary of an accurate-docs change shouldn't have to grow
+  the diff into another linter).
+- **CR-2.** `tests/docs_test.sh` feeds the skill loop via **process substitution** and adds a
+  **fail-closed count guard** (`checked` must equal the parsed skill count) — a skipped enumeration
+  now fails instead of printing green.
+- **CR-3.** `doc_has_cmd` now uses a **symmetric** boundary `[^[:alnum:]/._-]` on both sides, so a
+  path (`/frame/SKILL.md`) or filename (`/deep-audit.md`) no longer satisfies the `/command` check.
+  Verified behaviorally: both rejected, real `` `/deep-audit` `` accepted.
+- **CR-4.** README + ARCHITECTURE now say "the **configured workflow test suites**" — count-free,
+  so wiring a suite never restales the docs.
+
 ## Fixes (2026-07-29, approach round 1)
 
 Applied both approved fixes; gate green.
