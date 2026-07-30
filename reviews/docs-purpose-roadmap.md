@@ -228,6 +228,18 @@ redesign goes through `/close`, then re-reviews). Exact scope:
   block** (not the whole file), and require the **structural command token `/<name>`** (with a
   delimiter) in README **and** ARCHITECTURE — pinning command identity, not incidental prose.
 
+## Codex approach review (2026-07-29, base main, HEAD a45dd77 — re-review round 2)
+
+Artifact: `reviews/docs-purpose-roadmap.approach.json`. Re-review after the AP-1/AP-2 redesign.
+
+**Verdict (empty findings — CLEAN):** *"The reshaped approach is sound. ROADMAP.md now contains
+durable strategic direction, authority pointers, and open decisions without recreating per-item
+lifecycle status. The docs linter derives deployed skills solely from install.sh's ARTIFACTS block
+and checks delimited /command tokens without coupling to prose wording. AP-1 and AP-2 are verified as
+fixed and remain settled; no genuinely new high-leverage shape concerns were found."*
+
+Shape **blessed** — correctness runs in the same round.
+
 ## Fixes (2026-07-29, approach round 1)
 
 Applied both approved fixes; gate green.
