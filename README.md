@@ -8,7 +8,21 @@ a good Claude↔Codex back-and-forth.
 
 For the full picture of *this* system — requirements through intended implementation — see
 [`ARCHITECTURE.md`](ARCHITECTURE.md). The normative rules live in
-[`.claude/workflow-protocol.md`](.claude/workflow-protocol.md).
+[`.claude/workflow-protocol.md`](.claude/workflow-protocol.md). Where things stand and where they're
+headed is in [`ROADMAP.md`](ROADMAP.md).
+
+## What this repo is
+
+**This repo is where the workflow itself is authored — then deployed to run everywhere else.** The
+skills (`/frame` `/review` `/close`, plus the recon tools `/dev-audit` and `/deep-audit`) and the
+guard hook live here as project-local files under `.claude/`; [`install.sh`](install.sh) copies them
+to `~/.claude/`, so they operate across **every project on your machine**. The **loop** skills act on
+whatever repo you're working in; the **recon** tools inspect a *target* repo you point them at.
+
+This repo is the one **atypical** case: it *self-hosts* the workflow, so its own product is the
+prompt-instructions you see here — which is why auditing *this* repo is a special case, not the norm
+(the deploy targets are ordinary codebases). It's written for its owner first, but structured so
+anyone could adopt it — clone, `./install.sh`, and run `/frame` in any project.
 
 ## The loop
 
@@ -30,7 +44,7 @@ On a first review both passes run; scope it with **`/review approach`** (force t
 **`/review correctness`** (skip straight to the line-level pass). Re-reviews that only verify fixes are
 correctness-only by default.
 
-### Before the loop: `/dev-audit`
+### Before the loop: recon (`/dev-audit`, `/deep-audit`)
 `/dev-audit [path]` is a standalone **pre-loop recon** step. It inspects a repo's languages,
 frameworks, manifests, tests, CI, and secret-handling; classifies its type and maturity tier;
 selects analysis tools that fit *that* repo (via a declarative ecosystem→tool table, **with
@@ -39,6 +53,15 @@ nothing); and returns a brief report — findings, **risk level**, best-practice
 next steps — flagging missing safeguards (CI, tests, pinned deps, secret handling). It is read-only
 and **report-first**: it graduates findings into [`BACKLOG.md`](BACKLOG.md) as `AUDIT-` items only on
 an explicit instruction, and honors the same `docs/ai-protocol.md` stand-down as the loop skills.
+
+`/deep-audit [path]` goes deeper: a **whole-app, multi-lens audit**. It compiles a priced,
+deterministic audit *plan* — which judgment lenses (hidden-failure, security, test-adequacy,
+architecture), at which altitudes (file / subsystem / app), over which files, at what token cost —
+for a target repo, and presents it for approval. **Shipped today: the plan stage** (recon → priced
+plan → consult → stop). Its **execution engine** — running the plan's critic fleet, adversarially
+verifying every finding, synthesizing a report — is **on the roadmap, direction under evaluation**
+(core / plugin / park); see [`ROADMAP.md`](ROADMAP.md). Like `/dev-audit`, it is read-only,
+report-first, and stands down on `docs/ai-protocol.md`.
 
 **The reviewer is selectable.** `.claude/workflow.json`'s `reviewer` field (default `codex`) — or a
 per-invocation override on `/review` (`/review llm`, `/review approach codex`) — picks the backend.
@@ -88,7 +111,7 @@ of the merge flow (using the CI check's observed context) and then merges via au
 own behavior is still pinned by [`tests/guard_test.sh`](tests/guard_test.sh) (the gate).
 
 ## Continuous integration
-[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs the **gate** (the three test suites) plus
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs the **gate** (the configured workflow test suites) plus
 `shellcheck` and a **gitleaks** diff scan on every PR and push to `main`; it is the required status
 check enforced by branch protection. [`.github/workflows/scheduled.yml`](.github/workflows/scheduled.yml)
 re-scans the **full history** for secrets weekly (drift check). GitHub-native **secret scanning +
@@ -101,7 +124,7 @@ then merges.
 Because the skills + hook install globally (`~/.claude`), they reach every repo. A repo that already
 runs a heavier/native workflow signals it with a **`docs/ai-protocol.md`** marker at its root. When
 that marker is present, the light workflow **stands down**: the guard hook becomes a no-op (the
-repo's own hooks govern) and `/frame`, `/review`, `/close` — and `/dev-audit`, before it reads or writes anything — stop and point you at the native skills.
+repo's own hooks govern) and `/frame`, `/review`, `/close` — and the recon tools `/dev-audit` and `/deep-audit`, each before it reads or writes anything — stop and point you at the native skills.
 Repos without the marker are governed by the light workflow as normal.
 
 ## Test here, then deploy everywhere
