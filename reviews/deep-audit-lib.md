@@ -254,3 +254,30 @@ Thomas's frame-consult decisions — **binding on implementation**:
   deterministic derivation; the LLM supplies only the detection profile).
 - **Smaller opens (leans, no objection):** library layout = one subcommand-dispatched CLI (Open
   question 2); JSON tooling = `jq` (Open question 4).
+
+## Design decisions — amendment (2026-07-31): implementation language → Python
+
+**Supersedes the shell choice above** (Open question 4's `jq` lean and the bash sketch). After a
+skeptical review of the lib's purpose, Thomas decided: **"build in python and expect to test value
+soon after with a whole repo or several."**
+
+- **Why the change.** The original "shell, because shell is the estate's real code" reasoning applied
+  the repo-conventions guardrail to the wrong category: the estate's shell is **plumbing**
+  (`install.sh` copies files; the linters grep). `compile-plan` is **data processing** — grouping,
+  LOC chunking, churn windows, phased row emission with collision resolution, patch application,
+  arithmetic, JSON I/O — which in bash+jq becomes hundreds of lines of associative-array juggling.
+  `python3` is **already a declared requirement** (README) and is the right tool for this shape.
+- **Constraints (binding).** One file, `deep_audit_lib.py`, subcommand-dispatched CLI; **stdlib only**
+  (no pip dependencies — it deploys to every repo and the estate is non-admin); same contract as
+  before (**JSON in, exit status out**; nonzero on any violation). The behavioral suite keeps driving
+  it as a **black box** (subprocess), so the test contract is unchanged by the language.
+- **Quality gate.** **`ruff`** (installed) is the Python counterpart to `shellcheck` + `shfmt` — it
+  lints *and* formats. Wired into CI alongside the shell checks. This story sets the repo's Python
+  convention (first Python file in the estate).
+- **Port, don't fork.** The already-built `fingerprint` and `resolve-units` move to Python and must
+  produce **identical output** (the existing behavioral tests are the oracle; digest equality with
+  the bash implementation is verified explicitly). The bash lib is then removed — one library, one
+  language, no seam.
+- **Value test to follow.** Thomas: expect a real value test **soon after** — running the lens over a
+  whole repo (or several) to answer the question the subsystem has never answered: are the findings
+  worth triaging? Recorded here so the build stays pointed at that.

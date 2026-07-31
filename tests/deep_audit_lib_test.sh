@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # ── Behavioral test suite for deep-audit-lib.sh ──
 # Unlike the drift linters (which pin PROSE presence), this is a REAL behavioral
+# gate. It drives the library as a BLACK BOX (subprocess), so the contract is
+# language-independent — these same assertions validated the bash->Python port.
 # gate: it builds fixtures + tampered inputs, invokes the library, and asserts exit
 # status / output. Tampered-input REJECTION is the acceptance signal — the thing
 # prose-presence checks structurally cannot verify. This is the net the deep-audit
@@ -8,7 +10,7 @@
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-LIB="$ROOT/.claude/skills/deep-audit-lib.sh"
+LIB="$ROOT/.claude/skills/deep_audit_lib.py"
 
 pass=0 fail=0
 ok() {
@@ -50,12 +52,12 @@ make_fixture_repo() {
 }
 
 echo "== AC1: dispatch =="
-assert_exit "unknown subcommand → nonzero" 2 bash "$LIB" bogus
-assert_exit "no subcommand → nonzero" 2 bash "$LIB"
+assert_exit "unknown subcommand → nonzero" 2 python3 "$LIB" bogus
+assert_exit "no subcommand → nonzero" 2 python3 "$LIB"
 
 echo "== AC2: fingerprint =="
 FX="$(make_fixture_repo)"
-fp() { bash "$LIB" fingerprint "$FX"; }
+fp() { python3 "$LIB" fingerprint "$FX"; }
 A="$(fp)"
 B="$(fp)"
 [ -n "$A" ] && ok "emits a digest" || bad "digest empty"
@@ -73,16 +75,16 @@ E="$(fp)"
 git -C "$FX" checkout -- reviews/x.md
 assert_eq "reviews/ change is ignored" "$A" "$E"
 NONREPO="$(mktemp -d)"
-assert_exit "fingerprint on a non-repo → nonzero" 2 bash "$LIB" fingerprint "$NONREPO"
+assert_exit "fingerprint on a non-repo → nonzero" 2 python3 "$LIB" fingerprint "$NONREPO"
 rm -rf "$FX" "$NONREPO"
 
 echo "== AC3: resolve-units =="
-assert_eq "standard = full ordered" "$(bash "$LIB" resolve-units standard a b c d)" "$(printf 'a\nb\nc\nd')"
-assert_eq "deep = full ordered" "$(bash "$LIB" resolve-units deep a b c d)" "$(printf 'a\nb\nc\nd')"
-assert_eq "light = every-3rd (0,3,6)" "$(bash "$LIB" resolve-units light a b c d e f g)" "$(printf 'a\nd\ng')"
-assert_eq "light single unit" "$(bash "$LIB" resolve-units light a)" "a"
-assert_exit "unknown depth → nonzero" 2 bash "$LIB" resolve-units bogus a b
-assert_eq "empty input → empty output" "$(bash "$LIB" resolve-units standard)" ""
+assert_eq "standard = full ordered" "$(python3 "$LIB" resolve-units standard a b c d)" "$(printf 'a\nb\nc\nd')"
+assert_eq "deep = full ordered" "$(python3 "$LIB" resolve-units deep a b c d)" "$(printf 'a\nb\nc\nd')"
+assert_eq "light = every-3rd (0,3,6)" "$(python3 "$LIB" resolve-units light a b c d e f g)" "$(printf 'a\nd\ng')"
+assert_eq "light single unit" "$(python3 "$LIB" resolve-units light a)" "a"
+assert_exit "unknown depth → nonzero" 2 python3 "$LIB" resolve-units bogus a b
+assert_eq "empty input → empty output" "$(python3 "$LIB" resolve-units standard)" ""
 
 echo
 echo "passed=$pass failed=$fail"

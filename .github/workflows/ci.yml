@@ -25,6 +25,15 @@ jobs:
       - name: ShellCheck (tracked *.sh; preinstalled on ubuntu runners)
         run: shellcheck --severity=warning $(git ls-files '*.sh')
 
+      # Python's counterpart to shellcheck + shfmt: ruff lints AND format-checks. Pinned like the
+      # other installed tools so a new ruff release can't change the gate's verdict underneath us.
+      - name: ruff (lint + format check — tracked *.py)
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet --disable-pip-version-check ruff==0.15.21
+          python3 -m ruff check $(git ls-files '*.py')
+          python3 -m ruff format --check $(git ls-files '*.py')
+
       # Format check. Runs on every event (unlike the gitleaks step) — formatting is cheap and
       # meaningful on both PR and push. shfmt isn't on the runner image, so install it pinned +
       # checksum-verified into the job-local temp dir. FLAGS MUST MATCH the one-time reformat: -i 2 -ci.
