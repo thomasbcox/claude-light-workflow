@@ -1,0 +1,279 @@
+# falsification-surface-rows — falsification rows per (criterion, surface), append-only, with declared exclusions
+
+Date: 2026-08-03 · Branch: claude/falsification-surface-rows · Status: approved
+
+Scope approved by Thomas 2026-08-03: **"fix all three, skipping line for every promise"** —
+all three design findings fixed; `surfaces excluded` required on every AC (three-valued).
+
+## Problem
+
+`frame-falsification-plan` (merged 2026-08-03, `merge: frame-falsification-plan`) requires
+each acceptance criterion to name a regression and its oracle, then requires that regression
+to be **demonstrated red** at implementation. That closes the *liveness* question: is this
+check capable of firing at all?
+
+It does not close the **extent** question: does the check cover everywhere the criterion
+applies? The two are independent. Of the three txl-assessment-collector instances that
+motivated the original story, demonstrate-red kills the first two — an impossible regex and
+a ban on a never-emitted token both fail to go red, exposing themselves. The third, a
+closure scoped to one element type, **survives it cleanly**: you mutate the element type the
+closure watches, the check goes red, the evidence looks complete, and every other element
+type stays unguarded. A criterion satisfied on one surface and dead on another is invisible
+to the mechanism we just shipped.
+
+The residual is therefore *extent*, and it needs its own row key. A single row per criterion
+cannot express "this must hold for each element type" — it can only record that it held
+somewhere.
+
+### Known limits (stated, not solved)
+
+- **No mechanical denominator.** With one row per AC, a script can count ACs and count rows.
+  With per-surface rows, nothing tells an automated check that a criterion has four surfaces
+  and three were listed — under-enumeration is invisible to any script. This story does not
+  solve that; it converts the silent gap into a **written claim** (AC2) that the step-6
+  reviewer can attack, which is the mechanism that has actually been catching this class
+  (txl rounds 1–2; the AC7 catch in `frame-falsification-plan` round 1).
+- **Reviewer judgment quality is unverifiable here.** AC2 and AC4 delegate extent-checking to
+  the step-6 reviewer; no check in this repo observes whether the reviewer reliably attacks a
+  lazy `none`. The delegate cannot also be the verifier. Recorded as a limit, not represented
+  as an excluded surface (design finding 2).
+- **Amendment volume is unbounded.** Nothing stops a deliberately thin spec-time plan whose
+  real content arrives through the append valve. The `added at: implement` marker makes it
+  visible to a reader; no check counts it. Accepted limit.
+
+## In scope
+
+1. **Row key** (`.claude/skills/frame/SKILL.md` step 5): the falsification plan's unit
+   becomes **(AC, surface)** rather than (AC). `surface` is **free text** naming where in the
+   product the criterion is observable, derived from the criterion — typically from its own
+   quantifier ("any element type", "every deployed skill", "all `*.sh` files"). One row per
+   surface the criterion spans; a criterion naming a single observable keeps one row. A
+   surface is a **place, not a mechanism**: a test, the gate, or the reviewer is an *oracle*,
+   never a surface.
+2. **Declared exclusions**, same step: each AC carries a `surfaces excluded` line, **three
+   valued** — a list of named surfaces with reasons, `none`, or `n/a` (single observable).
+   Silence is not an option. Exclusions name **product surfaces only**; machinery limits go
+   in prose.
+3. **No circular oracles**, same step: a row may not name as its oracle the same mechanism
+   whose failure is that row's regression.
+4. **Append-only after approval, via one amendment log** (steps 8–9): the plan in the `spec:`
+   commit is the frozen baseline. Post-approval changes are recorded in a single
+   `## Falsification-plan amendments` section — one entry per change stating the action
+   (`add` / `retract`), the AC, the exact surface targeted, the reason, and
+   `added at: implement`. Approved rows are never edited or deleted in place; a wrong row is
+   **retracted**, and the retraction is itself a claim the reviewer may reject.
+   Implement-added rows carry the same demonstrate-red obligation as spec-time rows.
+5. **Reviewer prompt** (step 6): the design reviewer additionally critiques **surface
+   enumeration**, the **`surfaces excluded`** claim, **retractions**, and **circular
+   oracles**.
+6. **Minimal drift assertions** in `tests/reviewer_test.sh` pinning the load-bearing phrase
+   at each edit site, per that file's "linter, not a behavioral gate" charter.
+
+## Non-goals
+
+- **A closed vocabulary of surfaces.** Deliberately rejected: a fixed list would have to be
+  built by reading the codebase and enumerating the surfaces it happens to have, making
+  every plan artifact-anchored by construction — the exact bias this line of work exists to
+  remove. Free text is the anti-anchoring choice.
+- **A mechanical completeness check on surface counts.** No denominator exists (see Known
+  limits). Not attempted.
+- **The cross-AC consistency heuristic** (flagging when two ACs quoting the same quantifier
+  list different surface counts). Considered and declined: no ground truth, wording-coupled,
+  and the same brittleness class `tests/reviewer_test.sh`'s charter warns against. Recorded
+  here, not built.
+- **/review-side changes** (OPS-18 remains the companion story) and **`AGENTS.md`** or the
+  design-review schema — reviewer critiques flow through existing finding fields.
+
+## Acceptance criteria
+
+1. Step 5's falsification-plan bullet keys rows by **(AC, surface)**: `surface` is free text
+   naming where in the product the criterion is observable, derived from the criterion (its
+   quantifier) rather than from any intended implementation; one row per spanned surface; a
+   single-observable criterion keeps one row; and a surface is explicitly a **place, not a
+   mechanism** (a test / the gate / the reviewer is an oracle, never a surface). The existing
+   per-row requirements — oracle mode (`gate` / `manual` / `reviewer`) and the
+   renders-nothing case for presence/shape — carry forward unchanged **per row**.
+2. Step 5 requires a per-AC **`surfaces excluded`** line with exactly three permitted forms:
+   a list of named surfaces each with a reason, `none`, or `n/a`. Silence is not an option,
+   and exclusions name product surfaces only.
+3. Step 5 forbids a **circular oracle**: no row may name as its oracle the mechanism whose
+   failure is that row's own regression.
+4. Steps 8–9 state the **append-only** rule and its **amendment log**: the `spec:` commit is
+   the frozen baseline; post-approval changes go in one `## Falsification-plan amendments`
+   section, each entry giving action (`add` / `retract`), AC, target surface, reason, and
+   `added at: implement`; approved rows are never edited or deleted in place; a wrong row is
+   retracted rather than removed; implement-added rows carry demonstrate-red.
+5. The step-6 reviewer prompt directs the reviewer to critique surface enumeration, the
+   `surfaces excluded` claim, retractions, and circular oracles.
+6. `tests/reviewer_test.sh` gains drift assertions pinning the load-bearing phrase at each
+   edit site, and the full gate passes.
+7. Scope containment: the diff touches only `.claude/skills/frame/SKILL.md`,
+   `tests/reviewer_test.sh`, and this story's artifacts
+   (`reviews/falsification-surface-rows.*`).
+
+## Test notes
+
+Written in the **proposed** per-surface format — the story demonstrates the format it asks
+for. Surfaces below are **places**: the instruction text itself, the specs that instruction
+produces, a story file's own history, the linter file, and the branch diff. Mechanisms
+(`gate` / `manual` / `reviewer`) appear only in the oracle column, per design finding 2.
+
+**AC1 — row key (AC, surface)**
+
+| surface | regression that must be caught | oracle |
+|---|---|---|
+| the step-5 instruction text | reverts to one row per AC, or drops the criterion-derived requirement so surfaces may be listed from the implementation, or drops the place-not-mechanism rule | `gate` |
+| specs produced by that instruction | an author writes one row for a criterion that quantifies over several kinds ("any element type") — the under-enumeration this story exists to catch | `reviewer` (step 6) |
+
+*surfaces excluded:* `none`.
+
+**AC2 — declared exclusions**
+
+| surface | regression that must be caught | oracle |
+|---|---|---|
+| the step-5 instruction text | the three-valued vocabulary collapses — a blank becomes permissible, or `n/a` and `none` merge so "I looked and excluded nothing" is no longer distinguishable from "nothing to look at" | `gate` |
+| specs produced by that instruction | an author types `n/a` on a criterion that plainly quantifies, or `none` without having considered extent | `reviewer` (step 6) |
+
+*surfaces excluded:* `none`.
+
+**AC3 — no circular oracles**
+
+| surface | regression that must be caught | oracle |
+|---|---|---|
+| the step-5 instruction text | the prohibition is dropped, permitting a row whose oracle is the very mechanism its regression breaks | `gate` |
+| specs produced by that instruction | an author names the reviewer as the oracle for "the reviewer misses this" | `reviewer` (step 6) |
+
+*surfaces excluded:* `none`.
+
+**AC4 — append-only + amendment log**
+
+| surface | regression that must be caught | oracle |
+|---|---|---|
+| the step-8/9 instruction text | the append-only rule is dropped, the amendment log stops being required, or the retraction path is written so a row may be removed rather than marked | `gate` |
+| a story file's own git history | a plan row present at the `spec:` commit is absent at merge — the plan shrank to fit the artifact | `manual`: `git diff <spec-commit>..HEAD -- reviews/<slug>.md`, verify no plan row was removed |
+| specs produced by that instruction | amendments are written inline in the tables instead of the log, leaving active-vs-retracted state ambiguous to a reader | `reviewer` (step 6) |
+
+*surfaces excluded:* `none`.
+
+**AC5 — reviewer prompt**
+
+| surface | regression that must be caught | oracle |
+|---|---|---|
+| the step-6 prompt text | the prompt stops naming enumeration, exclusions, retractions, or circular oracles — silently removing the one mechanism with any purchase on extent | `gate` |
+
+*surfaces excluded:* `n/a` — the criterion names a single observable (the prompt text). Whether
+the reviewer then *acts* on the prompt is delegated judgment, recorded under Known limits;
+naming it here would make the failing mechanism its own oracle (design finding 3).
+
+**AC6 — drift pins**
+
+| surface | regression that must be caught | oracle |
+|---|---|---|
+| the drift-linter file (`tests/reviewer_test.sh`) | a pin stays green when its pinned phrase is weakened or deleted — a vacuous check | `gate`, demonstrated red: each new pin run against the pre-change file from `main` must fail |
+
+*surfaces excluded:* `n/a` — single observable.
+
+**AC7 — scope containment**
+
+| surface | regression that must be caught | oracle |
+|---|---|---|
+| the branch diff | a file outside the enumerated set appears | `manual`: `git diff --name-only main...HEAD`, verify no files beyond those AC7 enumerates |
+
+*surfaces excluded:* `n/a` — single observable.
+
+### Demonstrate-red record
+
+_To be filled at implementation (step 9): each `gate`-oracle row above, the regression
+applied, the check observed red, the revert._
+
+## Open questions
+
+_None — resolved at the frame consult: `surfaces excluded` is required on every AC
+(three-valued). See Design decisions._
+
+## Design sketch — HOW
+
+Three edits to `.claude/skills/frame/SKILL.md`, plus drift pins:
+
+- **Step 5, falsification-plan bullet:** re-key rows to (AC, surface) with `surface` defined
+  as a place in the product derived from the criterion's quantifier, explicitly not a
+  mechanism; keep oracle mode and the renders-nothing rule **per row**; forbid circular
+  oracles; add the `surfaces excluded` line with its three permitted forms. No new heading —
+  the plan stays inside `## Test notes`, as merged. The bullet becomes a short nested list
+  rather than one long sentence, because it now carries four rules.
+- **Step 6, codex prompt:** extend the existing falsification sentence to name surface
+  enumeration, the exclusion claim, retractions, and circular oracles. One sentence, no
+  schema change — findings continue to flow through the design-review schema's existing
+  fields.
+- **Steps 8–9:** the `spec:` commit is the frozen baseline (step 8); append-only with a
+  single `## Falsification-plan amendments` log, retraction-not-removal, and demonstrate-red
+  extended to implement-added rows (step 9).
+- **`tests/reviewer_test.sh`:** one `has` pin per load-bearing phrase, in the existing
+  falsification block; no new test file.
+
+**Format note:** the plan is written as a small table per AC rather than prose bullets,
+because the unit is now a pair and a table makes an omitted surface visible as a missing
+row. This is a presentation convention in the template, not a parser — nothing reads these
+tables mechanically.
+
+## Codex design review (2026-08-03)
+
+**Verdict:** "The per-(AC, surface) model is proportionate for this instruction-driven
+repository, and no dependency manifest or existing library supplies the missing denominator.
+However, I would tighten the shape before adopting it globally: preserve the approved plan
+through one explicit amendment log, keep surfaces distinct from verification mechanisms and
+policy limits, and remove a self-referential reviewer oracle."
+
+### IMPORTANT
+
+- **Append-only tables lack an explicit amendment model** · one-way × kludgy ·
+  *locus: In scope 3; AC3; Design sketch — Steps 8–9*
+  Making arbitrary Markdown rows append-only without saying where amendments live, how a
+  retraction identifies its target, or how a reader derives the active plan creates an
+  ambiguous cross-cutting protocol. Git already preserves the approved `spec:` version.
+  **Alternative:** freeze the approved tables; add one declarative
+  `Falsification-plan amendments` log (action / AC / exact surface / reason /
+  `added at: implement`), with demonstrate-red records referencing active additions.
+  **Win:** one place for all post-approval change, unambiguous retraction targets, no mixed
+  active/retracted state in tables, reuses git's immutable baseline.
+
+- **The example collapses surfaces, oracles, and known limits** · one-way × kludgy ·
+  *locus: Test notes introduction; AC2–AC4 `surfaces excluded` entries*
+  The contract defines a surface as where the criterion is observable, but the example calls
+  the gate a surface and lists reviewer judgment quality and amendment volume as *excluded
+  surfaces* — an oracle quality and a policy limit respectively. Future stories copy the
+  example, so the model invites authors to enumerate tests and reviewers instead of the
+  criterion's extent — the anchoring this story exists to prevent.
+  **Alternative:** reserve surface rows and `surfaces excluded` for criterion-derived product
+  observables only; put unverifiable oracle quality and assurance limits in Known
+  limits / Non-goals prose.
+  **Win:** one invariant for every row; prevents plans that look complete by listing
+  verification machinery instead of omitted product surfaces.
+
+- **AC4 assigns the reviewer as oracle for its own omission** · two-way × nonstandard ·
+  *locus: Test notes — AC4, `reviewer output on a future story` row*
+  The regression is "the reviewer never flags an under-enumerated plan" and the named oracle
+  is that same reviewer. An oracle that fails in the regression cannot detect it.
+  **Alternative:** keep the gate row for prompt removal; either drop the future-behavior row
+  or name an independent inspection as `manual`.
+  **Win:** removes one impossible detection path; every retained row names a mechanism
+  capable of observing its regression.
+
+## Design decisions (2026-08-03)
+
+Thomas: **"fix all three, skipping line for every promise"**.
+
+- **Finding 1 (amendment model) → fix.** Approved plan tables are frozen at the `spec:`
+  commit; all post-approval change goes in one `## Falsification-plan amendments` log with
+  action / AC / target surface / reason / `added at: implement`. Now AC4.
+- **Finding 2 (surfaces vs mechanisms vs limits) → fix.** `surface` is defined as a place in
+  the product, explicitly not a mechanism; `surfaces excluded` names product surfaces only;
+  reviewer-judgment quality and amendment volume moved to **Known limits** prose. This
+  spec's own Test notes rewritten accordingly — the worked example is what future stories
+  copy, which is why the fix lands here too.
+- **Finding 3 (circular oracle) → fix.** Generalised into a rule (AC3): no row may name as
+  its oracle the mechanism whose failure is that row's regression. The offending AC4 row is
+  dropped; its subject is recorded under Known limits.
+- **Open question (`surfaces excluded` scope) → every AC, three-valued.** Keeps the cheap
+  presence check (a script can assert the line exists on every AC); accepts that the field
+  reads `n/a` on single-observable criteria. Two-way door.
