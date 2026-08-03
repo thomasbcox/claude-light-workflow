@@ -467,6 +467,42 @@ review is explicitly surfaced in the frame prompt, story, and backlog rather tha
 
 **Findings:** none.
 
+## Codex review — round 3 (2026-08-03, base f8e5426, HEAD 8273832)
+
+**Summary:** "The branch adds the requested positive prompt pins, and reviewer_test.sh passes
+64/64 checks. However, it violates the append-only plan contract by rewriting the retracted
+row in place, and its OPS-18 ownership pin still omits the separate BACKLOG.md handoff site."
+
+### BLOCKER
+
+- **Retracted plan row is edited in place** · `reviews/falsification-surface-rows.md:254`
+  The round-2 fix rewrote the previously recorded AC5 replacement row into a struck-through,
+  annotated row. AC4 requires approved rows to remain **unchanged**, with post-approval
+  corrections represented **through the amendment log**; logging the retract/add entries does
+  not license also editing the historical row. This destroys the append-only evidence and
+  leaves a retracted row sitting under the "Active replacement rows" heading.
+  **Suggestion:** restore the prior row byte-for-byte, keep the appended retract/add entries,
+  and append the replacement row separately so active state is *derived* from the log rather
+  than annotated onto history.
+
+### IMPORTANT
+
+- **BACKLOG handoff remains unpinned** · `tests/reviewer_test.sh:131`
+  The new OPS-18 ownership assertion searches only `$FRAME`. AC7 names `BACKLOG.md` as a
+  **separate edit site** carrying the handoff the minimal fix depends on — deleting its
+  ownership text and "go unreviewed" warning would leave the linter green. AC6 requires the
+  load-bearing phrase pinned at *each* edit site.
+  **Suggestion:** define the `BACKLOG.md` path, assert its amendment-review ownership and the
+  unreviewed-until-OPS-18 warning, and demonstrate that deleting that text fails the check.
+
+## Hidden-failure review — round 3 (2026-08-03, base f8e5426, HEAD 8273832)
+
+**Summary:** "The diff introduces no swallowed exceptions, blind catches, catch-and-continue
+behavior, silent fallbacks, or deleted assertions or safety checks. The two added drift
+assertions fail loudly when the required phase-boundary or OPS-18 handoff wording is absent."
+
+**Findings:** none.
+
 ## Fixes — round 2 (2026-08-03)
 
 - **IMPORTANT (OPS-18 handoff not pinned) → fixed at both levels.**
