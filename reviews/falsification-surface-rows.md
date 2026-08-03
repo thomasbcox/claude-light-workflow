@@ -421,6 +421,20 @@ pin. That is **two instances in two rounds** of the same mechanism — a rule st
 skill prose and a linter pin, where editing the prose silently breaks the pin. It is exactly
 **OPS-17**, and this story has now supplied it two fresh data points.
 
+## Codex approach review — round 2 (2026-08-03, base 6650969, HEAD 61d5dc8)
+
+**Verdict:** "The shape is sound and proportionate. I would satisfy the ACs with the same
+structure: one declarative per-(AC, surface) contract in frame step 5, phase-appropriate
+reviewer guidance, one append-only amendment protocol, and lightweight drift pins. The
+round-one fixes remove the mechanical-story bypass and the temporally impossible retraction
+review without adding runtime machinery. The repository has no dependency manifest or
+framework facility that this reinvents, and the phrase pins match its documented
+instruction-as-product conventions. I found no remaining high-leverage approach concern;
+this verdict does not assess line-level correctness."
+
+**Findings:** none — both round-1 findings verified closed. Shape blessed; correctness pass
+runs this same round.
+
 ## Decisions (2026-08-03)
 
 Round 1 — approach pass, two IMPORTANT findings. Thomas: **"fix both, minimal for the
