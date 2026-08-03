@@ -511,6 +511,32 @@ assertions fail loudly when the required phase-boundary or OPS-18 handoff wordin
 
 **Findings:** none.
 
+## Codex review — round 4 (2026-08-03, base 8273832, HEAD c5dc608)
+
+**Summary:** "The changes satisfy the approved round-3 fixes: the historical AC5 row is
+restored byte-for-byte, active state is derived from the amendment log, and both BACKLOG-side
+OPS-18 handoff phrases are pinned. `tests/reviewer_test.sh` passes 66/66 checks. The full gate
+could not be independently rerun because the read-only sandbox blocks its temporary-directory
+setup."
+
+**Findings:** none — round-3 BLOCKER and IMPORTANT both verified closed.
+
+## Hidden-failure review — round 4 (2026-08-03, base 8273832, HEAD c5dc608)
+
+**Summary:** "The diff introduces no swallowed exceptions, blind catches, catch-and-continue
+behavior, silent fallbacks, or deleted assertions or safety checks. The added BACKLOG drift
+checks fail loudly when required handoff wording is absent; reviewer_test.sh passes all 66
+checks."
+
+**Findings:** none.
+
+## Decisions — round 4 (2026-08-03)
+
+Correctness-only re-review of the round-3 fixes. **Both critics returned empty — no findings
+to decide.** The round-3 BLOCKER (retracted row edited in place) and IMPORTANT (BACKLOG
+handoff unpinned) are confirmed closed by the independent reviewer. First fully clean round of
+this story.
+
 ## Fixes — round 3 (2026-08-03)
 
 - **BLOCKER (retracted row edited in place) → fixed.** The AC5 round-1 row is restored
