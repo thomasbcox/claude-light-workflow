@@ -277,3 +277,22 @@ Scope approved by Thomas: **"Approved — Fix A, fix 2 and 3, file the backlog l
   criterion-first (weakenings before checks).
 - **Open question (companion filing) → file.** The /review-side companion goes into
   `BACKLOG.md` as an OPS item; building it stays a non-goal.
+
+## Decisions (2026-08-02)
+
+Round 1 — approach pass clean, hidden-failure pass clean, one correctness BLOCKER.
+
+**Correctness**
+
+- **BLOCKER — Unlisted approach-review artifact violates AC7** → **fix, by amending AC7.**
+  Thomas: *"Amend AC7"*. The AC's artifact clause was written at spec time, before the
+  review round existed, and enumerated only the two artifacts that existed then; the loop's
+  own review outputs (`.approach.json`, `.codex.json`, `.hidden-failure.json`) are mandated
+  by `/review` and are repo convention on every prior story. AC7 is reworded to cover this
+  story's artifacts as a set (`reviews/frame-falsification-plan.*`). The criterion's purpose
+  — containing the *product* diff to the frame skill, the test file, and the backlog line —
+  is unchanged.
+
+**Approach** — no findings; shape blessed.
+
+**Hidden-failure** — no findings.
