@@ -176,7 +176,11 @@ AC→file map:
 - **AC4** (demonstrate-red before done) → `.claude/skills/frame/SKILL.md` step 9
 - **AC5** (drift pins, gate green) → `tests/reviewer_test.sh`, six `has` checks
 - **AC6** (companion filed) → `BACKLOG.md` OPS-18
-- **AC7** (scope containment) → the diff itself (four files + two story artifacts)
+- **AC7** (scope containment) → the diff itself (three product files + this story's artifacts)
+
+*Round 2 (2026-08-02):* map unchanged — the round-1 fix amended AC7's wording in the story
+file only; no product file moved. (Recorded as a line rather than a duplicated section: a
+second identical copy is the drift OPS-17 documents.)
 
 ## Codex design review (2026-08-02)
 
