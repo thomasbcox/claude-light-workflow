@@ -247,13 +247,18 @@ exactly what the rule forbids, and retract-plus-add is how a change to an existi
 | `retract` | AC5 | the step-6 prompt text | **round-2 correctness finding:** the row named only content-removal and duty-reinstatement as regressions, so deleting the *handoff sentence* itself was an uncovered regression — the row was incomplete, and the test built from it was correspondingly blind | `added at: implement` |
 | `add` | AC5 | the step-6 prompt text | replacement row covering handoff deletion as well (below) | `added at: implement` |
 
-**Active replacement rows** (both carry the same demonstrate-red obligation as spec-time rows):
+**Rows added by amendment** — appended in order, **never edited**. Each carries the same
+demonstrate-red obligation as a spec-time row. Whether a row is *active* is **derived from the
+log above**: a row with a later `retract` entry naming it is inactive. Nothing here is struck
+through or annotated, because annotating a historical row is itself the in-place edit the rule
+forbids (round-3 BLOCKER). Uniqueness on `(AC, surface)` holds over the **active** rows — the
+two AC5 entries below are not a collision, since the log retracts the first.
 
 | AC | surface | regression that must be caught | oracle |
 |---|---|---|---|
-| AC5 | the step-6 prompt text | ~~the prompt stops naming enumeration, exclusions, or circular oracles … or the impossible retraction duty is reinstated~~ **(retracted round 2 — incomplete)** | ~~`gate`~~ |
-| AC5 | the step-6 prompt text | the prompt stops naming enumeration, exclusions, or circular oracles — silently removing the one frame-time mechanism with purchase on extent; **or** the impossible retraction duty is reinstated, re-claiming a check that phase cannot perform; **or** the handoff sentence itself is deleted, so the phase boundary and OPS-18's ownership vanish and the deferral becomes silent rather than recorded | `gate` |
+| AC5 | the step-6 prompt text | the prompt stops naming enumeration, exclusions, or circular oracles — silently removing the one frame-time mechanism with purchase on extent — **or** the impossible retraction duty is reinstated, re-claiming a check that phase cannot perform | `gate` |
 | AC2 | the step-5 instruction text | the three-valued vocabulary collapses (a blank becomes permissible, or `n/a` and `none` merge) **or** the mechanical label is allowed to waive the per-AC extent claim rather than only the per-row detail | `gate` |
+| AC5 | the step-6 prompt text | the prompt stops naming enumeration, exclusions, or circular oracles — silently removing the one frame-time mechanism with purchase on extent; **or** the impossible retraction duty is reinstated, re-claiming a check that phase cannot perform; **or** the handoff sentence itself is deleted, so the phase boundary and OPS-18's ownership vanish and the deferral becomes silent rather than recorded | `gate` |
 
 *No other row changed.* AC7's row references "those AC7 enumerates" rather than restating the
 file list, so amending AC7's list left its row correct — the reason step 5 tells scope-
@@ -502,6 +507,39 @@ behavior, silent fallbacks, or deleted assertions or safety checks. The two adde
 assertions fail loudly when the required phase-boundary or OPS-18 handoff wording is absent."
 
 **Findings:** none.
+
+## Fixes — round 3 (2026-08-03)
+
+- **BLOCKER (retracted row edited in place) → fixed.** The AC5 round-1 row is restored
+  **byte-for-byte** from `bec4475` (verified by literal match against that revision), the
+  strikethrough and annotation are gone, and the round-2 replacement is appended below it. The
+  heading changed from "Active replacement rows" to **"Rows added by amendment"**, which is
+  what the table actually is: an append-only list in chronological order. Active state is now
+  **derived** — a row is inactive iff the log above carries a `retract` naming it — so nothing
+  is written onto history. The two AC5 entries are not a uniqueness collision because
+  uniqueness holds over *active* rows, which the section now says explicitly.
+- **IMPORTANT (BACKLOG handoff unpinned) → fixed.** `tests/reviewer_test.sh` gains a
+  `BACKLOG` path variable and two positive pins — OPS-18 *accepting* amendment-log review, and
+  the standing warning that retraction reasons go unreviewed until it ships. The handoff has
+  **two** sites: the frame prompt defers the duty, `BACKLOG.md` accepts it. Pinning only the
+  deferring side left the receiving side deletable with the gate green.
+
+**Demonstrate-red for both added pins** — verified in both directions:
+
+| pin | red against `main` | fires when the handoff text is deleted |
+|---|---|---|
+| `**Also owns amendment-log review**` | ✓ | ✓ |
+| `Until OPS-18 ships, retraction reasons go unreviewed.` | ✓ | ✓ |
+
+Full gate green, per suite with explicit exit codes; `reviewer_test.sh` now `passed=66
+failed=0`.
+
+**Third instance of the same class, and the one that matters most.** The BLOCKER was not a
+test gap — it was the story's own artifact contradicting the rule the story ships. The
+retraction was logged correctly *and* annotated onto history, which is the in-place edit AC4
+forbids; had it merged, the worked example every future story copies would have demonstrated
+the violation. Found by the reviewer reading AC4 against the diff, not by the author reading
+his own compliance.
 
 ## Decisions — round 3 (2026-08-03)
 

@@ -29,6 +29,7 @@ FRAME="$ROOT/.claude/skills/frame/SKILL.md"
 AGENTS="$ROOT/AGENTS.md"
 PROTOCOL="$ROOT/.claude/workflow-protocol.md"
 WF="$ROOT/.claude/workflow.json"
+BACKLOG="$ROOT/BACKLOG.md"
 
 pass=0 fail=0
 ok() {
@@ -129,6 +130,10 @@ has "step-5 mechanical waives detail not extent" "$FRAME" "The mechanical label 
 absent "step-6 drops the impossible retraction duty" "$FRAME" "any retraction in the amendment log whose reason does not hold"
 has "step-6 defers retractions by phase" "$FRAME" "Amendment-log retractions are **out of scope here**"
 has "step-6 names OPS-18 as the retraction owner" "$FRAME" "that duty is OPS-18's"
+# The handoff lives at TWO sites — the frame prompt defers it, BACKLOG.md accepts it. Pinning
+# only the frame side leaves the receiving end deletable with the gate still green.
+has "OPS-18 accepts amendment-log review" "$BACKLOG" "**Also owns amendment-log review**"
+has "OPS-18 states the gap until it ships" "$BACKLOG" "Until OPS-18 ships, retraction reasons go unreviewed."
 
 echo "== drift: consult-presentation rule stated in doctrine + pointed at from a stop =="
 has "doctrine states consult-presentation rule" "$PROTOCOL" "How a consult is presented"
