@@ -1,0 +1,1 @@
+{"summary":"2026-08-03 06:12:38 PDT — The round-1 blocker is resolved as Thomas directed: AC7 now permits the workflow-generated review artifacts while retaining the original product-file boundary. The range touches only the story file and permitted review artifacts, records the decision and fix consistently, and introduces no correctness or hidden-failure issue.","findings":[]}

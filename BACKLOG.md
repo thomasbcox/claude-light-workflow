@@ -356,6 +356,11 @@ we'd fixed"), root-caused during `deep-audit-plan`. Evaluate-and-decide.
 single-source-of-truth** discipline — estate-wide, since it is inherent to how skill+schema+AC+linter
 restate rules. The prefix-revisit question OPS-11 opened keeps accruing data points.)
 
+OPS-18 — **/review-side falsification companion**: the reviewer proposes mutations for test-bearing
+stories at review time, complementing the frame-side plan (spec-time, criterion-derived, executed as
+step-9 demonstrate-red — shipped via `reviews/frame-falsification-plan.md`). Filed 2026-08-02 as
+that story's declared non-goal; not committed work.
+
 _(OPS-10 shipped — see [Done](#done).)_
 
 ---

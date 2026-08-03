@@ -104,6 +104,16 @@ has "design names failure-hiding as a shape flaw" "$AGENTS" "Hiding failure is a
 echo "== drift: frame bootstrap seeds the reviewer field =="
 has "bootstrap seeds reviewer=codex" "$FRAME" '"reviewer": "codex"'
 
+echo "== drift: frame requires a falsification plan (spec-time, oracle-typed, executed at step 9) =="
+# Presence pins only — the plan contract is Markdown instructions; per this file's charter the
+# real enforcement is the step-6 reviewer critique and the step-9 demonstrate-red discipline.
+has "step-5 per-AC regression required" "$FRAME" "name at least one plausible regression"
+has "step-5 oracle modes typed" "$FRAME" 'reserve "the gate goes red" for `gate` oracles'
+has "step-5 renders-nothing case" "$FRAME" "include the case where the element renders *nothing*"
+has "step-5 mechanical N/A needs a reason" "$FRAME" "silence is not an option"
+has "step-6 flags implementation-shaped plans" "$FRAME" "derived from an implementation shape"
+has "step-9 demonstrate-red" "$FRAME" "demonstrate red before done"
+
 echo "== drift: consult-presentation rule stated in doctrine + pointed at from a stop =="
 has "doctrine states consult-presentation rule" "$PROTOCOL" "How a consult is presented"
 has "a stop points at the rule" "$REVIEW" "consult-presentation rule"
