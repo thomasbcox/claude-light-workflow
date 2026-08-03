@@ -181,10 +181,43 @@ naming it here would make the failing mechanism its own oracle (design finding 3
 
 *surfaces excluded:* `n/a` — single observable.
 
-### Demonstrate-red record
+### Demonstrate-red record (2026-08-03, at implementation)
 
-_To be filled at implementation (step 9): each `gate`-oracle row above, the regression
-applied, the check observed red, the revert._
+Every `gate`-oracle row above is carried by a drift pin whose planned regression is the
+pinned phrase being weakened or deleted. All ten were exercised at once against the
+**pre-change file** (`git show main:.claude/skills/frame/SKILL.md`), where each phrase is
+genuinely absent — the maximal form of the planned regression:
+
+| AC | surface | pinned phrase | result |
+|---|---|---|---|
+| AC1 | step-5 instruction text | `where in the product the criterion is observable` | red on main ✓ |
+| AC1 | step-5 instruction text | `A surface is a **place, not a mechanism**` | red on main ✓ |
+| AC2 | step-5 instruction text | `in exactly three permitted forms` | red on main ✓ |
+| AC2 | step-5 instruction text | `Exclusions name **product surfaces only**` | red on main ✓ |
+| AC3 | step-5 instruction text | `**No circular oracles:**` | red on main ✓ |
+| AC4 | step-8/9 instruction text | `falsification plan in this commit is the frozen baseline` | red on main ✓ |
+| AC4 | step-8/9 instruction text | `The approved plan is append-only:` | red on main ✓ |
+| AC4 | step-8/9 instruction text | `## Falsification-plan amendments` | red on main ✓ |
+| AC4 | step-8/9 instruction text | `retracted, never removed` | red on main ✓ |
+| AC5 | step-6 prompt text | `rather than a place in the product` | red on main ✓ |
+
+Then the full gate on the branch: **green**, verified per suite with explicit exit codes
+(guard, reviewer-seam, dev-audit, deep-audit-plan, docs — all `0`). Red-on-main →
+green-on-branch proves the ten pins are live, not vacuous (AC6's `gate` oracle).
+
+**One genuine red caught in passing.** The first full-gate run failed
+(`reviewer_test.sh`: `passed=59 failed=1`). Restructuring the step-5 bullet into a nested
+list dropped the word "name" from "name at least one plausible regression", breaking the pin
+the *previous* story installed. Fixed by restoring the wording in the skill text rather than
+editing the pin to match — a pin edited to fit the artifact is the failure this whole line
+of work exists to prevent. This is a live instance of **OPS-17** (one rule restated in skill
+prose and in a linter pin; editing one copy silently breaks the other), and an instance of
+the gate doing its job.
+
+*Process note:* the initial run masked this by piping the suite through `tail`, which
+returns `tail`'s exit status rather than the suite's — the run printed `failed=1` and
+`GATE GREEN` in the same breath. Re-run per suite with explicit exit codes. Recorded because
+a gate whose result can be masked by the way it is invoked is worth knowing about.
 
 ## Open questions
 
