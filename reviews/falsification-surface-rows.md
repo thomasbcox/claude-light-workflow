@@ -244,12 +244,15 @@ exactly what the rule forbids, and retract-plus-add is how a change to an existi
 | `add` | AC5 | the step-6 prompt text | replacement row for the amended criterion (below) | `added at: implement` |
 | `retract` | AC2 | the step-5 instruction text | AC2 amended: the row's regression covered only vocabulary collapse, not the mechanical hatch erasing every per-AC declaration | `added at: implement` |
 | `add` | AC2 | the step-5 instruction text | replacement row for the amended criterion (below) | `added at: implement` |
+| `retract` | AC5 | the step-6 prompt text | **round-2 correctness finding:** the row named only content-removal and duty-reinstatement as regressions, so deleting the *handoff sentence* itself was an uncovered regression — the row was incomplete, and the test built from it was correspondingly blind | `added at: implement` |
+| `add` | AC5 | the step-6 prompt text | replacement row covering handoff deletion as well (below) | `added at: implement` |
 
 **Active replacement rows** (both carry the same demonstrate-red obligation as spec-time rows):
 
 | AC | surface | regression that must be caught | oracle |
 |---|---|---|---|
-| AC5 | the step-6 prompt text | the prompt stops naming enumeration, exclusions, or circular oracles — silently removing the one frame-time mechanism with purchase on extent — **or** the impossible retraction duty is reinstated, re-claiming a check that phase cannot perform | `gate` |
+| AC5 | the step-6 prompt text | ~~the prompt stops naming enumeration, exclusions, or circular oracles … or the impossible retraction duty is reinstated~~ **(retracted round 2 — incomplete)** | ~~`gate`~~ |
+| AC5 | the step-6 prompt text | the prompt stops naming enumeration, exclusions, or circular oracles — silently removing the one frame-time mechanism with purchase on extent; **or** the impossible retraction duty is reinstated, re-claiming a check that phase cannot perform; **or** the handoff sentence itself is deleted, so the phase boundary and OPS-18's ownership vanish and the deferral becomes silent rather than recorded | `gate` |
 | AC2 | the step-5 instruction text | the three-valued vocabulary collapses (a blank becomes permissible, or `n/a` and `none` merge) **or** the mechanical label is allowed to waive the per-AC extent claim rather than only the per-row detail | `gate` |
 
 *No other row changed.* AC7's row references "those AC7 enumerates" rather than restating the
@@ -459,6 +462,36 @@ catch-and-continue behavior, or deletion of an effective safety check. The defer
 review is explicitly surfaced in the frame prompt, story, and backlog rather than hidden."
 
 **Findings:** none.
+
+## Fixes — round 2 (2026-08-03)
+
+- **IMPORTANT (OPS-18 handoff not pinned) → fixed at both levels.**
+  - **Test:** two positive `has` pins added — one on the phase-boundary wording
+    (`Amendment-log retractions are **out of scope here**`), one on the ownership wording
+    (`that duty is OPS-18's`) — alongside the retained `absent` guard against the old duty
+    returning. The `absent` guard alone could never catch deletion; only a positive pin can.
+  - **Plan:** AC5's round-1 replacement row is **retracted and replaced** through the
+    amendment log. The row was the root defect — it named content-removal and
+    duty-reinstatement as its regressions but not deletion of the handoff sentence, so a test
+    built faithfully from it was blind by construction. Corrected by retract-plus-add, never
+    edited in place.
+
+**Demonstrate-red for both added pins** — verified in both directions, since a pin that
+cannot fail is the defect this story exists to catch:
+
+| pin | red against `main` | fires when the handoff sentence is deleted |
+|---|---|---|
+| `Amendment-log retractions are **out of scope here**` | ✓ | ✓ |
+| `that duty is OPS-18's` | ✓ | ✓ |
+
+Full gate green, per suite with explicit exit codes; `reviewer_test.sh` now `passed=64
+failed=0`.
+
+**Worth recording:** this finding is the story's own thesis turned on itself. The round-1 test
+was derived from an incomplete plan row rather than from AC5's criterion, and it passed
+convincingly while leaving the criterion's real extent unguarded — liveness without extent,
+which is precisely the gap the (AC, surface) key exists to close. The independent reviewer
+caught it by reading the criterion, not the test.
 
 ## Decisions — round 2 (2026-08-03)
 
