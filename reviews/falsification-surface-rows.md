@@ -314,6 +314,9 @@ changed.
 (`tests/reviewer_test.sh`) and corrected AC5's plan row in the story file; no new file entered
 the map.
 
+*Round 4 (2026-08-03):* map unchanged — the round-3 fixes restored a story-file row and added
+two pins at AC6's existing site, now also reading `BACKLOG.md` (already in the map via AC5).
+
 ## Codex design review (2026-08-03)
 
 **Verdict:** "The per-(AC, surface) model is proportionate for this instruction-driven
