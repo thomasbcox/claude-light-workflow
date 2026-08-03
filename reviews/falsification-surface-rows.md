@@ -460,6 +460,27 @@ review is explicitly surfaced in the frame prompt, story, and backlog rather tha
 
 **Findings:** none.
 
+## Decisions — round 2 (2026-08-03)
+
+Approach pass clean (both round-1 findings verified closed); hidden-failure pass clean; one
+correctness finding. Thomas: **"fix and /close"**.
+
+**Correctness**
+
+- **IMPORTANT — OPS-18 handoff is not pinned** → **fix.** The round-1 edit added an `absent`
+  guard against the *old* retraction wording returning, but pinned nothing positive, so
+  deleting the new phase-boundary/OPS-18 sentence would leave the gate green — AC5's handoff
+  unprotected and AC6's "each edit site" unmet. Fix adds positive `has` pins for the phase
+  boundary and the OPS-18 ownership, retaining the `absent` guard.
+  **The underlying defect is in the plan, not only the test:** AC5's round-1 replacement row
+  named only prompt-content removal and duty reinstatement as its regressions, not deletion
+  of the handoff sentence. That row is therefore retracted and replaced through the amendment
+  log — an incomplete row is corrected by retract-plus-add, never edited in place.
+
+**Approach** — no findings.
+
+**Hidden-failure** — no findings.
+
 ## Decisions (2026-08-03)
 
 Round 1 — approach pass, two IMPORTANT findings. Thomas: **"fix both, minimal for the
