@@ -162,6 +162,18 @@ Three surgical edits to `.claude/skills/frame/SKILL.md`, drift assertions, one b
 - **`BACKLOG.md`:** one OPS entry for the /review-side companion (compact — provenance and
   complement relationship; build not committed).
 
+## Build note (2026-08-02)
+
+AC→file map:
+
+- **AC1** (per-AC falsification plan, oracle-typed) → `.claude/skills/frame/SKILL.md` step 5, `## Test notes` bullet
+- **AC2** (mechanical `N/A` carve-out with reason) → same bullet
+- **AC3** (reviewer critiques the plan) → `.claude/skills/frame/SKILL.md` step 6, codex prompt
+- **AC4** (demonstrate-red before done) → `.claude/skills/frame/SKILL.md` step 9
+- **AC5** (drift pins, gate green) → `tests/reviewer_test.sh`, six `has` checks
+- **AC6** (companion filed) → `BACKLOG.md` OPS-18
+- **AC7** (scope containment) → the diff itself (four files + two story artifacts)
+
 ## Codex design review (2026-08-02)
 
 **Verdict:** "The edit locations are proportionate and add no dependency, but the design
@@ -206,6 +218,17 @@ notes also expose gaps in the proposed contract."
   **Alternative:** state negative cases from each criterion first, then choose `has`
   strings broad enough that each semantic weakening breaks its drift check.
   **Win:** the first example complies with the policy it introduces.
+
+## Codex approach review (2026-08-02, base origin/main, HEAD 44efe88)
+
+**Verdict:** "The approach is sound, proportionate, and idiomatic for this
+instruction-driven repository. It uses one criterion-first plan contract, typed oracles, a
+matching design-review check, implementation-time evidence for executable oracles, minimal
+drift pins, and no new dependency or unnecessary machinery. The configured gate could not
+run because the read-only sandbox forbids its temporary repositories; that is
+environmental, not an approach concern."
+
+**Findings:** none — clean pass. Shape blessed; correctness pass runs this same round.
 
 ## Design decisions (2026-08-02)
 
