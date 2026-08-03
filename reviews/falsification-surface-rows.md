@@ -341,6 +341,36 @@ contradicts the new every-AC exclusion invariant."
   **Win:** removes a special-case bypass; one invariant for reviewers and any future presence
   check — every AC always declares its considered extent.
 
+## Decisions (2026-08-03)
+
+Round 1 — approach pass, two IMPORTANT findings. Thomas: **"fix both, minimal for the
+first"**. Both are shape changes, so per `review/SKILL.md` step 7 the **correctness pass does
+not run this round**; the fixes are applied and the branch returns for a fresh review.
+
+**Approach**
+
+- **IMPORTANT — Retractions are reviewed before they can exist** → **fix, minimal variant.**
+  The step-6 prompt's retraction clause is removed: step 6 runs before approval and cannot
+  observe an amendment log that only exists after step 9, so the clause claimed a check that
+  could never happen. Retraction and amendment review is handed to **OPS-18** (the
+  already-filed /review-side companion), which is where post-implementation falsification
+  review belongs. The scope-expanding variant — stating the rubric once in the shared
+  reviewer contract so both phases apply it — was **declined for this story**: it is a
+  larger one-way door than this story was framed for, and a cross-cutting contract change
+  should not be made as a mid-round addendum.
+  - **AC5 amended:** the step-6 prompt covers surface enumeration, the `surfaces excluded`
+    claim, and circular oracles — **not** retractions.
+  - **AC7 amended:** `BACKLOG.md` added to the permitted file list, for the one-line OPS-18
+    addition that carries the handoff.
+  - **Known limit added:** retraction review is unassigned until OPS-18 ships. Recorded
+    rather than silently claimed.
+
+- **IMPORTANT — Whole-plan mechanical N/A bypasses the per-AC invariant** → **fix.**
+  `N/A — mechanical` may waive the per-row regression/oracle detail, but **every AC still
+  carries its `surfaces excluded` line** in one of the three permitted forms. The extent
+  claim stops being conditional on a self-applied story-level label.
+  - **AC2 amended** to state the narrowed carve-out.
+
 ## Design decisions (2026-08-03)
 
 Thomas: **"fix all three, skipping line for every promise"**.
