@@ -305,6 +305,30 @@ Round 1 — approach pass clean, hidden-failure pass clean, one correctness BLOC
 
 **Hidden-failure** — no findings.
 
+## Codex review (2026-08-03, base 94b6d1e, HEAD 275207b)
+
+**Summary:** "The round-1 blocker is resolved as Thomas directed: AC7 now permits the
+workflow-generated review artifacts while retaining the original product-file boundary. The
+range touches only the story file and permitted review artifacts, records the decision and
+fix consistently, and introduces no correctness or hidden-failure issue."
+
+**Findings:** none — round-1 BLOCKER verified closed.
+
+## Hidden-failure review (2026-08-03, base 94b6d1e, HEAD 275207b)
+
+**Summary:** "The diff introduces no swallowed exceptions, catch-log-continue paths, silent
+fallbacks, ignored failures, or deleted assertions/safety checks that permit degraded
+execution to continue unsurfaced. No hidden-failure issue was found."
+
+**Findings:** none.
+
+## Decisions (2026-08-03)
+
+Round 2 — re-review verifying the round-1 fix (correctness-only per the round-keyed default:
+approved fix was a spec amendment, not a redesign). Both critics returned empty. **No
+findings to decide.** The round-1 BLOCKER is confirmed closed by the independent reviewer;
+nothing carried forward.
+
 ## Fixes (2026-08-02)
 
 - **BLOCKER (unlisted approach-review artifact violates AC7)** → AC7's permitted-artifact
