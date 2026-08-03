@@ -110,10 +110,29 @@ step-9 demonstrate-red discipline (design decision Fix A) and the step-6 reviewe
 - **AC7** — oracle: `manual` — run `git diff --name-only main...HEAD` and verify no files
   appear beyond those AC7 enumerates.
 
-### Demonstrate-red record
+### Demonstrate-red record (2026-08-02, at implementation)
 
-_To be filled at implementation (step 9): each `gate`-oracle entry above, the regression
-applied, the check observed red, the revert._
+The `gate` oracles here are the six new drift pins; the planned regression for each is the
+pinned phrase being absent (weakened or deleted wholesale — same grep catches both). Rather
+than six sequential delete-and-rerun cycles, all six were exercised at once against the
+**pre-change file** (`git show origin/main:.claude/skills/frame/SKILL.md`), where every
+pinned phrase is genuinely absent — the maximal form of the planned regression:
+
+- `name at least one plausible regression` — **red on main** ✓ (AC1: template stops
+  requiring a per-AC entry)
+- `reserve "the gate goes red" for `gate` oracles` — **red on main** ✓ (AC1: oracle typing
+  dropped)
+- `include the case where the element renders *nothing*` — **red on main** ✓ (AC1:
+  renders-nothing requirement dropped)
+- `silence is not an option` — **red on main** ✓ (AC2: carve-out weakened to silent N/A)
+- `derived from an implementation shape` — **red on main** ✓ (AC3: prompt stops flagging
+  anchored plans)
+- `demonstrate red before done` — **red on main** ✓ (AC4: step 9 stops requiring executed
+  falsification)
+
+Then the full gate on the branch: **green** (guard 19, reviewer-seam 50, dev-audit,
+deep-audit-plan 97, docs 13 — zero failures). Red-on-main → green-on-branch proves the six
+checks are live, not vacuous (AC5's `gate` oracle).
 
 ## Open questions
 
