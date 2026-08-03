@@ -76,8 +76,12 @@ review's BLOCKER):
    at each edit site, and the full gate passes.
 6. `BACKLOG.md` files the /review-side companion as an OPS item.
 7. Scope containment: the diff touches only `.claude/skills/frame/SKILL.md`,
-   `tests/reviewer_test.sh`, `BACKLOG.md`, and this story's artifacts
-   (`reviews/frame-falsification-plan.md`, `reviews/frame-falsification-plan.design.json`).
+   `tests/reviewer_test.sh`, `BACKLOG.md`, and this story's artifacts — the story file plus
+   whatever review artifacts the loop generates for it (`reviews/frame-falsification-plan.*`:
+   the spec, `.design.json`, and any `.approach.json` / `.codex.json` /
+   `.hidden-failure.json` a review round produces). *(Amended round 1 — the original clause
+   enumerated only the two artifacts that existed at spec time, which the loop's own
+   mandated review outputs then violated; see Decisions.)*
 
 ## Test notes
 
@@ -296,3 +300,12 @@ Round 1 — approach pass clean, hidden-failure pass clean, one correctness BLOC
 **Approach** — no findings; shape blessed.
 
 **Hidden-failure** — no findings.
+
+## Fixes (2026-08-02)
+
+- **BLOCKER (unlisted approach-review artifact violates AC7)** → AC7's permitted-artifact
+  clause amended from the two spec-time artifacts to this story's artifact *set*
+  (`reviews/frame-falsification-plan.*`), naming the review outputs the loop mandates. The
+  criterion's product-scope limit (`.claude/skills/frame/SKILL.md`, `tests/reviewer_test.sh`,
+  `BACKLOG.md`) is unchanged, so the containment check still bites on any stray product file.
+  Spec-only edit; no product code touched.
