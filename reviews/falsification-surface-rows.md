@@ -304,6 +304,43 @@ policy limits, and remove a self-referential reviewer oracle."
   **Win:** removes one impossible detection path; every retained row names a mechanism
   capable of observing its regression.
 
+## Codex approach review (2026-08-03, base main, HEAD 3d09300)
+
+**Verdict:** "The per-(AC, surface) table and lightweight phrase pins are proportionate,
+consistent with this instruction-only repository, and introduce no unnecessary dependency or
+parser. I would not ship the shape unchanged, however: retraction review is assigned to a
+phase that runs before retractions can exist, and the mechanical-story escape hatch
+contradicts the new every-AC exclusion invariant."
+
+### IMPORTANT
+
+- **Retractions are reviewed before they can exist** · one-way × kludgy ·
+  *locus: `.claude/skills/frame/SKILL.md` steps 6 and 9; AC4–AC5*
+  Step 6 tells the frame-time design reviewer to critique amendment-log retractions, but
+  step 6 runs **before approval** while the amendment log can only be created during step-9
+  implementation. The only explicitly tasked check is temporally incapable of seeing a
+  retraction; the later approach pass is generic, and this story excludes `/review`-side
+  changes — leaving a cross-cutting claim future stories may treat as reviewed when it was
+  never observable.
+  **Alternative:** move amendment/retraction inspection to the post-implementation approach
+  pass; preferably define the falsification-plan rubric once in the shared reviewer contract
+  and have both phases apply it — frame review takes enumeration, exclusions, and circular
+  oracles; approach review additionally takes actual amendments and retractions.
+  **Win:** eliminates an impossible review path; every retraction is inspected only after it
+  exists; the rubric is centralized instead of duplicated per phase.
+
+- **Whole-plan mechanical N/A bypasses the per-AC invariant** · one-way × kludgy ·
+  *locus: `.claude/skills/frame/SKILL.md` step 5*
+  The new contract says every AC must carry a three-valued `surfaces excluded` declaration
+  and that silence is not permitted — but the retained whole-plan `N/A — mechanical` escape
+  hatch lets every per-AC declaration disappear on a subjective story-level label. The
+  central extent claim becomes conditional, and future stories get a protocol-wide bypass.
+  **Alternative:** keep the mechanical exemption for regression/oracle detail if desired, but
+  still enumerate each AC and require its `surfaces excluded` line in one of the three
+  approved forms.
+  **Win:** removes a special-case bypass; one invariant for reviewers and any future presence
+  check — every AC always declares its considered extent.
+
 ## Design decisions (2026-08-03)
 
 Thomas: **"fix all three, skipping line for every promise"**.
