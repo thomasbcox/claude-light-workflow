@@ -29,6 +29,7 @@ FRAME="$ROOT/.claude/skills/frame/SKILL.md"
 AGENTS="$ROOT/AGENTS.md"
 PROTOCOL="$ROOT/.claude/workflow-protocol.md"
 WF="$ROOT/.claude/workflow.json"
+BACKLOG="$ROOT/BACKLOG.md"
 
 pass=0 fail=0
 ok() {
@@ -113,6 +114,26 @@ has "step-5 renders-nothing case" "$FRAME" "include the case where the element r
 has "step-5 mechanical N/A needs a reason" "$FRAME" "silence is not an option"
 has "step-6 flags implementation-shaped plans" "$FRAME" "derived from an implementation shape"
 has "step-9 demonstrate-red" "$FRAME" "demonstrate red before done"
+
+echo "== drift: falsification rows are keyed (AC, surface), append-only, with declared exclusions =="
+has "step-5 surface is a product place" "$FRAME" "where in the product the criterion is observable"
+has "step-5 place-not-mechanism rule" "$FRAME" "A surface is a **place, not a mechanism**"
+has "step-5 no circular oracles" "$FRAME" "**No circular oracles:**"
+has "step-5 exclusions are three-valued" "$FRAME" "in exactly three permitted forms"
+has "step-5 exclusions name product surfaces only" "$FRAME" "Exclusions name **product surfaces only**"
+has "step-8 spec commit is the frozen baseline" "$FRAME" "falsification plan in this commit is the frozen baseline"
+has "step-9 plan is append-only" "$FRAME" "The approved plan is append-only:"
+has "step-9 amendment log required" "$FRAME" "## Falsification-plan amendments"
+has "step-9 retract never remove" "$FRAME" "retracted, never removed"
+has "step-6 flags mechanism-as-surface" "$FRAME" "rather than a place in the product"
+has "step-5 mechanical waives detail not extent" "$FRAME" "The mechanical label waives the detail, never the extent claim"
+absent "step-6 drops the impossible retraction duty" "$FRAME" "any retraction in the amendment log whose reason does not hold"
+has "step-6 defers retractions by phase" "$FRAME" "Amendment-log retractions are **out of scope here**"
+has "step-6 names OPS-18 as the retraction owner" "$FRAME" "that duty is OPS-18's"
+# The handoff lives at TWO sites — the frame prompt defers it, BACKLOG.md accepts it. Pinning
+# only the frame side leaves the receiving end deletable with the gate still green.
+has "OPS-18 accepts amendment-log review" "$BACKLOG" "**Also owns amendment-log review**"
+has "OPS-18 states the gap until it ships" "$BACKLOG" "Until OPS-18 ships, retraction reasons go unreviewed."
 
 echo "== drift: consult-presentation rule stated in doctrine + pointed at from a stop =="
 has "doctrine states consult-presentation rule" "$PROTOCOL" "How a consult is presented"

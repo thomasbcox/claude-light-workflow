@@ -359,7 +359,10 @@ restate rules. The prefix-revisit question OPS-11 opened keeps accruing data poi
 OPS-18 — **/review-side falsification companion**: the reviewer proposes mutations for test-bearing
 stories at review time, complementing the frame-side plan (spec-time, criterion-derived, executed as
 step-9 demonstrate-red — shipped via `reviews/frame-falsification-plan.md`). Filed 2026-08-02 as
-that story's declared non-goal; not committed work.
+that story's declared non-goal; not committed work. **Also owns amendment-log review** —
+retractions and implement-added rows exist only *after* step 9, so no frame-time review can see
+them; `falsification-surface-rows` (2026-08-03) removed that impossible clause from the step-6
+prompt and handed the duty here. **Until OPS-18 ships, retraction reasons go unreviewed.**
 
 _(OPS-10 shipped — see [Done](#done).)_
 
