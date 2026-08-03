@@ -298,6 +298,10 @@ AC→file map:
 - **AC6** (drift pins, gate green) → `tests/reviewer_test.sh`, ten `has` checks
 - **AC7** (scope containment) → the diff itself
 
+*Round 2 (2026-08-03):* AC5's map entry gains `BACKLOG.md` — the round-1 minimal fix moved
+retraction review to OPS-18, and the handoff line lives in that entry. No other mapping
+changed.
+
 ## Codex design review (2026-08-03)
 
 **Verdict:** "The per-(AC, surface) model is proportionate for this instruction-driven
@@ -341,7 +345,13 @@ policy limits, and remove a self-referential reviewer oracle."
   **Win:** removes one impossible detection path; every retained row names a mechanism
   capable of observing its regression.
 
-## Codex approach review (2026-08-03, base main, HEAD 3d09300)
+## Codex approach review (2026-08-03, base main, HEAD 6650969)
+
+*Record correction (round 2): this header originally cited HEAD `3d09300`, a SHA that does
+not exist in this repository — a transcription error, not a real commit. The pass ran with
+HEAD at `6650969` (`review: build note`), which is the SHA the round-2 re-review bases on.
+Corrected rather than left standing, since a story file citing a non-existent commit is an
+unusable audit trail.*
 
 **Verdict:** "The per-(AC, surface) table and lightweight phrase pins are proportionate,
 consistent with this instruction-only repository, and introduce no unnecessary dependency or
