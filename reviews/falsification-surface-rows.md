@@ -305,6 +305,10 @@ AC→file map:
 retraction review to OPS-18, and the handoff line lives in that entry. No other mapping
 changed.
 
+*Round 3 (2026-08-03):* map unchanged — the round-2 fix added two pins at AC6's existing site
+(`tests/reviewer_test.sh`) and corrected AC5's plan row in the story file; no new file entered
+the map.
+
 ## Codex design review (2026-08-03)
 
 **Verdict:** "The per-(AC, surface) model is proportionate for this instruction-driven
