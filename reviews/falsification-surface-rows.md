@@ -435,7 +435,7 @@ this verdict does not assess line-level correctness."
 **Findings:** none — both round-1 findings verified closed. Shape blessed; correctness pass
 runs this same round.
 
-## Codex review (2026-08-03, base 6650969, HEAD 8a7d1c4)
+## Codex review (2026-08-03, base 6650969, HEAD f8e5426)
 
 **Summary:** "The implementation satisfies the two amended behavior requirements, but its new
 drift coverage does not protect the required OPS-18 handoff. The directly relevant reviewer
@@ -452,7 +452,7 @@ temporary-directory setup."
   **Suggestion:** add a positive `has` assertion for the phase-boundary and OPS-18 ownership
   wording, keeping the `absent` assertion against reinstating the impossible duty.
 
-## Hidden-failure review (2026-08-03, base 6650969, HEAD 8a7d1c4)
+## Hidden-failure review (2026-08-03, base 6650969, HEAD f8e5426)
 
 **Summary:** "The diff introduces no swallowed exceptions, blind catches, silent fallbacks,
 catch-and-continue behavior, or deletion of an effective safety check. The deferred retraction
