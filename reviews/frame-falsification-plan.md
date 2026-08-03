@@ -230,6 +230,39 @@ environmental, not an approach concern."
 
 **Findings:** none — clean pass. Shape blessed; correctness pass runs this same round.
 
+## Codex review (2026-08-02, base origin/main, HEAD 94b6d1e)
+
+**Summary:** "The behavioral changes satisfy AC1–AC6, but the branch violates the approved
+scope-containment criterion because it adds an unlisted review artifact."
+
+### BLOCKER
+
+- **Unlisted approach-review artifact violates AC7** ·
+  `reviews/frame-falsification-plan.approach.json:1`
+  AC7 lists only `frame-falsification-plan.md` and `frame-falsification-plan.design.json`
+  as permitted story artifacts; the added approach-review artifact is not among them, so
+  the branch fails an explicit acceptance criterion as written.
+  **Suggestion:** remove the artifact, or amend AC7 with Thomas's approval so
+  workflow-generated review artifacts are explicitly permitted.
+
+## Hidden-failure review (2026-08-02, base origin/main, HEAD 94b6d1e)
+
+**Summary:** "The diff introduces no swallowed exceptions, ignored failures,
+catch-and-continue paths, silent fallbacks, or removed safety checks. Its new
+falsification workflow explicitly requires failed checks to stop implementation, so no
+hidden-failure issue was found."
+
+**Findings:** none.
+
+*Process note for this round:* the deployed review skill at `~/.claude` (July 2) predates
+the parallel hidden-failure critic (OPS-12, July 17): the round initially ran per the stale
+single-critic instructions, was caught against the repo's current `review/SKILL.md`, and
+the hidden-failure critic was then run to complete the pair. Its first launch failed
+fail-closed — `hidden-failure-schema.json` is absent from the stale deployment — and was
+rerun against this repo's own copy of the schema (this repo is the skill's home; the
+absolute-`$HOME` rule exists for repos that don't carry it). Redeploy via `./install.sh`
+belongs to /close, post-merge.
+
 ## Design decisions (2026-08-02)
 
 Scope approved by Thomas: **"Approved — Fix A, fix 2 and 3, file the backlog line."**
