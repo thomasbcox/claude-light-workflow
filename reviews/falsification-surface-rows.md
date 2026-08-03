@@ -435,6 +435,31 @@ this verdict does not assess line-level correctness."
 **Findings:** none — both round-1 findings verified closed. Shape blessed; correctness pass
 runs this same round.
 
+## Codex review (2026-08-03, base 6650969, HEAD 8a7d1c4)
+
+**Summary:** "The implementation satisfies the two amended behavior requirements, but its new
+drift coverage does not protect the required OPS-18 handoff. The directly relevant reviewer
+linter passes; the full gate could not run because the read-only sandbox prevents its
+temporary-directory setup."
+
+### IMPORTANT
+
+- **OPS-18 handoff is not pinned** · `tests/reviewer_test.sh:129`
+  The new assertion only checks that the *former* retraction-review wording is **absent**. If
+  the newly required parenthetical — declaring retractions out of scope at step 6 and
+  assigning them to OPS-18 — were deleted, the check would still pass. AC5's required handoff
+  is unprotected, and AC6 requires the load-bearing phrase pinned at **each** edit site.
+  **Suggestion:** add a positive `has` assertion for the phase-boundary and OPS-18 ownership
+  wording, keeping the `absent` assertion against reinstating the impossible duty.
+
+## Hidden-failure review (2026-08-03, base 6650969, HEAD 8a7d1c4)
+
+**Summary:** "The diff introduces no swallowed exceptions, blind catches, silent fallbacks,
+catch-and-continue behavior, or deletion of an effective safety check. The deferred retraction
+review is explicitly surfaced in the frame prompt, story, and backlog rather than hidden."
+
+**Findings:** none.
+
 ## Decisions (2026-08-03)
 
 Round 1 — approach pass, two IMPORTANT findings. Thomas: **"fix both, minimal for the

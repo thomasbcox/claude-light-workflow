@@ -1,0 +1,1 @@
+{"summary":"2026-08-03 08:27 PDT — The diff introduces no swallowed exceptions, blind catches, silent fallbacks, catch-and-continue behavior, or deletion of an effective safety check. The deferred retraction review is explicitly surfaced in the frame prompt, story, and backlog rather than hidden.","findings":[]}
