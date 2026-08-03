@@ -40,6 +40,10 @@ somewhere.
 - **Amendment volume is unbounded.** Nothing stops a deliberately thin spec-time plan whose
   real content arrives through the append valve. The `added at: implement` marker makes it
   visible to a reader; no check counts it. Accepted limit.
+- **Retraction reasons are unreviewed until OPS-18 ships.** A retraction can only exist after
+  step 9, so the step-6 design review — which runs before approval — cannot see one. That
+  duty is handed to OPS-18 and the step-6 prompt says so explicitly rather than claiming a
+  check it cannot perform. Added round 1 (approach finding 1, minimal variant).
 
 ## In scope
 
@@ -95,7 +99,11 @@ somewhere.
    renders-nothing case for presence/shape — carry forward unchanged **per row**.
 2. Step 5 requires a per-AC **`surfaces excluded`** line with exactly three permitted forms:
    a list of named surfaces each with a reason, `none`, or `n/a`. Silence is not an option,
-   and exclusions name product surfaces only.
+   and exclusions name product surfaces only. This holds **even when the design sketch is
+   `N/A — mechanical`**: the mechanical label waives the per-row regression/oracle detail,
+   never the per-AC extent claim. *(Amended round 1 — the whole-plan mechanical escape hatch
+   would otherwise let a self-applied story-level label erase every per-AC declaration; see
+   Decisions.)*
 3. Step 5 forbids a **circular oracle**: no row may name as its oracle the mechanism whose
    failure is that row's own regression.
 4. Steps 8–9 state the **append-only** rule and its **amendment log**: the `spec:` commit is
@@ -104,12 +112,16 @@ somewhere.
    `added at: implement`; approved rows are never edited or deleted in place; a wrong row is
    retracted rather than removed; implement-added rows carry demonstrate-red.
 5. The step-6 reviewer prompt directs the reviewer to critique surface enumeration, the
-   `surfaces excluded` claim, retractions, and circular oracles.
+   `surfaces excluded` claim, and circular oracles. It does **not** cover retractions: step 6
+   runs before approval and an amendment log exists only after step 9, so that duty is
+   OPS-18's and the prompt says so. *(Amended round 1 — the original wording assigned a check
+   to a phase temporally incapable of performing it; see Decisions and Known limits.)*
 6. `tests/reviewer_test.sh` gains drift assertions pinning the load-bearing phrase at each
    edit site, and the full gate passes.
 7. Scope containment: the diff touches only `.claude/skills/frame/SKILL.md`,
-   `tests/reviewer_test.sh`, and this story's artifacts
-   (`reviews/falsification-surface-rows.*`).
+   `tests/reviewer_test.sh`, `BACKLOG.md`, and this story's artifacts
+   (`reviews/falsification-surface-rows.*`). *(Amended round 1 — `BACKLOG.md` added to carry
+   the one-line OPS-18 handoff that the minimal fix to finding 1 depends on; see Decisions.)*
 
 ## Test notes
 
@@ -218,6 +230,31 @@ the gate doing its job.
 returns `tail`'s exit status rather than the suite's — the run printed `failed=1` and
 `GATE GREEN` in the same breath. Re-run per suite with explicit exit codes. Recorded because
 a gate whose result can be masked by the way it is invoked is worth knowing about.
+
+## Falsification-plan amendments
+
+The plan frozen at the `spec:` commit (`59c99fa`) is never edited in place. Round-1 fixes
+changed two criteria, so their rows are **retracted and replaced** here — an in-place edit is
+exactly what the rule forbids, and retract-plus-add is how a change to an existing
+`(AC, surface)` pair is expressed while uniqueness on the pair still holds.
+
+| action | AC | surface | reason | when |
+|---|---|---|---|---|
+| `retract` | AC5 | the step-6 prompt text | AC5 amended: the prompt no longer covers retractions, so the row's regression named a duty that no longer exists | `added at: implement` |
+| `add` | AC5 | the step-6 prompt text | replacement row for the amended criterion (below) | `added at: implement` |
+| `retract` | AC2 | the step-5 instruction text | AC2 amended: the row's regression covered only vocabulary collapse, not the mechanical hatch erasing every per-AC declaration | `added at: implement` |
+| `add` | AC2 | the step-5 instruction text | replacement row for the amended criterion (below) | `added at: implement` |
+
+**Active replacement rows** (both carry the same demonstrate-red obligation as spec-time rows):
+
+| AC | surface | regression that must be caught | oracle |
+|---|---|---|---|
+| AC5 | the step-6 prompt text | the prompt stops naming enumeration, exclusions, or circular oracles — silently removing the one frame-time mechanism with purchase on extent — **or** the impossible retraction duty is reinstated, re-claiming a check that phase cannot perform | `gate` |
+| AC2 | the step-5 instruction text | the three-valued vocabulary collapses (a blank becomes permissible, or `n/a` and `none` merge) **or** the mechanical label is allowed to waive the per-AC extent claim rather than only the per-row detail | `gate` |
+
+*No other row changed.* AC7's row references "those AC7 enumerates" rather than restating the
+file list, so amending AC7's list left its row correct — the reason step 5 tells scope-
+containment ACs to reference rather than restate.
 
 ## Open questions
 
@@ -340,6 +377,39 @@ contradicts the new every-AC exclusion invariant."
   approved forms.
   **Win:** removes a special-case bypass; one invariant for reviewers and any future presence
   check — every AC always declares its considered extent.
+
+## Fixes (2026-08-03)
+
+- **Approach finding 1 (retractions reviewed before they can exist) → minimal variant.** The
+  step-6 prompt's retraction clause is removed and replaced with an explicit statement that
+  amendment-log retractions are out of scope at that phase, naming OPS-18 as the owner —
+  so the prompt no longer claims a check it cannot perform. `BACKLOG.md`'s OPS-18 entry gains
+  the handoff and the plain statement that retraction reasons go unreviewed until it ships.
+  AC5 and AC7 amended; a Known limit records the gap.
+- **Approach finding 2 (mechanical N/A bypasses the per-AC invariant) → fixed.** Step 5's
+  carve-out now waives only the per-row regression/oracle detail; every AC still carries its
+  `surfaces excluded` line in one of the three forms. AC2 amended.
+- **Plan rows** changed via the new `## Falsification-plan amendments` log (retract + add per
+  affected `(AC, surface)` pair), never edited in place — the story's first exercise of its
+  own mechanism.
+
+### Demonstrate-red for the round-1 added rows
+
+- **AC2 / step-5 instruction text** — new pin `The mechanical label waives the detail, never
+  the extent claim`: **red against `main`** ✓ (the phrase does not exist there).
+- **AC5 / step-6 prompt text** — the reinstatement guard is an `absent` check, so its
+  regression is the impossible duty *returning*. Verified both directions: the check **fires**
+  against a file containing the reinstated clause ✓, and is **satisfied** by the current file
+  ✓. An `absent` pin that never fires would be the vacuous case; this one does.
+
+Full gate green, verified per suite with explicit exit codes.
+
+**A second real red caught in this round.** `reviewer_test.sh` failed (`passed=61 failed=1`):
+rewriting the mechanical carve-out capitalised "Silence", breaking the previous story's pin
+on the lowercase phrase. Fixed by restoring the wording in the skill text, not by editing the
+pin. That is **two instances in two rounds** of the same mechanism — a rule stated in both
+skill prose and a linter pin, where editing the prose silently breaks the pin. It is exactly
+**OPS-17**, and this story has now supplied it two fresh data points.
 
 ## Decisions (2026-08-03)
 

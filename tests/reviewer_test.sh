@@ -125,6 +125,8 @@ has "step-9 plan is append-only" "$FRAME" "The approved plan is append-only:"
 has "step-9 amendment log required" "$FRAME" "## Falsification-plan amendments"
 has "step-9 retract never remove" "$FRAME" "retracted, never removed"
 has "step-6 flags mechanism-as-surface" "$FRAME" "rather than a place in the product"
+has "step-5 mechanical waives detail not extent" "$FRAME" "The mechanical label waives the detail, never the extent claim"
+absent "step-6 drops the impossible retraction duty" "$FRAME" "any retraction in the amendment log whose reason does not hold"
 
 echo "== drift: consult-presentation rule stated in doctrine + pointed at from a stop =="
 has "doctrine states consult-presentation rule" "$PROTOCOL" "How a consult is presented"
