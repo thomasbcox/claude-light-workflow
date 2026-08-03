@@ -249,6 +249,18 @@ because the unit is now a pair and a table makes an omitted surface visible as a
 row. This is a presentation convention in the template, not a parser — nothing reads these
 tables mechanically.
 
+## Build note (2026-08-03)
+
+AC→file map:
+
+- **AC1** (row key `(AC, surface)`; place-not-mechanism) → `.claude/skills/frame/SKILL.md` step 5, `## Test notes` bullet
+- **AC2** (`surfaces excluded`, three-valued, product surfaces only) → same bullet
+- **AC3** (no circular oracles) → same bullet
+- **AC4** (frozen baseline; append-only + amendment log; retract-not-remove) → `.claude/skills/frame/SKILL.md` steps 8 and 9
+- **AC5** (reviewer critiques enumeration / exclusions / retractions / circular oracles) → `.claude/skills/frame/SKILL.md` step 6, codex prompt
+- **AC6** (drift pins, gate green) → `tests/reviewer_test.sh`, ten `has` checks
+- **AC7** (scope containment) → the diff itself
+
 ## Codex design review (2026-08-03)
 
 **Verdict:** "The per-(AC, surface) model is proportionate for this instruction-driven
