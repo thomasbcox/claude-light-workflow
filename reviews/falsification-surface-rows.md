@@ -503,6 +503,26 @@ assertions fail loudly when the required phase-boundary or OPS-18 handoff wordin
 
 **Findings:** none.
 
+## Decisions — round 3 (2026-08-03)
+
+Correctness-only re-review (round-2 fix was line-level, no redesign). Hidden-failure clean.
+Thomas: **"fix both and /close"**.
+
+**Correctness**
+
+- **BLOCKER — Retracted plan row is edited in place** → **fix.** The round-2 "retraction"
+  logged its entries correctly but *also* struck through and annotated the historical row —
+  an in-place edit of an approved row, which AC4 forbids. Restore the row byte-for-byte from
+  `bec4475`, keep the log entries, and append the replacement under its own heading so active
+  state is **derived from the log**, never annotated onto history. The worked example must
+  demonstrate the rule, not violate it.
+- **IMPORTANT — BACKLOG handoff remains unpinned** → **fix.** Pin the `BACKLOG.md` side of the
+  OPS-18 handoff (ownership + the unreviewed-until-OPS-18 warning) and demonstrate the check
+  fails when that text is deleted. Third instance in this story of one surface pinned while a
+  second sits unguarded — the exact class the (AC, surface) key exists to catch.
+
+**Hidden-failure** — no findings.
+
 ## Fixes — round 2 (2026-08-03)
 
 - **IMPORTANT (OPS-18 handoff not pinned) → fixed at both levels.**
