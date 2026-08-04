@@ -32,7 +32,81 @@ and shipped together via PR #2 / `5225bdb`; see [Done](#done). BUG-4 shipped via
 `0504e31`; BUG-5 was obviated by `drop-shipped-tag` (the `shipped/<slug>` tag it depended on
 was removed); both in [Done](#done).
 
-_(all shipped — see [Done](#done))_
+BUG-6 and BUG-7 are **open**, both filed 2026-08-04 from `fireworks-reviewer-backend`'s two
+flagged-but-unfixed items — one observed during implementation and deliberately not carried, one an
+approach-review BLOCKER accepted with the claim corrected rather than the window closed.
+
+BUG-6 — **Schema validation is vacuous if the schema file is well-formed JSON but not a real
+schema.** From that story's "Observed, not fixed" note
+([reviews/fireworks-reviewer-backend.md](reviews/fireworks-reviewer-backend.md)). JSON Schema treats
+unrecognised keywords as **no-ops**, so a file that parses as JSON but declares no real constraints
+validates **anything** — including the empty object — and the runner promotes the result as a clean
+review.
+
+- **How it surfaced (not theory).** Writing the AC-2 schema test: substituting one valid JSON file for
+  another **did not fail**. The check meant to prove validation is live passed against a schema that
+  constrains nothing.
+- **Both enforcement layers share one input, so they fail together.** The runner's defense reads as
+  two independent layers — the API-side `response_format: json_schema` grammar constraint and the
+  local `jsonschema.validate` — but `run_pass` reads the schema file once and hands the *same dict* to
+  both. A meaningless schema disables both at once.
+- **The codex path has less defense and shares the same files.** `review/SKILL.md`'s `promote()` gates
+  on {clean exit AND `jq -e .`} — **parseable**, never schema-checked — relying entirely on
+  `codex exec --output-schema` fed from the same skill-local schema files. A fix has to decide whether
+  it covers that path or only the runner.
+- **It is the failure shape that motivated the whole backend.** An abnormal condition yielding a
+  schema-valid artifact that reads as a clean review — same shape as the `{}` promotion and the
+  `content_filter` gap, both fixed in that story. This is the instance left standing.
+- **Candidate fixes (evaluate) — and the trap in the obvious one.** (a) **Meta-validate at load** —
+  the library's `check_schema` on each schema before use. Cheap and worth having, but **necessary,
+  not sufficient**: it catches a file that is illegal *as a schema*, and misses the case actually
+  observed, because a foreign JSON document (say the routing table) is a *legal* schema whose
+  keywords are simply unrecognised. (b) **Prove the schema bites** — validate a known-bad instance
+  against it at load or in the gate and fail closed if that instance *passes*; the empty object is the
+  natural probe, since all three schemas carry a non-empty `required` and must reject it. This is the
+  check that closes the observed hole. (c) **Gate-time structural pins** per schema file, which also
+  covers the codex path — nothing there validates locally at all. Lean: (b) first, (a) alongside it,
+  (c) if the codex path is in scope.
+- **Reach.** Every schema the runner loads (design, approach, correctness, hidden-failure), and every
+  future critic added to the altitude.
+
+(Logged 2026-08-04. Filed `BUG-` per the taxonomy above: it changes what `/review` *does* — its
+fail-closed guarantee has a hole — not how the skills are shipped.)
+
+BUG-7 — **A review round is not published atomically: per-file renames, no round transaction.** The
+deferred half of the approach BLOCKER Thomas accepted 2026-08-03
+([reviews/fireworks-reviewer-backend.md](reviews/fireworks-reviewer-backend.md)). **Accepted meant
+the overclaim was corrected, not that the window was closed** — AC-5, `review/SKILL.md` step 8, and
+the runner's `promote()` docstring now state the true guarantee and name the residual window. This
+item owns closing it.
+
+- **The window.** Publication is a sequence of same-directory renames, one per artifact — atomic *per
+  file*, so no reader ever sees a partial artifact, but not one transaction across files. A process
+  killed between two renames leaves one artifact new and one stale, and nothing ties a round's files
+  together, so step 9's decision menu reads the mixed set as a single round. Narrow (the interval
+  between two renames) and silent when it happens.
+- **What is already guaranteed, and stays.** A failed review publishes nothing: every pass must
+  validate, then every payload is written and fsynced to a temp beside its destination, and only then
+  are renames performed; staging failures clean up and promote nothing. The gap is only the
+  killed-between-renames case.
+- **It spans both backends — fixing one leaves the invariant half-true.** The `codex` path's two
+  sequential `mv`s share the identical window; the runner's `os.replace` loop is the same shape in
+  Python. That shared exposure is why it was deferred out of a fireworks-only change.
+- **The shape codex proposed.** Write every result into one immutable, round-specific directory,
+  fsync it, then publish with a single atomic directory rename or a current-round pointer; consumers
+  resolve artifacts only through that committed reference — one commit point instead of a
+  probabilistic sequence.
+- **What it costs (why it is a story, not a patch).** It changes the **artifact contract**
+  (`reviews/<slug>.<pass>.json`) and therefore every consumer: both backends' invocations, the step-9
+  menu, the drift-linted command blocks pinned in `reviewer_test.sh`, and the story trail's naming
+  convention. Anything reading those files by stable name has to learn the pointer.
+- **It grows with the critic layer.** OPS-12's standing rule — every parallel critic gets its own
+  schema and its own artifact — means more files per round, so more renames per commit point and more
+  consumers to migrate. Every critic added before this is fixed copies the pattern.
+
+(Logged 2026-08-04. Filed `BUG-` rather than `OPS-`: a workflow-correctness defect in what `/review`
+publishes, not shipping ergonomics — though it is kin to the OPS-11…OPS-18 reviewer-architecture
+line, whose prefix question stays a one-way door left for Thomas.)
 
 ## Deployment & tooling improvements
 
