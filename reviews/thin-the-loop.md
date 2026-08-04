@@ -286,6 +286,38 @@ regrowth, accepting that exact-phrase paste-back would not be caught mechanicall
 two-tier rule instead of a contradiction; (b) makes the pin set fully consistent with AC-4's
 principle. Either resolves the discrepancy; the current state leaves the file arguing with itself.
 
+## Fireworks review (2026-08-04, base main, HEAD 46bdc4e)
+
+**Summary.** "The diff faithfully implements all seven ACs. `/deep-audit` is fully retired across
+skill files, tests, `install.sh`, `workflow.json`, `ci.yml`, and all four docs; the falsification
+plan in `frame/SKILL.md` is reduced to demonstrate-red with the matrix, exclusions, and amendment log
+gone; demonstrate-red survives intact; pins are pruned from ~91 to 19 with a clear two-tier bar
+stated in the header; the behavioural core (resolver, CI-vs-config, fireworks-in-gate, artifact
+presence) is preserved; the reverse docs check is added and is structural; and scope is contained to
+the 14 enumerated files plus the `reviews/` trail. The approach review's single IMPORTANT finding was
+resolved by the final commit. **No correctness issues found.**"
+
+### NIT — Approach review JSON lacks trailing newline
+*`reviews/thin-the-loop.approach.json:15`* — the file ends with `}` and no trailing newline, unlike
+the repo's other JSON files.
+
+## Hidden-failure review (2026-08-04, base main, HEAD 46bdc4e)
+
+**Summary.** "The new code in `docs_test.sh` is explicitly fail-closed (guards on `seen > 0`, reports
+`bad` on empty extraction). The behavioral core of `reviewer_test.sh` is preserved intact. No bare
+except/catch, no catch-log-continue, no silent fallbacks were introduced. One finding: a
+behavior-guard pin for the mixed-backend stop was removed during the pin prune."
+
+### QUESTION — Mixed-backend stop pin removed; it may meet the retention bar
+*`tests/reviewer_test.sh:114`* — the pruned set dropped
+`has "mixed-backend altitude is a stop" "$REVIEW" "Both passes must resolve to the **same** backend"`.
+That pin guarded a real behavior invariant: if `/review` runs correctness on one backend and
+hidden-failure on another, the skill must STOP rather than proceed silently. Its silent failure —
+the skill text disappearing — would let mixed-backend reviews run with no test catching it and the
+gate staying green. The retained set lists "the unwired-backend stop", but that is a different
+scenario (both backends wired, just not the same one). This is not prose drift; it is a behavior
+invariant losing its only mechanical guard. Intentional exclusion, or an oversight in the prune?
+
 ## Design sketch — HOW
 
 Deletion, not construction. Order matters only so the gate stays green between commits:
