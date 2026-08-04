@@ -107,6 +107,29 @@ manifests absent at HEAD fall into the same "NOT INCLUDED" listing `_changed_fil
 **Win:** one invariant — *every context source reads at HEAD* — replaces two rules and removes a
 contradiction the reviewer cannot resolve.
 
+## Decisions — approach pass (2026-08-04)
+
+| Finding | Decision |
+|---|---|
+| IMPORTANT — `_manifests` reads the working tree, not HEAD | **Fix** — *"fix please"* |
+
+A tidy, not a redesign: it applies a pattern already established in the same file, so the shape is
+blessed and the correctness pass continues in this round.
+
+## Fixes — approach round (2026-08-04)
+
+`_manifests` now reads at HEAD, and the invariant is uniform: **every context source reads at HEAD**.
+Manifests are discovered via `git ls-tree -r --name-only HEAD` and read with `git show HEAD:<path>`,
+so no working-tree content reaches the payload from any source.
+
+One addition beyond the literal finding: an **untracked** manifest is now *named* in the payload,
+contents withheld. Without it, a repo whose only manifest is uncommitted would report "no manifest"
+— a silent omission of the same kind the absent-manifest statement (AC-4) exists to prevent. Names
+only, because including contents would reintroduce the leak just fixed.
+
+*Red demonstrated:* reverting the manifest read to the working tree trips
+`uncommitted manifest edits never reach the reviewer`. Suite 85 → 89 checks; gate 362 → 366.
+
 ### Known limits
 
 - **Fireworks is unproven at this altitude, on a sample of one.** Run head-to-head against codex on

@@ -158,24 +158,61 @@ def _changed_files(ctx: dict) -> str:
 
 
 def _manifests(ctx: dict) -> str:
-    """Every dependency manifest found, or an explicit statement that there are none."""
+    """Every dependency manifest **at HEAD**, or an explicit statement that there are none.
+
+    Reads at HEAD for the same reason `_changed_files` does, and the invariant is
+    now uniform: *every context source reads at HEAD*. Reading the working tree
+    here meant a manifest that was also a changed file could appear twice in one
+    payload — at HEAD and uncommitted — contradicting itself, and a manifest that
+    was not a changed file could carry uncommitted edits into a review of
+    committed work. Caught by the approach reviewer, one function away from the
+    identical bug it had already been fixed for.
+    """
+    tracked = _git(["ls-tree", "-r", "--name-only", "HEAD"], ctx["root"]).splitlines()
+    candidates = sorted(
+        rel for rel in tracked
+        if rel.strip()
+        and Path(rel).name in MANIFEST_NAMES
+        and "node_modules" not in Path(rel).parts
+    )
+
     found = []
-    for name in MANIFEST_NAMES:
-        for path in sorted(ctx["root"].rglob(name)):
-            if ".git" in path.parts or "node_modules" in path.parts:
-                continue
-            try:
-                found.append(
-                    f"----- {path.relative_to(ctx['root'])} -----\n{path.read_text().rstrip()}"
-                )
-            except (UnicodeDecodeError, OSError):
-                continue
-    if not found:
-        return (
-            "No dependency manifest found in this repository. This is a stated "
-            "absence, not an omission — do not infer dependencies you cannot see."
+    for rel in candidates:
+        proc = subprocess.run(
+            ["git", "show", f"HEAD:{rel}"],
+            cwd=ctx["root"], capture_output=True, text=True, check=False,
         )
-    return "\n\n".join(found)
+        if proc.returncode != 0:
+            continue
+        found.append(f"----- {rel} (at HEAD) -----\n{proc.stdout.rstrip()}")
+
+    # An untracked manifest is deliberately NOT included — it is not part of the
+    # committed state under review — but its existence is named, so "no manifest"
+    # never silently means "manifest present but withheld". Names only; including
+    # contents would reintroduce the leak this function was just fixed for.
+    untracked = [
+        rel for rel in _git(
+            ["ls-files", "--others", "--exclude-standard"], ctx["root"]
+        ).splitlines()
+        if rel.strip() and Path(rel).name in MANIFEST_NAMES
+    ]
+    notes = []
+    if untracked:
+        notes.append(
+            "----- PRESENT BUT UNCOMMITTED (excluded: not part of the state under "
+            "review; names only) -----\n" + "\n".join(sorted(untracked))
+        )
+
+    if not found:
+        return "\n\n".join(
+            [
+                "No dependency manifest is committed at HEAD in this repository. "
+                "This is a stated absence, not an omission — do not infer "
+                "dependencies you cannot see."
+            ]
+            + notes
+        )
+    return "\n\n".join(found + notes)
 
 
 # ── Pass table ────────────────────────────────────────────────────────────────

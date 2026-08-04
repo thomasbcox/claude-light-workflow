@@ -529,6 +529,29 @@ with repo() as root:
     check("  ↳ writes the approach artifact",
           artifacts(root) == ["demo.approach.json"], str(artifacts(root)))
 
+# The approach reviewer's finding: _manifests read the working tree while
+# _changed_files read HEAD. The invariant is uniform now — EVERY context source
+# reads at HEAD — so this asserts it for manifests specifically.
+with repo() as root:
+    subprocess.run(["git", "add", "-A"], cwd=root, check=True, capture_output=True)
+    (root / "requirements.txt").write_text("committed-dep==1.0\n")
+    subprocess.run(["git", "add", "-A"], cwd=root, check=True, capture_output=True)
+    subprocess.run(["git", "commit", "-qm", "add manifest"], cwd=root, check=True,
+                   capture_output=True)
+    (root / "requirements.txt").write_text("committed-dep==1.0\nUNCOMMITTED-DEP==9.9\n")
+    (root / "package.json").write_text('{"name":"never-committed"}\n')
+    calls = []
+    invoke_approach(root, calls=calls)
+    body = calls[0]["messages"][1]["content"]
+    check("manifests are read at HEAD", "committed-dep==1.0" in body)
+    check("  ↳ uncommitted manifest edits never reach the reviewer",
+          "UNCOMMITTED-DEP" not in body,
+          "working-tree manifest content leaked")
+    check("  ↳ an untracked manifest is named, not silently omitted",
+          "package.json" in body and "PRESENT BUT UNCOMMITTED" in body)
+    check("  ↳ but its contents are withheld",
+          "never-committed" not in body, "untracked manifest contents leaked")
+
 # THE bug the first live run exposed: reading the working tree while the diff is
 # computed against HEAD splices two snapshots into one payload, letting
 # uncommitted work leak into a review of committed work.
