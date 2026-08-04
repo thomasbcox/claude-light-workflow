@@ -173,21 +173,28 @@ is a dead assertion and the fix is the test, not the note. That is what AC-7 is.
 
 ### Result
 
-Gate green at **202 checks**, from 368.
+Gate green at **203 checks**, from 368. (Final, after the round-1 review fix restored one pin; the
+pre-review figure was 202.)
 
 | Suite | Before | After | |
 |---|---|---|---|
 | `guard_test.sh` | 19 | 19 | behavioural — unchanged |
 | `fireworks_runner_test.sh` | 91 | 91 | behavioural — unchanged |
 | `dev_audit_test.sh` | 46 | 46 | out of scope (Q3) — unchanged |
-| `reviewer_test.sh` | 102 | 30 | behavioural core 11 → 11; pins 91 → 19 |
+| `reviewer_test.sh` | 102 | 31 | behavioural core 11 → 11; pins 91 → 20 |
 | `deep_audit_plan_test.sh` | 97 | — | deleted with the skill |
 | `docs_test.sh` | 13 | 16 | −2 deep-audit rows, +5 reverse checks |
-| **Total** | **368** | **202** | |
+| **Total** | **368** | **203** | |
 
-**166 checks removed, 0 behavioural checks lost.** Behavioural coverage went from 167 to 167 and
+**165 checks removed, 0 behavioural checks lost.** Behavioural coverage went from 167 to 167 and
 gained 5: the reverse deployed-command check that closes the hole AC-1's own oracle fell into.
 `frame/SKILL.md` step 5 went from six sub-bullets of matrix rules to one paragraph.
+
+The 20 retained pins are 15 tier-1 behavior guards plus the closed tier-2 set of 5, the mixed-backend
+stop having been restored at review. Both adjustments came from the round-1 critics, not from the
+gate: the approach pass caught the header contradicting the pins, and the hidden-failure pass caught
+a pin dropped that met the bar. That is the pattern this story cited as its evidence, reproduced on
+its own diff.
 
 ### Scope containment (AC-6)
 
@@ -349,6 +356,31 @@ pre-existing, not caused by this diff — all three artifacts this round lack th
 `approach-on-fireworks` artifacts already on `main`, so it is runner-wide behaviour. A `BACKLOG.md`
 line against the runner is to be added in `/close` so it is recorded rather than re-raised every
 round.
+
+## Fixes (2026-08-04)
+
+**Hidden-failure QUESTION — mixed-backend stop pin → restored as tier-1.** `tests/reviewer_test.sh`
+regains `has "mixed-backend altitude is a stop"`, placed with the unwired-stop pins it complements.
+The block header widened from "an unwired (pass, backend) pair" to "a bad (pass, backend) pairing",
+since it now covers two distinct failures, and a comment states the difference: unwired means a
+backend is not wired for its pass, mixed means both are wired and simply differ, splitting one
+altitude's findings across two models with no reconciliation rule. It also records why the pin is
+needed despite the resolver check — that check pins *this* repo's config, while the skill deploys
+globally, so the pin guards the instruction that travels.
+
+*Demonstrate-red* (a check added after spec time carries the same obligation): replaced
+`Both passes must resolve to the **same** backend` in `review/SKILL.md` → `FAIL mixed-backend
+altitude is a stop`, 30 passed / 1 failed, exit 1. Reverted; `review/SKILL.md` is untouched in the
+diff. Gate 202 → 203.
+
+**Correctness NIT — trailing newline → rejected here, logged as OPS-19.** New `BACKLOG.md` entry
+against `fireworks_runner.py`, recording that it is runner-wide and pre-existing, why it could not be
+fixed in this story (the reviewer-output constraint plus the runner being a non-goal), and that it
+should ride along the next time the runner is open rather than becoming a bookkeeping story.
+
+**Approach IMPORTANT — two pin tiers.** Applied in-round during `/review` at `46bdc4e`; the
+correctness and hidden-failure passes then ran against it, so it is already reviewed. No further
+change here.
 
 ## Design sketch — HOW
 

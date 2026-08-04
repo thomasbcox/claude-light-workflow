@@ -137,7 +137,7 @@ done
 # Every pin states the reason it survived. Nothing outside the two tiers qualifies.
 # ─────────────────────────────────────────────────────────────────────────────
 
-echo "== pin: an unwired (pass, backend) pair is a loud stop, never a silent fallback =="
+echo "== pin: a bad (pass, backend) pairing is a loud stop, never a silent fallback =="
 # Silent failure: the review quietly runs on a backend the pass was never wired for, or
 # falls back to codex without saying so. Either way Thomas reads findings believing they
 # came from the backend he selected. Both sites are pinned — the stop is stated in
@@ -145,6 +145,14 @@ echo "== pin: an unwired (pass, backend) pair is a loud stop, never a silent fal
 has "no codex fallback" "$REVIEW" "Do **not** fall back to codex"
 has "stop is scoped to unwired, not to non-codex" "$REVIEW" "**Selecting a backend for a pass it is not wired for is a loud STOP**"
 has "frame routes unwired design backend to stop" "$FRAME" "not wired for the design pass"
+# The MIXED-pair stop is a DIFFERENT failure from the unwired one above: there both backends
+# are fine but one is not wired for its pass; here both are wired and simply differ, splitting
+# ONE altitude's findings across two models with no reconciliation rule. Silent failure: the
+# round returns two partial finding sets and reads as a complete review. Restored after the
+# thin-the-loop prune dropped it — a hidden-failure critic caught the omission (2026-08-04).
+# The resolver check above pins THIS repo's config exactly, but the skill deploys globally, so
+# this pin guards the instruction that travels to every project.
+has "mixed-backend altitude is a stop" "$REVIEW" "Both passes must resolve to the **same** backend"
 
 echo "== pin: promotion is fail-closed — a failed review publishes nothing =="
 # Silent failure: a partial or empty artifact lands in reviews/ and reads as a clean review.

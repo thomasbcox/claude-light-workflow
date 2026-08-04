@@ -478,6 +478,16 @@ that story's declared non-goal; not committed work.
   remains of OPS-18 is only its original idea: reviewer-proposed mutations at review time. The
   frame-side discipline it complements is now just demonstrate-red.
 
+OPS-19 — **`fireworks_runner.py` writes artifacts without a trailing newline.** Cosmetic and
+runner-wide: every `reviews/<slug>.{approach,codex,hidden-failure}.json` the fireworks backend
+promotes ends at `}` with no final newline, unlike the repo's hand-maintained JSON
+(`workflow.json`, the schemas). Logged 2026-08-04 from a `thin-the-loop` correctness NIT, rejected
+there for two reasons that still hold for any story that isn't about the runner: `/review`'s hard
+constraint forbids editing reviewer output, so the artifact cannot be fixed after the fact, and the
+fix belongs in the writer. Pre-existing, not introduced by that story. **Fix when the runner is next
+open** — one `write` call — rather than as a story of its own; a bookkeeping-only story is against
+doctrine. Recorded so it stops being re-raised as a NIT every round.
+
 _(OPS-10 shipped — see [Done](#done).)_
 
 ---
