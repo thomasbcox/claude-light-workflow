@@ -252,6 +252,21 @@ negative one pinned in the row above.
   tested on structured output. The 262k figure attributed to it elsewhere is exactly
   `kimi-k2p7-code`'s window and appears misattributed.
 
+## Build note (2026-08-03)
+
+| AC | Files |
+|---|---|
+| 1 — vendored runner + runtime contract | `.claude/skills/review/fireworks_runner.py`, `.claude/skills/review/requirements.txt` |
+| 2 — schema enforcement, fail-closed | `fireworks_runner.py` (`run_pass`, `validate`, `promote`) |
+| 3 — routing by purpose | `fireworks_runner.py` (`load_routes`, `resolve_route`, `KNOWN_PURPOSES`) |
+| 4 — versioned routing table | `.claude/skills/review/fireworks-models.json`, `tests/fireworks_runner_test.py` |
+| 5 — runner owns orchestration | `fireworks_runner.py` (`PASSES`, `ALTITUDES`, `run_altitude`, `promote`), `.claude/skills/review/SKILL.md` (step 8 thin invocation) |
+| 6 — declarative context profile | `fireworks_runner.py` (`CONTEXT_SOURCES`, `assemble_context`, `check_size`) |
+| 7 — per-pass backend selection | `.claude/workflow.json`, `.claude/skills/review/SKILL.md`, `.claude/skills/frame/SKILL.md`, `tests/reviewer_test.sh` |
+| 8 — `llm` retired | `review/SKILL.md`, `frame/SKILL.md`, `README.md`, `ARCHITECTURE.md`, `BACKLOG.md` (annotated), `tests/reviewer_test.sh` |
+| 9 — suite in the gate | `.claude/workflow.json`, `tests/fireworks_runner_test.sh`, `tests/fireworks_runner_test.py` |
+| 10 — scope containment | (no file — verified against the branch diff) |
+
 ## Falsification-plan amendments
 
 The approved plan is append-only. Every change below is recorded, never applied in place.
