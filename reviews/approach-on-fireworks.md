@@ -153,6 +153,18 @@ lengths to state absence explicitly and to name untracked manifests — has no e
 `git show` fails (encoding, a git internal error, a submodule edge case) the review proceeds
 degraded, missing a manifest the reviewer was never told existed.
 
+## Decisions — correctness round (2026-08-04)
+
+**Correctness (fireworks):** no findings — nothing to decide.
+
+**Hidden-failure (fireworks):**
+
+| Finding | Decision |
+|---|---|
+| IMPORTANT — `_manifests` silently drops a manifest it found but could not read | **Fix** — *"fix it then /close"* |
+
+Routing to `/close`. Not a merge authorization — `/close` stops at its fork.
+
 ### Known limits
 
 - **Fireworks is unproven at this altitude, on a sample of one.** Run head-to-head against codex on
