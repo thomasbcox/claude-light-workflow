@@ -239,6 +239,22 @@ Decided by Thomas at the frame consult, 2026-08-04:
 - **Q3 — does `/dev-audit`'s 46-check drift suite get the same pruning?** → Out of scope, deferred.
   The same argument plausibly applies; it is not assumed here.
 
+## Build note (2026-08-04)
+
+AC → file map:
+
+| AC | Files |
+|---|---|
+| 1 — `/deep-audit` retired | `.claude/skills/deep-audit/SKILL.md` (deleted), `.claude/skills/deep-audit/plan-schema.json` (deleted), `tests/deep_audit_plan_test.sh` (deleted), `install.sh`, `.claude/workflow.json`, `.github/workflows/ci.yml`, `README.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `BACKLOG.md` |
+| 2 — falsification plan reduced | `.claude/skills/frame/SKILL.md` (steps 5, 6, 8), `BACKLOG.md` (OPS-18 duty discharged) |
+| 3 — demonstrate-red survives | `.claude/skills/frame/SKILL.md` (step 9) |
+| 4 — wording pins pruned | `tests/reviewer_test.sh` |
+| 5 — no behavioural coverage lost | no files — verified by the gate |
+| 6 — scope containment | no files — verified by `git diff --name-only` |
+| 7 — docs cannot advertise a retired skill | `tests/docs_test.sh` |
+
+The retirement tag `retired/deep-audit-plan` is a git object, not a file in the diff.
+
 ## Design sketch — HOW
 
 Deletion, not construction. Order matters only so the gate stays green between commits:
