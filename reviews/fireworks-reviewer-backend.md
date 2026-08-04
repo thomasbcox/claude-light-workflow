@@ -273,6 +273,15 @@ negative one pinned in the row above.
 | 9 — suite in the gate | `.claude/workflow.json`, `tests/fireworks_runner_test.sh`, `tests/fireworks_runner_test.py` |
 | 10 — scope containment | (no file — verified against the branch diff) |
 
+## Build note — round 2 (2026-08-03)
+
+Re-review scope only; the AC→file map above is unchanged. Round-2 commits touch:
+
+| Approved finding | Files |
+|---|---|
+| Hidden-failure IMPORTANT — `finish_reason` too narrow | `.claude/skills/review/fireworks_runner.py` (`run_pass`), `tests/fireworks_runner_test.py` |
+| Correctness NIT — unguarded `response.choices[0]` | `.claude/skills/review/fireworks_runner.py` (`run_pass`), `tests/fireworks_runner_test.py` |
+
 ## Falsification-plan amendments
 
 The approved plan is append-only. Every change below is recorded, never applied in place.
