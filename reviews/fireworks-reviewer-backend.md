@@ -89,8 +89,14 @@ follow in a second story, added to the runner's pass table.
 5. **The runner owns correctness-altitude orchestration.** A declarative pass table maps each
    correctness-altitude pass (`correctness`, `hidden-failure`) to its prompt, schema, required
    context, and output artifact. The runner performs the concurrent fan-out, the join, and
-   all-or-nothing promotion: if any pass fails, **no** artifact is promoted for the round. The skill
-   retains a thin invocation, not a copied command block.
+   promotion. **Promotion guarantee, stated precisely** (softened from "all-or-nothing" per Thomas's
+   2026-08-03 disposition of the approach BLOCKER): if any pass fails, or any artifact fails to
+   stage, **nothing** is published. Publication itself is a sequence of same-directory renames, one
+   per artifact — atomic *per file*, so no reader can ever see a partial artifact, but not a single
+   transaction across files. A process killed between two renames can leave one artifact new and one
+   stale. This window is inherent to the existing artifact contract and the `codex` backend shares
+   it; closing it means a round-directory or pointer scheme for **both** backends, deferred to its
+   own story. The skill retains a thin invocation, not a copied command block.
 6. **Declarative context profile, fail-closed.** The correctness altitude's required context is
    declared in the pass table, not assembled ad hoc. The runner verifies every declared input exists
    and is non-empty before building the payload; a missing or empty input aborts with a message

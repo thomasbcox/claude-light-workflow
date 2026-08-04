@@ -156,7 +156,12 @@ has "invocation names the altitude" "$REVIEW" "--altitude correctness --slug <sl
 has "runner uses the bootstrapped interpreter" "$REVIEW" 'fireworks-venv/bin/python'
 has "invocation passes -B" "$REVIEW" 'fireworks-venv/bin/python" -B'
 has "the -B note states the real mechanism, not a wrong one" "$REVIEW" "cheap insurance, not load-bearing here"
-has "runner owns all-or-nothing promotion" "$REVIEW" "promotes **both** artifacts or **neither**"
+# The promotion guarantee is stated at its true strength, not overclaimed. Thomas
+# accepted the residual window (approach BLOCKER, 2026-08-03); these pin BOTH halves
+# so neither the guarantee nor its limit can quietly disappear.
+has "failed review publishes nothing" "$REVIEW" "**nothing** is published"
+has "publication limit is stated, not overclaimed" "$REVIEW" "not one transaction across files"
+has "the codex path is named as sharing the window" "$REVIEW" "The codex block below shares that window"
 has "fireworks writes the same two artifacts" "$REVIEW" "reviews/<slug>.codex.json\`, \`reviews/<slug>.hidden-failure.json"
 has "mixed-backend altitude is a stop" "$REVIEW" "Both passes must resolve to the **same** backend"
 has "routing table is not restated in the skill" "$REVIEW" "Model routing lives in \`fireworks-models.json\`"

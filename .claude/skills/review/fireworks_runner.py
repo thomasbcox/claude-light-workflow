@@ -3,8 +3,8 @@
 
 This module is the *backend boundary* for one review altitude. It owns context
 assembly, the concurrent fan-out across that altitude's passes, schema-enforced
-model calls, and all-or-nothing artifact promotion. The calling skill keeps a
-thin invocation rather than a copied command block.
+model calls, and artifact promotion. The calling skill keeps a thin invocation
+rather than a copied command block.
 
 Why this is executable code and not skill prose: `tests/reviewer_test.sh` is a
 documentation linter with no oracle, and says so in its own charter — the second
@@ -14,8 +14,10 @@ test. This is that code.
 Fail-closed by construction. Every failure mode — missing dependency, missing or
 empty context input, oversized payload, API error, truncated completion,
 unparseable body, schema violation — takes the same path: a message naming the
-cause, no artifact written, non-zero exit. A partial review is never promoted,
-and a failed round never leaves a prior round's artifact standing as its result.
+cause, no artifact written, non-zero exit. A failed *review* never publishes
+anything, and a failed round never leaves a prior round's artifact standing as
+its result. See promote() for the precise publication guarantee — it is
+per-file atomic, not a single transaction across files.
 
 Unlike the agentic `codex` backend, this one cannot explore the repo: context is
 *pushed*, so anything the reviewer is not given, it cannot see. That is why the
@@ -286,10 +288,14 @@ def run_pass(name: str, context: str, ctx: dict, routes: dict) -> dict:
     """Run one pass end to end and return its validated body. Never writes."""
     spec = PASSES[name]
     purpose = spec["purpose"]
-    # The route is resolved even when --model overrides it: contextLength still
-    # governs the size guard, so an override cannot silently disable it.
+    # An override must supply a COMPLETE route — id and context length together.
+    # Taking the id from the flag while the guard kept using the table's number
+    # sourced one model contract from two records: a smaller override passed a
+    # preflight sized for the routed model's larger window and failed only at the
+    # API. main() rejects --model without --context-length, so these move as one.
     route = resolve_route(purpose, routes)
     model = ctx["model_override"] or route["model"]
+    context_length = ctx["context_length_override"] or route["contextLength"]
 
     schema_path = HERE / spec["schema"]
     try:
@@ -299,7 +305,7 @@ def run_pass(name: str, context: str, ctx: dict, routes: dict) -> dict:
     except json.JSONDecodeError as exc:
         raise RunnerError(f"schema for '{name}' is not valid JSON ({schema_path}): {exc}")
 
-    check_size(context, spec["prompt"], schema, route["contextLength"], purpose)
+    check_size(context, spec["prompt"], schema, context_length, purpose)
 
     client = build_client(ctx["api_key"])
     try:
@@ -354,10 +360,13 @@ def promote(results: dict, ctx: dict) -> list[Path]:
     both correctness critics caught it: a failure on the second file would leave
     the first already promoted and the round half-reviewed.
 
-    This is not a true multi-file transaction — POSIX has no such primitive — but
-    the residual window is a rename failing after a sibling rename succeeded,
-    which needs the filesystem to break between two adjacent metadata operations.
-    A reader can never catch a partial *file*, which is the failure that matters.
+    NOT a true multi-file transaction — POSIX has no such primitive. A process
+    killed between two renames can leave one artifact new and one stale. Thomas
+    accepted that window on 2026-08-03 (approach-review BLOCKER): the `codex`
+    backend's two sequential `mv`s share it, so closing it means a round-directory
+    or pointer scheme for BOTH backends, deferred to its own story. What IS
+    guaranteed: a failed review publishes nothing, and no reader ever catches a
+    partial *file*.
     """
     staged: list[tuple[Path, Path]] = []
     try:
@@ -478,7 +487,14 @@ def main() -> int:
     parser.add_argument("--slug", help="story slug (reviews/<slug>.md)")
     parser.add_argument("--base", help="base branch or ref to diff against")
     parser.add_argument(
-        "--model", help="explicit model id, overriding the routing table for this run"
+        "--model",
+        help="explicit model id, overriding the routing table for this run; "
+        "requires --context-length so the size guard applies to the model actually called",
+    )
+    parser.add_argument(
+        "--context-length",
+        type=int,
+        help="context window of --model, in tokens (required with --model)",
     )
     parser.add_argument(
         "--check-models",
@@ -499,6 +515,21 @@ def main() -> int:
 
         if args.check_models:
             return check_models(routes, api_key)
+
+        # An override is a complete route or it is not an override. Accepting a bare
+        # --model would leave the preflight guard checking the routed model's window
+        # against a different model's payload.
+        if args.model and not args.context_length:
+            raise RunnerError(
+                "--model requires --context-length (the override model's context window "
+                "in tokens). Without it the size guard would check the routed model's "
+                "window against a model that is not being called. For a lasting change, "
+                f"edit {ROUTES_FILE.name} instead."
+            )
+        if args.context_length and not args.model:
+            raise RunnerError("--context-length is only meaningful with --model")
+        if args.context_length is not None and args.context_length <= 0:
+            raise RunnerError("--context-length must be a positive number of tokens")
 
         missing = [
             flag
@@ -530,6 +561,7 @@ def main() -> int:
             "base": args.base,
             "api_key": api_key,
             "model_override": args.model,
+            "context_length_override": args.context_length,
         }
         return run_altitude(args.altitude, ctx, routes)
     except RunnerError as exc:

@@ -133,6 +133,7 @@ def ctx_for(root: Path, slug="demo", model=None):
         "base": "main",
         "api_key": "stub-key",
         "model_override": model,
+        "context_length_override": None,
     }
 
 
@@ -261,6 +262,52 @@ with repo() as root:
     invoke(root, model="accounts/fireworks/models/override-me", calls=calls)
     check("--model override reaches the request",
           all(c["model"] == "accounts/fireworks/models/override-me" for c in calls))
+
+# An override must be a COMPLETE route. Taking the id from the flag while the size
+# guard kept the table's contextLength sourced one model contract from two records.
+print("== AC-3: a --model override must carry its own context length ==")
+argv = ["--altitude", "correctness", "--slug", "demo", "--base", "main"]
+
+
+def run_main(extra):
+    saved = sys.argv
+    sys.argv = ["fireworks_runner.py", *argv, *extra]
+    err = io.StringIO()
+    try:
+        with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+            rc = runner.main()
+    finally:
+        sys.argv = saved
+    return rc, err.getvalue()
+
+
+os.environ.setdefault("FIREWORKS_API_KEY", "stub-key")
+rc, err = run_main(["--model", "accounts/fireworks/models/x"])
+check("--model without --context-length is rejected", rc != 0)
+check("  ↳ message names the flag it needs", "--context-length" in err, err[:90])
+rc, err = run_main(["--context-length", "1000"])
+check("--context-length without --model is rejected", rc != 0)
+rc, err = run_main(["--model", "accounts/fireworks/models/x", "--context-length", "0"])
+check("a non-positive --context-length is rejected", rc != 0)
+
+with repo() as root:
+    # The guard must use the OVERRIDE's window, not the routed model's. A tiny
+    # override window must trip the guard even though the table's is 1M.
+    ctx = ctx_for(root, model="accounts/fireworks/models/tiny")
+    ctx["context_length_override"] = 1000
+    factory, calls = stub({"*": VALID_FINDING})
+    original = runner.build_client
+    runner.build_client = factory
+    err = io.StringIO()
+    try:
+        with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+            rc = runner.run_altitude("correctness", ctx, runner.load_routes())
+    except runner.RunnerError as exc:
+        rc, _ = 1, err.write(str(exc))
+    finally:
+        runner.build_client = original
+    check("the size guard uses the override's window, not the table's", rc != 0)
+    check("  ↳ no request was made", calls == [], f"{len(calls)} call(s)")
 
 
 # ── AC-4: routing table structure ─────────────────────────────────────────────
