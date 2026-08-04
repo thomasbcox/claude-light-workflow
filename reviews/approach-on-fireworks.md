@@ -62,6 +62,14 @@ The predecessor story deliberately left this as the follow-up and pre-routed `ap
 | 5 — dispatch + config + docs | `.claude/skills/review/SKILL.md` (step 6, backend list, unwired-stop scope), `.claude/workflow.json`, `.claude/skills/review/fireworks-models.json`, `README.md`, `ARCHITECTURE.md`, `tests/reviewer_test.sh` |
 | 6 — scope containment | (no file — verified against the branch diff) |
 
+## Build note — round 3 (2026-08-04)
+
+Re-review scope only; the AC→file map above is unchanged. Round-3 commits touch:
+
+| Approved finding | Files |
+|---|---|
+| Hidden-failure IMPORTANT — silently dropped manifest | `.claude/skills/review/fireworks_runner.py` (`_manifests` skipped-list, `CONTEXT_SOURCES` rule header), `tests/fireworks_runner_test.py` |
+
 ## Test notes
 
 Gate: unchanged suite list; 355 → 362 checks, all additions behavioral.
