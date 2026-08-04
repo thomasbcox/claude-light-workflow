@@ -1,0 +1,15 @@
+{
+  "verdict": "approve \u2014 the shape is sound. This is a well-executed deletion story: tag-first preservation, a single small structural addition (the reverse docs check), clean lockstep removal across install/gate/CI, and an honest pin-prune with stated bar and evidence. One inconsistency between the file's stated pin bar and 5 of its 19 pins is worth Thomas's attention but does not undermine the approach.",
+  "findings": [
+    {
+      "severity": "IMPORTANT",
+      "reversibility": "two-way",
+      "standing": "standard",
+      "title": "Five \"crept back\" absent pins contradict the file's own behavioral bar",
+      "locus": "tests/reviewer_test.sh \u2014 pin section header + the \"retired falsification machinery\" block",
+      "claim": "The file header states the bar twice: \"a pin earns its place ONLY if its silent failure would let BEHAVIOR degrade unnoticed\" and the section header repeats \"Each one is here because its silent failure degrades behavior \u2014 the reason is stated with it. Nothing else qualifies.\" Then the last pin block immediately includes 5 `absent` pins explicitly commented \"Not a behavior guard \u2014 a decision guard.\" These check that removed constructs (\"surfaces excluded\", \"place, not a mechanism\", \"in exactly three permitted forms\", \"No circular oracles\", \"Falsification-plan amendments\") have not reappeared in frame/SKILL.md. They are spec-authorized (AC-2's demonstrate-red row plans them), but they do not meet the behavioral-degradation criterion AC-4 enumerates and the header declares. The next person reading the file sees a clear rule and then 5 pins that break it, and must guess which is wrong \u2014 the rule or the pins. That ambiguity is exactly the kind of unexamined regrowth the pins themselves exist to prevent, applied to the pin set.",
+      "alternative": "Either (a) amend the header and section comment to name a second, explicitly bounded class \u2014 decision-guard pins that protect against ceremony regrowth, each with a stated reason and a note that they are NOT behavior guards \u2014 so the stated bar honestly covers what the file practices; or (b) remove the 5 pins and rely on the step-6 design review (which critiques test notes at the same altitude) to catch conceptual regrowth of the old machinery, accepting that exact-phrase paste-back would not be caught mechanically.",
+      "win": "(a) makes the file's stated bar honest in one comment edit \u2014 the next person gets a clear two-tier rule instead of a contradiction; (b) makes the pin set fully consistent with AC-4's principle, removing 5 pins that don't meet the bar the story fought to establish. Either resolves the discrepancy; the current state leaves the file arguing with itself."
+    }
+  ]
+}

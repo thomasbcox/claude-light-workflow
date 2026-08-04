@@ -255,6 +255,37 @@ AC → file map:
 
 The retirement tag `retired/deep-audit-plan` is a git object, not a file in the diff.
 
+## Fireworks approach review (2026-08-04, base main, HEAD ab519d8)
+
+**Verdict: approve** — "the shape is sound. This is a well-executed deletion story: tag-first
+preservation, a single small structural addition (the reverse docs check), clean lockstep removal
+across install/gate/CI, and an honest pin-prune with stated bar and evidence. One inconsistency
+between the file's stated pin bar and 5 of its 19 pins is worth Thomas's attention but does not
+undermine the approach."
+
+### IMPORTANT · two-way · standard — Five "crept back" absent pins contradict the file's own behavioral bar
+
+*Locus:* `tests/reviewer_test.sh` — pin section header + the "retired falsification machinery" block
+
+**Claim.** The file header states the bar twice — "a pin earns its place ONLY if its silent failure
+would let BEHAVIOR degrade unnoticed" and "Each one is here because its silent failure degrades
+behavior — the reason is stated with it. Nothing else qualifies." Then the last pin block includes 5
+`absent` pins explicitly commented "Not a behavior guard — a decision guard." They are
+spec-authorized (AC-2's demonstrate-red row plans them) but do not meet the criterion AC-4 enumerates
+and the header declares. The next person sees a clear rule and then 5 pins that break it, and must
+guess which is wrong — the rule or the pins. That ambiguity is the kind of unexamined regrowth the
+pins themselves exist to prevent, applied to the pin set.
+
+**Alternative.** Either (a) amend the header and section comment to name a second, explicitly
+bounded class — decision-guard pins protecting against ceremony regrowth, each with a stated reason
+and a note that they are NOT behavior guards — so the stated bar honestly covers what the file
+practices; or (b) remove the 5 pins and rely on the step-6 design review to catch conceptual
+regrowth, accepting that exact-phrase paste-back would not be caught mechanically.
+
+**Win.** (a) makes the file's stated bar honest in one comment edit — the next person gets a clear
+two-tier rule instead of a contradiction; (b) makes the pin set fully consistent with AC-4's
+principle. Either resolves the discrepancy; the current state leaves the file arguing with itself.
+
 ## Design sketch — HOW
 
 Deletion, not construction. Order matters only so the gate stays green between commits:
