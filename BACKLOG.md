@@ -299,13 +299,21 @@ practice. Recorded so whoever builds it doesn't rebuild the wrong shape:
   work was re-sequenced lib-first) and `retired/deep-audit-lib` (`7574a05`, the stdlib-only Python
   port, 2026-07-31). Recover with `git show retired/deep-audit-engine` or branch from either tag.
 
-  **What survives and still ships:** the plan stage — the `/deep-audit` skill, its schema, and
-  `tests/deep_audit_plan_test.sh` in the gate. That slice was always specified as
-  standalone-valuable ("what would a comprehensive audit cost on this repo" as a one-page decision),
-  and it remains so without an executor behind it.
+  **Plan slice: RETIRED 2026-08-04** (superseding the "what survives and still ships" position held
+  for one day). The plan stage — the `/deep-audit` skill, its `plan-schema.json`, and
+  `tests/deep_audit_plan_test.sh` — is stood down by the `thin-the-loop` story
+  ([reviews/thin-the-loop.md](reviews/thin-the-loop.md)). It had been kept on the argument that it
+  was standalone-valuable ("what would a comprehensive audit cost on this repo" as a one-page
+  decision). With the engine retired the day before, that value did not survive contact: a priced
+  plan for an audit nothing can run is a costed quote for a service that no longer exists, and it
+  cost 258 skill lines (the largest in the repo) plus 97 gate checks to keep. Preserved as annotated
+  tag `retired/deep-audit-plan`. Recover with `git show retired/deep-audit-plan` or branch from it.
 
-  **OPS-13 status: closed as partially delivered.** The plan slice shipped; the engine slice is
-  retired, not pending. It is recorded here rather than moved to Done because Done means shipped,
+  **All three tags, one place:** `retired/deep-audit-engine` (`a0131b1`), `retired/deep-audit-lib`
+  (`7574a05`), `retired/deep-audit-plan` (`6606b88`). Nothing about OPS-13 is lost; it is unbuilt,
+  not unrecorded. The ROADMAP's core/plugin/park question is answered by this: **parked**.
+
+  **OPS-13 status: closed, retired in full.** Every slice is now stood down and tagged. It is recorded here rather than moved to Done because Done means shipped,
   and half of this did not. Reopening means a fresh story — the deferred ACs below are the
   starting point, not a live commitment.
 

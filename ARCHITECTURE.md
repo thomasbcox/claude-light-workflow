@@ -70,11 +70,11 @@ The loop is three skills, each ending at a human decision:
 | [`/review`](.claude/skills/review/SKILL.md) | gate green → **approach pass** (shape) gates **correctness pass** (diff) → decision menu | **decides per finding** |
 | [`/close`](.claude/skills/close/SKILL.md) | apply approved fixes → re-review or merge → cleanup | **approves merge** |
 
-### 2.2a Before the loop: recon (`/dev-audit`, `/deep-audit`)
+### 2.2a Before the loop: recon (`/dev-audit`)
 
-The three skills above act on *one stated change*. Two separate, standalone **recon** skills act
-*before* there is a change, pointed at a target repo. Both are **not loop steps**, have no merge gate,
-are read-only and report-first, and honor the same `docs/ai-protocol.md` stand-down (§3.5).
+The three skills above act on *one stated change*. A separate, standalone **recon** skill acts
+*before* there is a change, pointed at a target repo. It is **not a loop step**, has no merge gate,
+is read-only and report-first, and honors the same `docs/ai-protocol.md` stand-down (§3.5).
 
 [`/dev-audit`](.claude/skills/dev-audit/SKILL.md) detects type + maturity, selects analysis tools that
 fit (with rationale), runs a zero-dependency core plus any installed heavier tools (installing
@@ -82,13 +82,14 @@ nothing), and reports findings + risk + prioritized next steps. Its single seam 
 backlog: on an explicit instruction it graduates findings into [`BACKLOG.md`](BACKLOG.md) as `AUDIT-`
 items, which then flow through `/frame → /review → /close` like any other line.
 
-[`/deep-audit`](.claude/skills/deep-audit/SKILL.md) is a **whole-app, multi-lens** audit that
-complements the diff-scoped review loop with an occasional deep sweep. **Shipped: the plan stage** —
-it compiles a priced, deterministic audit *plan* (judgment lenses × altitudes × depth × token cost)
-and presents it for approval, then stops. Its **execution engine** (critic fleet → adversarial
-verification → synthesis) is **on the roadmap, direction under evaluation** — see
-[`ROADMAP.md`](ROADMAP.md). It is the estate's most substantial in-flight subsystem and the reason a
-clear roadmap exists.
+A second recon skill — a whole-app, multi-lens audit complementing the diff-scoped loop with an
+occasional deep sweep — was built and then stood down in August 2026: first its execution engine and
+supporting library, then the surviving plan stage. Its trees are preserved as `retired/deep-audit-*`
+tags and the full design record is retained in [`BACKLOG.md`](BACKLOG.md) under OPS-13. What the
+retirement leaves standing is the identity claim in §1: the loop is deliberately lightweight and
+diff-scoped, and a subsystem that priced near a million tokens per run did not earn deployment to
+every project on the machine. A whole-app sweep remains an open direction in
+[`ROADMAP.md`](ROADMAP.md), not a shipped capability.
 
 ### 2.3 Reversibility-gated blocking
 
@@ -225,12 +226,12 @@ continuously as a zero-maintenance first line.
 
 Because everything installs globally, a repo that runs its own heavier workflow opts out by placing a
 **`docs/ai-protocol.md`** marker at its root. When present, the hook becomes a no-op (the repo's own
-hooks govern) and `/frame`, `/review`, `/close` — and the recon tools `/dev-audit` and `/deep-audit`,
-each before it reads or writes anything — stop and point at the native skills.
+hooks govern) and `/frame`, `/review`, `/close` — and the recon tool `/dev-audit`,
+before it reads or writes anything — stop and point at the native skills.
 
 ### 3.6 Test here, deploy everywhere
 
-The skills (the three loop skills + two recon skills, `/dev-audit` and `/deep-audit`) + hook are
+The skills (the three loop skills + the recon skill `/dev-audit`) + hook are
 project-local under `.claude/` so they can be exercised here with a real `/frame → /review → /close`. [`install.sh`](install.sh) then copies
 them — its `ARTIFACTS` set is the single source of truth for the deployed files — to `~/.claude/` and
 wires the hook into `~/.claude/settings.json` (idempotent, backs up first); `./install.sh --check`
