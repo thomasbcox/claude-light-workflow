@@ -174,6 +174,22 @@ if grep -qF "tests/fireworks_runner_test.sh" "$WF"; then
 else
   bad "fireworks suite absent from testCommand — its oracles would never run"
 fi
+# ...and in the AUTHORITATIVE one. CI is the server-side gate branch protection requires, so a CI
+# list that drifts below the local list makes the stronger-looking check the weaker one. Behavioral:
+# compares the two command strings rather than pinning either's wording.
+CI="$ROOT/.github/workflows/ci.yml"
+wf_cmd="$(/usr/bin/env python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["testCommand"])' "$WF" 2>/dev/null)"
+ci_cmd="$(
+  /usr/bin/env python3 - "$CI" <<'PY' 2>/dev/null
+import re, sys
+for line in open(sys.argv[1]):
+    m = re.match(r"\s*run:\s*(bash tests/.*)$", line)
+    if m:
+        print(m.group(1).strip())
+        break
+PY
+)"
+eq "CI gate runs exactly the configured gate (no drift)" "$wf_cmd" "$ci_cmd"
 
 echo "== drift: reviewer role language stays tool-neutral =="
 has "approach prompt neutral" "$REVIEW" "You are the independent reviewer doing an APPROACH review"

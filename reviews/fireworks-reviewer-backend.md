@@ -350,6 +350,23 @@ reasoning**, not a description of current behaviour. It keeps its text with a te
 rather than being rewritten — editing the historical record to match today would destroy the thing a
 backlog is for.
 
+**8 — add · AC-9 · surface: `.github/workflows/ci.yml` · added at: implement**
+
+AC-9's approved row named `testCommand` in `.claude/workflow.json` as the surface and declared no
+exclusions. Under-enumerated again, and worse than amendment 7: **CI is the *authoritative*
+server-side gate** — `ci.yml` calls itself that, and branch protection requires its `gate` job.
+Its suite list is hardcoded and did not include the new behavioral suite, so the strongest-looking
+check was about to run a weaker gate than the local one, with every new oracle absent from it.
+
+Codex's design review named this precisely — *"absent from the stated gate, `.claude/workflow.json`
+test command, **and CI gate command**"* — and I fixed only two of the three while marking the finding
+*Fix*. Recording that plainly: a partially-applied BLOCKER disposition is not a fixed BLOCKER.
+
+`ci.yml` now bootstraps the runner's dependencies (the suite stubs the API client, so it needs no
+network at run time and **no credential** — no secret is introduced) and runs the full gate. A new
+behavioral pin compares `ci.yml`'s gate command against `workflow.json`'s `testCommand` as strings,
+so the two can no longer drift silently. Demonstrated red by removing the suite from `ci.yml`.
+
 **Sizing correction, no plan change:** the output reservation was first set to 8,000 tokens, and the
 live run truncated a real review of this branch — the runner refused to promote it, which is how it
 was found rather than shipped. Raised to 32,000 (verified accepted up to 131,072 on the routed
