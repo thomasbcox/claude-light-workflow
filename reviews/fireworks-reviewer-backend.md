@@ -288,6 +288,48 @@ what the test suite does. The note in the skill and in `.gitignore` was correcte
 mechanism. A wrong "keep this because X" is worse than no note, because the next person disproves X
 and removes the guard.
 
+**4 — add · AC-5 · surface: promotion of the artifact *set* · added at: implement**
+
+The plan's AC-5 rows covered "one pass fails ⇒ neither artifact promoted" (a *review* failure) but
+not a failure during promotion itself. A live smoke run against this very branch surfaced it: the
+first `promote()` renamed each artifact as it went, so a failure on the second would leave the first
+already promoted and the round half-reviewed. Restructured into stage-all-then-commit-all.
+Demonstrated red: reverting to rename-as-you-go trips
+`a failure staging the 2nd artifact promotes NEITHER` (`partial promotion: ['demo.codex.json']`).
+
+*Provenance worth recording:* this was found by the backend reviewing its own branch — both the
+correctness and hidden-failure critics flagged it independently, which is the divided-parallelism
+property working as designed.
+
+**5 — add · AC-2 · surface: the schema file itself · added at: implement**
+
+An unparseable schema file fell through to the generic handler and reported "unexpected error",
+naming no cause. Now caught and named. Demonstrated red by pointing the pass at a deliberately
+malformed schema and asserting the message identifies it.
+
+**6 — add · AC-4 · surface: the routed-purpose vocabulary · added at: implement**
+
+AC-4 requires "no unknown purposes", but the approved design deliberately routes `design` and
+`approach` **ahead of use** so the follow-up story is a dispatch change. A literal reading — routes
+must equal the wired passes — would fail by construction. The check implemented is the one the
+criterion actually means: every routed purpose must be a real review purpose (`KNOWN_PURPOSES`),
+while routing ahead of wiring stays legal. Recorded because it narrows an approved criterion's
+reading, which is Thomas's to reject.
+
+**Sizing correction, no plan change:** the output reservation was first set to 8,000 tokens, and the
+live run truncated a real review of this branch — the runner refused to promote it, which is how it
+was found rather than shipped. Raised to 32,000 (verified accepted up to 131,072 on the routed
+model). No falsification row changes; `finish_reason: length` was already covered and is what caught it.
+
+## Observed, not fixed — for the review round
+
+**A structurally-valid but meaningless schema makes validation vacuous.** JSON Schema treats
+unrecognised keywords as no-ops, so a schema file that is well-formed JSON but not a real schema
+would validate *anything* — and the runner would promote it. This surfaced while writing the AC-2
+schema test (substituting one valid JSON file for another did not fail). It is a genuine
+hidden-failure shape in code this story adds, but guarding it means validating the schema itself,
+which is scope this story did not carry. Flagged rather than silently added.
+
 ## Test notes — demonstrate-red results (2026-08-03)
 
 Every `gate` oracle in the approved plan was driven red by applying its planned regression, then

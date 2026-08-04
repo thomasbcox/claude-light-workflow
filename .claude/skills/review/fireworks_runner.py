@@ -41,7 +41,15 @@ BASE_URL = "https://api.fireworks.ai/inference/v1"
 # Output budget reserved for the model's reply, and the fraction of a model's
 # context we are willing to fill. Both feed the pre-flight size guard so an
 # oversized payload is refused locally rather than clamped by the provider.
-MAX_OUTPUT_TOKENS = 8000
+#
+# 8k was the first value tried and it truncated a real review of a ~1,500-line
+# diff — the runner correctly refused to promote it, which is how we found out.
+# A correctness pass over a large branch legitimately emits many findings, each
+# with a claim, an alternative, and a win, so the reply is long by design.
+# Verified accepted up to 131,072 on the routed model; 32k is chosen as ample for
+# a review while still far below any routed model's context, so the size guard
+# below is never dominated by this reservation.
+MAX_OUTPUT_TOKENS = 32000
 CONTEXT_HEADROOM = 0.90
 
 # Deliberately conservative: real text runs nearer 4 bytes/token and code denser
@@ -144,6 +152,12 @@ PASSES = {
 ALTITUDES = {
     "correctness": ["correctness", "hidden-failure"],
 }
+
+# The full review vocabulary, including purposes not yet wired to a pass above.
+# The routing table is allowed to route ahead of use — `design` and `approach`
+# are routed so the follow-up story is a dispatch change — but it may not route a
+# purpose that is not a review purpose at all, which would be a silent typo.
+KNOWN_PURPOSES = {"design", "approach", "correctness", "hidden-failure"}
 
 
 # ── Routing ───────────────────────────────────────────────────────────────────
@@ -282,6 +296,8 @@ def run_pass(name: str, context: str, ctx: dict, routes: dict) -> dict:
         schema = json.loads(schema_path.read_text())
     except FileNotFoundError:
         raise RunnerError(f"schema for '{name}' not found: {schema_path}")
+    except json.JSONDecodeError as exc:
+        raise RunnerError(f"schema for '{name}' is not valid JSON ({schema_path}): {exc}")
 
     check_size(context, spec["prompt"], schema, route["contextLength"], purpose)
 
@@ -328,26 +344,41 @@ def run_pass(name: str, context: str, ctx: dict, routes: dict) -> dict:
 def promote(results: dict, ctx: dict) -> list[Path]:
     """Write every artifact, or none. Reached only once all passes have validated.
 
-    Each write is temp-then-rename within the destination directory, so a reader
-    can never catch a partial artifact — and Python's mkstemp is unique by
-    construction, so concurrent passes cannot collide on a temp path.
+    Two phases, deliberately. STAGE writes and fsyncs every payload to a unique
+    temp beside its destination; anything that can realistically fail —
+    serialization, permissions, a full disk — fails here, where the cleanup
+    promotes nothing. COMMIT then does renames only: same-filesystem, atomic per
+    file, and needing no new space.
+
+    Interleaving the two (rename as you go) is what the first version did, and
+    both correctness critics caught it: a failure on the second file would leave
+    the first already promoted and the round half-reviewed.
+
+    This is not a true multi-file transaction — POSIX has no such primitive — but
+    the residual window is a rename failing after a sibling rename succeeded,
+    which needs the filesystem to break between two adjacent metadata operations.
+    A reader can never catch a partial *file*, which is the failure that matters.
     """
-    written = []
-    tmps = []
+    staged: list[tuple[Path, Path]] = []
     try:
         for name, payload in results.items():
             dest = ctx["root"] / PASSES[name]["artifact"].format(slug=ctx["slug"])
             dest.parent.mkdir(parents=True, exist_ok=True)
             fd, tmp = tempfile.mkstemp(dir=dest.parent, prefix=f".{dest.name}.")
-            tmps.append(Path(tmp))
             with os.fdopen(fd, "w") as handle:
                 json.dump(payload, handle, indent=2)
-            os.replace(tmp, dest)
-            tmps.pop()
-            written.append(dest)
-    finally:
-        for leftover in tmps:
-            leftover.unlink(missing_ok=True)
+                handle.flush()
+                os.fsync(handle.fileno())
+            staged.append((Path(tmp), dest))
+    except Exception:
+        for tmp, _ in staged:
+            tmp.unlink(missing_ok=True)
+        raise
+
+    written = []
+    for tmp, dest in staged:
+        os.replace(tmp, dest)
+        written.append(dest)
     return written
 
 
@@ -481,14 +512,18 @@ def main() -> int:
         if missing:
             raise RunnerError(f"missing required argument(s): {', '.join(missing)}")
 
-        root = Path(
-            subprocess.run(
-                ["git", "rev-parse", "--show-toplevel"],
-                capture_output=True,
-                text=True,
-                check=True,
-            ).stdout.strip()
+        rev = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            capture_output=True,
+            text=True,
+            check=False,
         )
+        if rev.returncode != 0 or not rev.stdout.strip():
+            raise RunnerError(
+                "not inside a git repository (git rev-parse --show-toplevel failed): "
+                f"{rev.stderr.strip() or 'no output'}"
+            )
+        root = Path(rev.stdout.strip())
         ctx = {
             "root": root,
             "slug": args.slug,
@@ -499,6 +534,11 @@ def main() -> int:
         return run_altitude(args.altitude, ctx, routes)
     except RunnerError as exc:
         print(f"FAIL: {exc}", file=sys.stderr)
+        return 1
+    except Exception as exc:
+        # A bug in this module must still read as a stopped round, not a stack
+        # trace the caller has to interpret. Still fail-closed: nothing promoted.
+        print(f"FAIL: unexpected error in the fireworks runner: {exc!r}", file=sys.stderr)
         return 1
 
 

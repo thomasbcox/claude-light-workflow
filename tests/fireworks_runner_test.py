@@ -151,6 +151,11 @@ def invoke(root: Path, replies=None, slug="demo", model=None, barrier=None,
             )
     except runner.RunnerError as exc:
         rc, _ = 1, err.write(str(exc))
+    except Exception as exc:
+        # Mirror main()'s catch-all. Driving run_altitude directly would otherwise
+        # let a bug escape as a traceback here while production reports a stopped
+        # round — the test must observe the behaviour callers actually get.
+        rc, _ = 1, err.write(f"unexpected error: {exc!r}")
     finally:
         runner.build_client = original
     return rc, recorded, err.getvalue()
@@ -271,6 +276,30 @@ check("every route has a positive integer contextLength",
       all(isinstance(r.get("contextLength"), int) and r["contextLength"] > 0
           for r in table["routes"].values()))
 check("every route states why", all(r.get("why") for r in table["routes"].values()))
+# Routing ahead of use is allowed (design/approach are routed before they are
+# wired); routing a purpose that is not a review purpose at all is a silent typo.
+check("no unknown purposes routed",
+      set(table["routes"]) <= runner.KNOWN_PURPOSES,
+      f"unrecognised: {set(table['routes']) - runner.KNOWN_PURPOSES}")
+check("every wired pass purpose is a known purpose",
+      {p["purpose"] for p in runner.PASSES.values()} <= runner.KNOWN_PURPOSES)
+
+# Diagnostics must name their cause rather than fall through to the catch-all.
+with repo() as root:
+    shim = Path(tempfile.mkdtemp())
+    (shim / "finding-schema.json").write_text("{ this is not json")
+    (shim / "hidden-failure-schema.json").write_text("{ this is not json")
+    real_here = runner.HERE
+    runner.HERE = shim
+    try:
+        rc, _, err = invoke(root)
+    finally:
+        runner.HERE = real_here
+        shutil.rmtree(shim, ignore_errors=True)
+    check("an unparseable schema file is rejected", rc != 0)
+    check("  ↳ named as a schema problem, not 'unexpected error'",
+          "not valid JSON" in err, err[:110])
+    check("  ↳ nothing promoted", artifacts(root) == [])
 
 
 # ── AC-5: the runner owns orchestration ───────────────────────────────────────
@@ -293,6 +322,30 @@ with repo() as root:
     check("one failed pass stops the round", rc != 0)
     check("  ↳ NEITHER artifact promoted", artifacts(root) == [], str(artifacts(root)))
     check("  ↳ stderr names the failing pass", "hidden-failure" in err, err[:120])
+
+# Regression oracle for the defect both correctness critics found on the live run:
+# promote() renamed as it went, so a failure on the second artifact left the first
+# already promoted. Staging must complete for every artifact before any is committed.
+with repo() as root:
+    real_mkstemp = tempfile.mkstemp
+    calls = {"n": 0}
+
+    def failing_mkstemp(**kwargs):
+        calls["n"] += 1
+        if calls["n"] == 2:  # second artifact fails while staging
+            raise OSError("no space left on device")
+        return real_mkstemp(**kwargs)
+
+    tempfile.mkstemp = failing_mkstemp
+    try:
+        rc, _, err = invoke(root)
+    finally:
+        tempfile.mkstemp = real_mkstemp
+    check("a failure staging the 2nd artifact promotes NEITHER", artifacts(root) == [],
+          f"partial promotion: {artifacts(root)}")
+    check("  ↳ round reports failure", rc != 0)
+    check("  ↳ no temp left behind",
+          not any(p.name.startswith(".") for p in (root / "reviews").iterdir()))
 
 with repo() as root:
     stale_c = root / "reviews" / "demo.codex.json"
