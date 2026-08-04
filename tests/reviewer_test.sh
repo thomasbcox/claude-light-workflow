@@ -1,41 +1,36 @@
 #!/usr/bin/env bash
-# ── Documentation-consistency linter for the pluggable-reviewer seam ──
-# THIS IS A LINTER, NOT A BEHAVIORAL GATE. Read this before adding to it.
+# ── Reviewer-seam checks: a small behavioral core + a deliberately short pin set ──
+# READ THIS BEFORE ADDING TO IT. This file was cut from ~91 wording pins to the set below
+# (thin-the-loop, 2026-08-04). Re-growing it undoes work that was done on evidence.
 #
-# The reviewer seam (resolution, override parsing, dispatch, the second-backend stop) is
-# *instructions Claude follows in Markdown skills*, not code. There is no
-# function to call, no exit code, no output — so there is NO oracle, and this
-# file CANNOT verify the seam's runtime behavior. All it can do is catch
-# wording/typo drift: that the key phrases and the codex command tokens still
-# exist where the skills expect them.
+# THE BAR FOR A PIN — a `has`/`absent` grep on Markdown earns its place ONLY if its silent
+# failure would let BEHAVIOR degrade unnoticed. Ask: "if this phrase quietly disappeared,
+# what would go wrong, and would anyone find out?" If the answer is "the docs would read
+# slightly differently", it is not a pin — delete it. If the answer is "reviews would
+# silently run on the wrong backend / publish partial artifacts / get write access", pin it.
 #
-# Real verification of the seam lives elsewhere, by design:
-#   • the independent reviewer's diff review (codex reads the actual change), and
-#   • a human reading the skill instructions.
+# WHY SO FEW. The evidence is the fireworks-reviewer-backend story: six real defects found,
+# NONE caught by a wording pin. Every one came from a reviewer reading code, a behavioral
+# test, or a live run. Pins that break on every rephrase cost real maintenance and caught
+# nothing. Some doc drift will now go uncaught; that is the accepted trade, not an oversight.
+# If a specific drift later proves expensive, add ONE pin with its reason stated — do not
+# restore the set.
 #
-# DO NOT grow this into a pseudo-behavioral suite (per-block parsers, git-diff
-# whitelists, exhaustive example enumeration). That is theater: it adds machinery
-# and wording-coupling without adding an oracle. If you need a REAL gate, extract
-# the thing into executable code and unit-test THAT.
-#
-# THAT FORCING EVENT HAS NOW HAPPENED, in part. The fireworks backend put context
-# assembly, fan-out, the join, and artifact promotion into a real module, so those
-# now have real oracles in tests/fireworks_runner_test.sh — put behavioral checks
-# for anything the runner owns THERE, not here. What stays here is (a) the
-# backend RESOLVER, which is still instructions plus a config value, exercised
-# behaviorally in the first block below, and (b) drift pins on the skills' prose.
-# The codex backend remains entirely prose, so it remains drift-only.
-#
-# Keep that split. A behavioral-looking check on Markdown is still theater.
+# THE SPLIT THAT MATTERS. The reviewer seam (resolution, override parsing, dispatch, the
+# second-backend stop) is *instructions Claude follows in Markdown*, not code — no function
+# to call, no exit code, so there is NO oracle and this file CANNOT verify runtime behavior.
+# Real verification lives elsewhere by design: the independent reviewer's diff review, and a
+# human reading the skill instructions. What IS real code has real oracles:
+#   • tests/fireworks_runner_test.sh — context assembly, fan-out, join, artifact promotion.
+#   • the behavioral block below — the backend RESOLVER, and the config↔CI gate comparison.
+# Put behavioral checks where the behavior is. A behavioral-looking check on Markdown is
+# still theater. If you need a REAL gate, extract the thing into code and unit-test THAT.
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 REVIEW="$ROOT/.claude/skills/review/SKILL.md"
 FRAME="$ROOT/.claude/skills/frame/SKILL.md"
-AGENTS="$ROOT/AGENTS.md"
-PROTOCOL="$ROOT/.claude/workflow-protocol.md"
 WF="$ROOT/.claude/workflow.json"
-BACKLOG="$ROOT/BACKLOG.md"
 
 pass=0 fail=0
 ok() {
@@ -90,100 +85,10 @@ eq "unknown backend is rejected" "ERR" "$(resolve '{"reviewer":"bogus"}')"
 eq "this repo routes approach+correctness+hidden-failure to fireworks, design to codex" \
   "codex fireworks fireworks fireworks" "$(resolve "$(cat "$WF")")"
 
-echo "== drift: resolution rule + override are still documented =="
-has "missing/empty ⇒ codex" "$REVIEW" "A missing or empty \`reviewer\` field ⇒ \`codex\`"
-has "value set {codex, fireworks}" "$REVIEW" "one of \`{codex, fireworks}\`"
-has "precedence override>config>default" "$REVIEW" "**beats** the default \`codex\`"
-has "override documented" "$REVIEW" "Reviewer override (bare arg, order-independent)"
-has "selection is per pass" "$REVIEW" "**Backend selection is per pass.**"
-has "bare-string form still valid" "$REVIEW" "that backend for *every* pass"
-has "absent pass ⇒ codex" "$REVIEW" "A pass absent from the map ⇒ \`codex\`"
-
-echo "== drift: an unwired (pass, backend) pair is a loud stop, not a silent fallback =="
-has "unwired stop message" "$REVIEW" "is not wired for the"
-has "no codex fallback" "$REVIEW" "Do **not** fall back to codex"
-has "stop is scoped to unwired, not to non-codex" "$REVIEW" "**Selecting a backend for a pass it is not wired for is a loud STOP**"
-has "frame routes unwired design backend to stop" "$FRAME" "not wired for the design pass"
-has "override cannot conjure wiring" "$REVIEW" "the override changes the selection, never the wiring"
-absent "no dangling llm backend (review)" "$REVIEW" "\`llm\`"
-absent "no dangling llm backend (frame)" "$FRAME" "\`llm\`"
-# The retirement spans every doc that describes CURRENT behavior, not just the
-# skills — README and ARCHITECTURE both documented `llm` as the second backend.
-# (BACKLOG's OPS-11 analysis is a dated record and keeps its text, annotated.)
-absent "README drops the retired backend" "$ROOT/README.md" "\`llm\`"
-absent "ARCHITECTURE drops the retired backend" "$ROOT/ARCHITECTURE.md" "\`llm\`"
-has "README documents the wired second backend" "$ROOT/README.md" "fireworks"
-has "ARCHITECTURE documents the wired second backend" "$ROOT/ARCHITECTURE.md" "fireworks"
-has "README shows the per-pass map form" "$ROOT/README.md" '"correctness": "fireworks"'
-has "ARCHITECTURE states resolution is per pass" "$ROOT/ARCHITECTURE.md" "resolved **per pass**"
-
-echo "== drift: codex command tokens still present (presence, not per-block) =="
-has "codex exec -s read-only" "$REVIEW" "codex exec -s read-only"
-has "approach schema abs path" "$REVIEW" '--output-schema "$HOME/.claude/skills/review/design-review-schema.json"'
-has "correctness schema abs path" "$REVIEW" '--output-schema "$HOME/.claude/skills/review/finding-schema.json"'
-has "approach -o repo-relative" "$REVIEW" "-o reviews/<slug>.approach.json"
-has "correctness promoted to its artifact" "$REVIEW" '"$tmp_c" reviews/<slug>.codex.json'
-has "codexModel passthrough" "$REVIEW" '${codexModel:+-m "$codexModel"}'
-has "stdin guard </dev/null" "$REVIEW" "</dev/null"
-has "frame design -o + schema" "$FRAME" "-o reviews/<slug>.design.json"
-
-echo "== drift: the parallel hidden-failure critic is wired (concurrent, fail-closed, own schema) =="
-# The correctness altitude now runs two critics at once. These are presence checks only — the seam
-# is Markdown, so per this file's charter there is no behavioral oracle to assert.
-has "correctness critic writes a temp" "$REVIEW" '-o "$tmp_c"'
-has "hidden-failure critic writes a temp" "$REVIEW" '-o "$tmp_h"'
-has "hidden-failure schema abs path" "$REVIEW" '--output-schema "$HOME/.claude/skills/review/hidden-failure-schema.json"'
-has "hidden-failure critic own artifact" "$REVIEW" "reviews/<slug>.hidden-failure.json"
-has "hidden-failure prompt scoped to one lens" "$REVIEW" "SCOPED TO ONE LENS"
-has "per-PID join (correctness)" "$REVIEW" 'wait "$pid_c"'
-has "per-PID join (hidden-failure)" "$REVIEW" 'wait "$pid_h"'
-has "atomic promote gate" "$REVIEW" "temp→validate→promote invariant"
-has "temps are reviews-local (same-fs atomic rename)" "$REVIEW" 'mktemp reviews/.<slug>.codex.XXXXXX'
-has "hidden-failure temp is reviews-local too" "$REVIEW" 'mktemp reviews/.<slug>.hidden-failure.XXXXXX'
-has "trap cleans unpromoted temps" "$REVIEW" "trap 'rm -f"
-has "fail-closed: both critics required" "$REVIEW" "both critics are REQUIRED"
-has "step-9 presents two labelled groups" "$REVIEW" "two labelled groups"
-has "step-9 own Hidden-failure section" "$REVIEW" "Hidden-failure review"
-# the dedicated schema ships as its own skill artifact
-has "hidden-failure schema exists" "$ROOT/.claude/skills/review/hidden-failure-schema.json" "HIDDEN-FAILURE parallel critic"
-
-echo "== drift: the fireworks dispatch is a THIN invocation, not a copied block =="
-# The runner owns assembly/fan-out/join/promotion, so this skill must carry an
-# invocation and nothing more. Real behavior lives in tests/fireworks_runner_test.sh;
-# these are presence pins on the seam's prose, per this file's charter.
-has "fireworks invocation present" "$REVIEW" "fireworks_runner.py"
-has "approach altitude wired to fireworks" "$REVIEW" "--altitude approach --slug <slug> --base <base>"
-has "approach pushes whole files, not just the diff" "$REVIEW" "whole changed files at HEAD"
-has "invocation names the altitude" "$REVIEW" "--altitude correctness --slug <slug> --base <base>"
-has "runner uses the bootstrapped interpreter" "$REVIEW" 'fireworks-venv/bin/python'
-has "invocation passes -B" "$REVIEW" 'fireworks-venv/bin/python" -B'
-has "the -B note states the real mechanism, not a wrong one" "$REVIEW" "cheap insurance, not load-bearing here"
-# The promotion guarantee is stated at its true strength, not overclaimed. Thomas
-# accepted the residual window (approach BLOCKER, 2026-08-03); these pin BOTH halves
-# so neither the guarantee nor its limit can quietly disappear.
-has "failed review publishes nothing" "$REVIEW" "**nothing** is published"
-has "publication limit is stated, not overclaimed" "$REVIEW" "not one transaction across files"
-has "the codex path is named as sharing the window" "$REVIEW" "The codex block below shares that window"
-has "fireworks writes the same two artifacts" "$REVIEW" "reviews/<slug>.codex.json\`, \`reviews/<slug>.hidden-failure.json"
-has "mixed-backend altitude is a stop" "$REVIEW" "Both passes must resolve to the **same** backend"
-has "routing table is not restated in the skill" "$REVIEW" "Model routing lives in \`fireworks-models.json\`"
-# The runner and its runtime contract must be present to be deployed by install.sh.
-for f in fireworks_runner.py fireworks-models.json requirements.txt; do
-  if [ -s "$ROOT/.claude/skills/review/$f" ]; then
-    ok "backend artifact present: $f"
-  else
-    bad "backend artifact missing/empty: $f"
-  fi
-done
-# The behavioral suite must actually be in the gate, or its oracles are dead weight.
-if grep -qF "tests/fireworks_runner_test.sh" "$WF"; then
-  ok "fireworks suite is in the configured gate"
-else
-  bad "fireworks suite absent from testCommand — its oracles would never run"
-fi
-# ...and in the AUTHORITATIVE one. CI is the server-side gate branch protection requires, so a CI
-# list that drifts below the local list makes the stronger-looking check the weaker one. Behavioral:
-# compares the two command strings rather than pinning either's wording.
+echo "== behavioral: the configured gate and the AUTHORITATIVE CI gate are the same command =="
+# CI is the server-side gate branch protection requires, so a CI list that drifts below the
+# local list makes the stronger-looking check the weaker one. Behavioral: compares the two
+# command strings rather than pinning either's wording.
 CI="$ROOT/.github/workflows/ci.yml"
 wf_cmd="$(/usr/bin/env python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["testCommand"])' "$WF" 2>/dev/null)"
 ci_cmd="$(
@@ -197,59 +102,78 @@ for line in open(sys.argv[1]):
 PY
 )"
 eq "CI gate runs exactly the configured gate (no drift)" "$wf_cmd" "$ci_cmd"
+# The behavioral suite must actually be in the gate, or its oracles are dead weight.
+if grep -qF "tests/fireworks_runner_test.sh" "$WF"; then
+  ok "fireworks suite is in the configured gate"
+else
+  bad "fireworks suite absent from testCommand — its oracles would never run"
+fi
 
-echo "== drift: reviewer role language stays tool-neutral =="
-has "approach prompt neutral" "$REVIEW" "You are the independent reviewer doing an APPROACH review"
-has "correctness prompt neutral" "$REVIEW" "You are the independent reviewer defined in AGENTS.md"
-has "design prompt neutral" "$FRAME" "You are the independent reviewer doing a DESIGN review"
-absent "no 'You are Codex' (review)" "$REVIEW" "You are Codex"
-absent "no 'You are Codex' (frame)" "$FRAME" "You are Codex"
-absent "no 'have Codex' role phrase" "$REVIEW" "have Codex"
-has "AGENTS.md neutral title" "$AGENTS" "independent reviewer contract"
-absent "AGENTS.md drops 'You are Codex'" "$AGENTS" "You are **Codex**"
+echo "== behavioral: the backend's runtime artifacts exist to be deployed =="
+# install.sh ships these by directory; an empty or missing one deploys a broken backend.
+for f in fireworks_runner.py fireworks-models.json requirements.txt; do
+  if [ -s "$ROOT/.claude/skills/review/$f" ]; then
+    ok "backend artifact present: $f"
+  else
+    bad "backend artifact missing/empty: $f"
+  fi
+done
 
-echo "== drift: the hidden-failure lens is named at both altitudes =="
-has "correctness names hidden failure" "$AGENTS" "**Hidden failure:**"
-has "design names failure-hiding as a shape flaw" "$AGENTS" "Hiding failure is a shape flaw"
+# ─────────────────────────────────────────────────────────────────────────────
+# PINS. Everything below is a wording grep. Each one is here because its silent
+# failure degrades behavior — the reason is stated with it. Nothing else qualifies.
+# ─────────────────────────────────────────────────────────────────────────────
 
-echo "== drift: frame bootstrap seeds the reviewer field =="
-has "bootstrap seeds reviewer=codex" "$FRAME" '"reviewer": "codex"'
+echo "== pin: an unwired (pass, backend) pair is a loud stop, never a silent fallback =="
+# Silent failure: the review quietly runs on a backend the pass was never wired for, or
+# falls back to codex without saying so. Either way Thomas reads findings believing they
+# came from the backend he selected. Both sites are pinned — the stop is stated in
+# review/SKILL.md and routed to from frame/SKILL.md's design pass.
+has "no codex fallback" "$REVIEW" "Do **not** fall back to codex"
+has "stop is scoped to unwired, not to non-codex" "$REVIEW" "**Selecting a backend for a pass it is not wired for is a loud STOP**"
+has "frame routes unwired design backend to stop" "$FRAME" "not wired for the design pass"
 
-echo "== drift: frame requires a falsification plan (spec-time, oracle-typed, executed at step 9) =="
-# Presence pins only — the plan contract is Markdown instructions; per this file's charter the
-# real enforcement is the step-6 reviewer critique and the step-9 demonstrate-red discipline.
-has "step-5 per-AC regression required" "$FRAME" "name at least one plausible regression"
-has "step-5 oracle modes typed" "$FRAME" 'reserve "the gate goes red" for `gate` oracles'
-has "step-5 renders-nothing case" "$FRAME" "include the case where the element renders *nothing*"
-has "step-5 mechanical N/A needs a reason" "$FRAME" "silence is not an option"
-has "step-6 flags implementation-shaped plans" "$FRAME" "derived from an implementation shape"
+echo "== pin: promotion is fail-closed — a failed review publishes nothing =="
+# Silent failure: a partial or empty artifact lands in reviews/ and reads as a clean review.
+# This is the defect class that produced the {} silent-clean bug; it degrades invisibly
+# because a green-looking artifact is indistinguishable from a real one.
+has "atomic promote gate" "$REVIEW" "temp→validate→promote invariant"
+has "failed review publishes nothing" "$REVIEW" "**nothing** is published"
+has "fail-closed: both critics required" "$REVIEW" "both critics are REQUIRED"
+has "temps are reviews-local (same-fs atomic rename)" "$REVIEW" 'mktemp reviews/.<slug>.codex.XXXXXX'
+
+echo "== pin: the reviewer runs read-only against the repo =="
+# Silent failure: the reviewer gains write access and can modify the tree it is judging.
+# The posture is the whole basis for trusting an independent review.
+has "codex exec -s read-only" "$REVIEW" "codex exec -s read-only"
+
+echo "== pin: schema path is absolute, artifact path is repo-relative =="
+# Silent failure: flip the -o and the artifact lands outside the repo — the review trail
+# vanishes with no error. (The schema half is pinned alongside it because the two are one
+# rule; inverting them is the mistake this split exists to prevent.)
+has "schema abs path (skill-local, installed under \$HOME)" "$REVIEW" '--output-schema "$HOME/.claude/skills/review/finding-schema.json"'
+has "artifact -o repo-relative (review)" "$REVIEW" "-o reviews/<slug>.approach.json"
+has "artifact -o repo-relative (frame)" "$FRAME" "-o reviews/<slug>.design.json"
+
+echo "== pin: demonstrate-red survives (the falsification discipline with teeth) =="
+# Silent failure: stories ship with planned checks nobody ever drove red — dead assertions
+# that look like coverage. This is the one part of the falsification machinery that was
+# shown to catch things, so it is the one part kept. See reviews/thin-the-loop.md.
 has "step-9 demonstrate-red" "$FRAME" "demonstrate red before done"
+has "step-9 names the dead-assertion stop" "$FRAME" "**dead assertion**"
+has "step-5 requires a per-AC check" "$FRAME" "for each AC, **how it will be checked**"
 
-echo "== drift: falsification rows are keyed (AC, surface), append-only, with declared exclusions =="
-has "step-5 surface is a product place" "$FRAME" "where in the product the criterion is observable"
-has "step-5 place-not-mechanism rule" "$FRAME" "A surface is a **place, not a mechanism**"
-has "step-5 no circular oracles" "$FRAME" "**No circular oracles:**"
-has "step-5 exclusions are three-valued" "$FRAME" "in exactly three permitted forms"
-has "step-5 exclusions name product surfaces only" "$FRAME" "Exclusions name **product surfaces only**"
-has "step-8 spec commit is the frozen baseline" "$FRAME" "falsification plan in this commit is the frozen baseline"
-has "step-9 plan is append-only" "$FRAME" "The approved plan is append-only:"
-has "step-9 amendment log required" "$FRAME" "## Falsification-plan amendments"
-has "step-9 retract never remove" "$FRAME" "retracted, never removed"
-has "step-6 flags mechanism-as-surface" "$FRAME" "rather than a place in the product"
-has "step-5 mechanical waives detail not extent" "$FRAME" "The mechanical label waives the detail, never the extent claim"
-absent "step-6 drops the impossible retraction duty" "$FRAME" "any retraction in the amendment log whose reason does not hold"
-has "step-6 defers retractions by phase" "$FRAME" "Amendment-log retractions are **out of scope here**"
-has "step-6 names OPS-18 as the retraction owner" "$FRAME" "that duty is OPS-18's"
-# The handoff lives at TWO sites — the frame prompt defers it, BACKLOG.md accepts it. Pinning
-# only the frame side leaves the receiving end deletable with the gate still green.
-has "OPS-18 accepts amendment-log review" "$BACKLOG" "**Also owns amendment-log review**"
-has "OPS-18 states the gap until it ships" "$BACKLOG" "Until OPS-18 ships, retraction reasons go unreviewed."
-
-echo "== drift: consult-presentation rule stated in doctrine + pointed at from a stop =="
-has "doctrine states consult-presentation rule" "$PROTOCOL" "How a consult is presented"
-has "a stop points at the rule" "$REVIEW" "consult-presentation rule"
+echo "== pin: the retired falsification machinery has not crept back =="
+# Not a behavior guard — a decision guard. These constructs were removed on evidence
+# (thin-the-loop, 2026-08-04); if they reappear, that should be a deliberate choice with a
+# fresh argument, not an unnoticed regrowth of ~40 lines of instruction weight.
+absent "no (AC, surface) matrix" "$FRAME" "surfaces excluded"
+absent "no place-not-mechanism rule" "$FRAME" "place, not a mechanism"
+absent "no three-form exclusion declaration" "$FRAME" "in exactly three permitted forms"
+absent "no circular-oracle clause" "$FRAME" "No circular oracles"
+absent "no append-only amendment log" "$FRAME" "Falsification-plan amendments"
 
 echo
 echo "passed=$pass failed=$fail"
 [ "$fail" = 0 ] || exit 1
-echo "ALL REVIEWER-SEAM LINT CHECKS PASSED (drift only — not a behavioral gate)"
+echo "ALL REVIEWER-SEAM CHECKS PASSED (small behavioral core + a short, reasoned pin set)"

@@ -148,6 +148,67 @@ and the reviewer should judge it as such.
 **AC-4 has no mechanical oracle and does not pretend to.** "Is this pin load-bearing?" is judgment,
 and the honest oracle is the reviewer at the approach altitude. Naming that here rather than
 inventing a count to check against is exactly the kind of thing this story is trying to restore.
+(The row above checks something narrower and real: that the pins *kept* still fail on real drift.)
+
+### Demonstrate-red results (2026-08-04)
+
+Every gate-oracle row was driven red, observed, and reverted. Nothing below was inferred.
+
+| AC | Regression applied | Observed |
+|---|---|---|
+| 1, 7 | Dropped the ARTIFACTS entry with `/deep-audit` still in README | `FAIL docs advertise /deep-audit but install.sh does not deploy it`, exit 1 |
+| 1 | Kept a dangling ARTIFACTS entry after deleting the tree | `DRIFT skills/deep-audit — MISSING from deployment`, exit 1 |
+| 1 | Dropped the suite from `workflow.json` but not `ci.yml` | `FAIL CI gate runs exactly the configured gate (no drift)`, both strings printed, exit 1 |
+| 1 | — | `git rev-parse retired/deep-audit-plan` resolves |
+| 2 | Re-inserted `surfaces excluded` into step 5 | 2 pins red (`no (AC, surface) matrix`, `no three-form exclusion declaration`), exit 1 |
+| 3 | Replaced "demonstrate red before done" in step 9 | `FAIL step-9 demonstrate-red`, exit 1 |
+| 4 | Broke the fail-closed promote wording in `review/SKILL.md` | `FAIL failed review publishes nothing`, exit 1 |
+| 5 | Inverted `check("empty object {} is rejected", …)` | Full gate exit 1; `FAIL empty object {} is rejected — rc=1` |
+| 6 | — | Manual: 14 files, each mapped to an AC; see below |
+
+**AC-1's first row was rewritten, not massaged.** As drafted it named `docs_test.sh` as the oracle
+for a stale doc reference. Tested on `main` first: that check did not exist — the suite stayed green
+at 13/0 with a stray `/deep-audit` line in `README.md`. Step 9 says a check that cannot be driven red
+is a dead assertion and the fix is the test, not the note. That is what AC-7 is.
+
+### Result
+
+Gate green at **202 checks**, from 368.
+
+| Suite | Before | After | |
+|---|---|---|---|
+| `guard_test.sh` | 19 | 19 | behavioural — unchanged |
+| `fireworks_runner_test.sh` | 91 | 91 | behavioural — unchanged |
+| `dev_audit_test.sh` | 46 | 46 | out of scope (Q3) — unchanged |
+| `reviewer_test.sh` | 102 | 30 | behavioural core 11 → 11; pins 91 → 19 |
+| `deep_audit_plan_test.sh` | 97 | — | deleted with the skill |
+| `docs_test.sh` | 13 | 16 | −2 deep-audit rows, +5 reverse checks |
+| **Total** | **368** | **202** | |
+
+**166 checks removed, 0 behavioural checks lost.** Behavioural coverage went from 167 to 167 and
+gained 5: the reverse deployed-command check that closes the hole AC-1's own oracle fell into.
+`frame/SKILL.md` step 5 went from six sub-bullets of matrix rules to one paragraph.
+
+### Scope containment (AC-6)
+
+`git diff --name-only main...HEAD` — 14 files, each mapped to the AC that authorises it:
+
+- AC-1 (10): `.claude/skills/deep-audit/SKILL.md`, `.claude/skills/deep-audit/plan-schema.json`,
+  `tests/deep_audit_plan_test.sh`, `install.sh`, `.claude/workflow.json`,
+  `.github/workflows/ci.yml`, `README.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `BACKLOG.md`
+- AC-2 / AC-3 (1): `.claude/skills/frame/SKILL.md`
+- AC-4 (1): `tests/reviewer_test.sh`
+- AC-7 (1): `tests/docs_test.sh`
+- Excluded per AC-6: `reviews/thin-the-loop.md` (this story's own trail)
+
+No file outside that list. Two consequential edits were made inside AC-1's files that the draft did
+not anticipate, both because the retirement made standing text false:
+
+- `ROADMAP.md`'s open decision 1 ("deep-audit: core / plugin / park") is **answered by this story** —
+  parked. Left as an open question it would have pointed at a decision already taken.
+- `BACKLOG.md`'s OPS-18 claimed to own review of the `## Falsification-plan amendments` log. AC-2
+  deletes that log, so the duty is discharged rather than owed. Left alone, OPS-18 would have carried
+  a live obligation to review an artifact that no longer exists.
 
 ### Known limits
 
