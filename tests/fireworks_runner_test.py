@@ -552,6 +552,33 @@ with repo() as root:
     check("  ↳ but its contents are withheld",
           "never-committed" not in body, "untracked manifest contents leaked")
 
+# Rule 2 for manifests: a manifest that ls-tree found but git show cannot read
+# must be NAMED, not dropped — "unreadable" must never look like "absent".
+with repo() as root:
+    (root / "requirements.txt").write_text("dep==1.0\n")
+    subprocess.run(["git", "add", "-A"], cwd=root, check=True, capture_output=True)
+    subprocess.run(["git", "commit", "-qm", "manifest"], cwd=root, check=True,
+                   capture_output=True)
+    real_run = subprocess.run
+
+    def failing_show(cmd, **kw):
+        if isinstance(cmd, list) and cmd[:2] == ["git", "show"] and "requirements" in cmd[-1]:
+            return SimpleNamespace(returncode=128, stdout="", stderr="fatal: bad object")
+        return real_run(cmd, **kw)
+
+    runner.subprocess.run = failing_show
+    try:
+        calls = []
+        invoke_approach(root, calls=calls)
+        body = calls[0]["messages"][1]["content"]
+    finally:
+        runner.subprocess.run = real_run
+    check("an unreadable manifest is named, not silently dropped",
+          "requirements.txt" in body and "NOT READABLE" in body,
+          "a manifest vanished with no accounting")
+    check("  ↳ the reviewer is told it is missing something",
+          "you are missing these" in body.lower())
+
 # THE bug the first live run exposed: reading the working tree while the diff is
 # computed against HEAD splices two snapshots into one payload, letting
 # uncommitted work leak into a review of committed work.

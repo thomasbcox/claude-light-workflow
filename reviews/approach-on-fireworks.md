@@ -165,6 +165,21 @@ degraded, missing a manifest the reviewer was never told existed.
 
 Routing to `/close`. Not a merge authorization — `/close` stops at its fork.
 
+## Fixes — correctness round (2026-08-04)
+
+**Hidden-failure IMPORTANT — silently dropped manifest.** A manifest that `ls-tree` found at HEAD but
+`git show` could not read is now collected into a `skipped` list and emitted under
+`FOUND AT HEAD BUT NOT READABLE (you are missing these)`, carrying git's own stderr as the reason —
+matching what `_changed_files` already did. *Red demonstrated:* replacing the accounting with a bare
+`pass` trips two checks. Suite 89 → 91; gate 366 → 368.
+
+**Addressed the class, not just the site.** Three consecutive rounds found the same shape: a fix
+applied to one context source while an adjacent one kept the old behaviour. `CONTEXT_SOURCES` now
+carries the rule both halves came from, as a header comment every future source must read —
+(1) read at HEAD, never the working tree; (2) anything you cannot include, name it, because a pushed
+reviewer cannot go look and will read a degraded context as a complete one. Written where the next
+source gets added rather than left implicit in two function bodies.
+
 ### Known limits
 
 - **Fireworks is unproven at this altitude, on a sample of one.** Run head-to-head against codex on

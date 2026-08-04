@@ -67,6 +67,17 @@ class RunnerError(Exception):
 # ── Context sources ───────────────────────────────────────────────────────────
 # Each declared input names a *place the review must be grounded in*. A pushed
 # reviewer sees exactly this and nothing else.
+#
+# THE RULE EVERY SOURCE FOLLOWS — read it before adding one:
+#   1. Read at HEAD, never the working tree. The diff is computed against HEAD;
+#      mixing in working-tree state splices two snapshots into one payload and
+#      lets uncommitted work reach a review of committed work.
+#   2. Anything you cannot include, NAME. Never `continue` past a file silently.
+#      A pushed reviewer cannot go look, so an omission it is not told about is
+#      indistinguishable from absence — it will read a degraded context as a
+#      complete one and report confidently on what it never saw.
+# Both halves were learned the same way: each was violated once, in a function
+# that already honoured the other, and caught by a reviewer rather than by design.
 
 
 def _git(args: list[str], root: Path) -> str:
@@ -176,13 +187,17 @@ def _manifests(ctx: dict) -> str:
         and "node_modules" not in Path(rel).parts
     )
 
-    found = []
+    found, skipped = [], []
     for rel in candidates:
         proc = subprocess.run(
             ["git", "show", f"HEAD:{rel}"],
             cwd=ctx["root"], capture_output=True, text=True, check=False,
         )
         if proc.returncode != 0:
+            # Rule 2: name it. `ls-tree` just said this exists at HEAD, so a read
+            # failure here means the reviewer is missing a manifest it was never
+            # told about — "unreadable" must not look like "absent".
+            skipped.append(f"{rel} ({proc.stderr.strip() or 'unreadable at HEAD'})")
             continue
         found.append(f"----- {rel} (at HEAD) -----\n{proc.stdout.rstrip()}")
 
@@ -197,6 +212,11 @@ def _manifests(ctx: dict) -> str:
         if rel.strip() and Path(rel).name in MANIFEST_NAMES
     ]
     notes = []
+    if skipped:
+        notes.append(
+            "----- FOUND AT HEAD BUT NOT READABLE (you are missing these) -----\n"
+            + "\n".join(skipped)
+        )
     if untracked:
         notes.append(
             "----- PRESENT BUT UNCOMMITTED (excluded: not part of the state under "
