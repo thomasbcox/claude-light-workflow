@@ -327,11 +327,31 @@ def run_pass(name: str, context: str, ctx: dict, routes: dict) -> dict:
     except Exception as exc:
         raise RunnerError(f"'{name}' API call failed: {exc}")
 
+    if not getattr(response, "choices", None):
+        raise RunnerError(
+            f"'{name}' returned no choices — the API produced no completion at all"
+        )
     choice = response.choices[0]
+
+    # Only `stop` means the model finished saying what it had to say. Everything
+    # else is the model telling us the reply is not what it would have been, and a
+    # truncated or filtered body can still be valid JSON that satisfies the schema
+    # — so validation cannot catch it. Ignoring the signal would promote a degraded
+    # review as a clean one, which is the same shape as the `{}` defect that
+    # motivated this backend. `length` keeps its own message because its fix is
+    # specific (raise the output budget); everything else shares the general one.
     if choice.finish_reason == "length":
         raise RunnerError(
             f"'{name}' response was cut off at the output limit "
             f"({MAX_OUTPUT_TOKENS:,} tokens) — the review is incomplete, not clean"
+        )
+    if choice.finish_reason != "stop":
+        raise RunnerError(
+            f"'{name}' completion ended abnormally (finish_reason="
+            f"{choice.finish_reason!r}) — the model signalled its reply was altered "
+            "or suppressed (e.g. content filtering). It may still parse and satisfy "
+            "the schema, which is exactly why this is checked: a filtered review is "
+            "not a clean review. Nothing promoted."
         )
 
     body = choice.message.content

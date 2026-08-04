@@ -472,6 +472,25 @@ important-2 recommendation"*
 Routing to `/close` to apply the two fixes. **This is not a merge authorization** — `/close` stops at
 its merge fork and requires a separate, explicit instruction.
 
+## Fixes (2026-08-03)
+
+Both round-1 fixes Thomas approved, applied in `run_pass`.
+
+**Correctness NIT — unguarded `response.choices[0]`.** An empty `choices` list is now caught and
+named ("returned no choices — the API produced no completion at all") instead of raising `IndexError`
+into the generic handler. Behaviour was already fail-closed; this makes the diagnostic match the rest
+of the runner's error model. *Red demonstrated:* disabling the guard trips 2 checks.
+
+**Hidden-failure IMPORTANT — narrow `finish_reason` check.** `run_pass` now accepts **only** `stop`.
+`length` keeps its own message because its remedy is specific (raise the output budget); every other
+value — `content_filter` foremost, but also unknown reasons a future API version might introduce —
+is rejected with a message naming altered/suppressed output. The reasoning is recorded in the code:
+a filtered or abnormal completion can still be valid JSON satisfying the schema, so validation cannot
+catch it, and promoting it would repeat the `{}` failure shape that motivated this whole backend.
+*Red demonstrated:* accepting non-`stop` reasons trips 11 checks.
+
+Suite grew 66 → 80 checks; full gate 341 → 355, green.
+
 ## Observed, not fixed — for the review round
 
 **A structurally-valid but meaningless schema makes validation vacuous.** JSON Schema treats

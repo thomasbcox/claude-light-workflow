@@ -185,6 +185,45 @@ with repo() as root:
     check("finish_reason=length is rejected", rc != 0)
     check("  ↳ names truncation, not bad JSON", "cut off" in err, err[:80])
 
+# Only `stop` is a completed reply. A filtered or otherwise abnormal completion can
+# be perfectly schema-valid, so validation cannot catch it — the finish_reason is
+# the only signal that the review is not what the model would have written.
+for reason in ("content_filter", "tool_calls", "", None, "unexpected_new_reason"):
+    with repo() as root:
+        rc, _, err = invoke(root, {"*": (VALID_FINDING, reason)})
+        check(f"finish_reason={reason!r} is rejected", rc != 0)
+        check(f"  ↳ nothing promoted", artifacts(root) == [], str(artifacts(root)))
+
+with repo() as root:
+    rc, _, err = invoke(root, {"*": (VALID_FINDING, "content_filter")})
+    check("  ↳ names filtering as the cause", "altered" in err or "suppressed" in err,
+          err[:100])
+
+
+class NoChoices:
+    choices = []
+
+
+with repo() as root:
+    original = runner.build_client
+    runner.build_client = lambda _k: SimpleNamespace(
+        chat=SimpleNamespace(
+            completions=SimpleNamespace(create=lambda **kw: NoChoices())
+        )
+    )
+    err = io.StringIO()
+    try:
+        with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+            rc = runner.run_altitude("correctness", ctx_for(root), runner.load_routes())
+    except Exception as exc:
+        rc, _ = 1, err.write(repr(exc))
+    finally:
+        runner.build_client = original
+    check("an empty choices list is rejected", rc != 0)
+    check("  ↳ named, not 'unexpected error'", "no choices" in err.getvalue(),
+          err.getvalue()[:100])
+    check("  ↳ nothing promoted", artifacts(root) == [])
+
 with repo() as root:
     rc, _, _ = invoke(root, {"*": "not json at all"})
     check("unparseable body is rejected", rc != 0)
