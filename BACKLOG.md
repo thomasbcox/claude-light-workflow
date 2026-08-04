@@ -212,10 +212,25 @@ practice. Recorded so whoever builds it doesn't rebuild the wrong shape:
   **First slice: SHIPPED** — the recon → plan-artifact consult (`/deep-audit`, plan stage only),
   standalone-valuable ("what would a comprehensive audit cost on this repo" as a one-page decision) —
   story [reviews/deep-audit-plan.md](reviews/deep-audit-plan.md), `PR #35 / merge: deep-audit-plan`.
-  OPS-13 stays **open** (BEGUN, not done): the execution-engine slice remains, carrying the deferred
-  ACs below.
-  **Engine-slice opening ACs (deferred there from the first slice's round-3 review, Thomas
-  2026-07-19):** (a) patch-phase structural ops — dedicated `exclude-files`/`only-files` union
+  **Engine slice: RETIRED 2026-08-03.** The execution-engine work and its supporting library were
+  stood down rather than finished. Nothing is lost — both are preserved as annotated tags and can be
+  read or resurrected at any time: `retired/deep-audit-engine` (`a0131b1`, parked 2026-07-27 when the
+  work was re-sequenced lib-first) and `retired/deep-audit-lib` (`7574a05`, the stdlib-only Python
+  port, 2026-07-31). Recover with `git show retired/deep-audit-engine` or branch from either tag.
+
+  **What survives and still ships:** the plan stage — the `/deep-audit` skill, its schema, and
+  `tests/deep_audit_plan_test.sh` in the gate. That slice was always specified as
+  standalone-valuable ("what would a comprehensive audit cost on this repo" as a one-page decision),
+  and it remains so without an executor behind it.
+
+  **OPS-13 status: closed as partially delivered.** The plan slice shipped; the engine slice is
+  retired, not pending. It is recorded here rather than moved to Done because Done means shipped,
+  and half of this did not. Reopening means a fresh story — the deferred ACs below are the
+  starting point, not a live commitment.
+
+  **Engine-slice opening ACs — historical, deferred to a retired slice** (from the first slice's
+  round-3 review, Thomas 2026-07-19). Retained as the design record for anyone resurrecting the
+  tags; no longer owed by any open item: (a) patch-phase structural ops — dedicated `exclude-files`/`only-files` union
   branches, selector `remove`/`restrict` reserved for compiled rows; (b) the full executability
   semantic gate — a scope registry incl. L2/L3 membership, structural pricing constants, and
   full-arithmetic checks (`unitIds` ≡ registry, `estTokens` = runs × constant, wall-clock formula) —
