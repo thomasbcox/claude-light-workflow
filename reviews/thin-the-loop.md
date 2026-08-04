@@ -357,6 +357,18 @@ pre-existing, not caused by this diff — all three artifacts this round lack th
 line against the runner is to be added in `/close` so it is recorded rather than re-raised every
 round.
 
+## Build note — round 2 (2026-08-04)
+
+Re-review scope only; the AC→file map above is unchanged. Round-2 commits touch:
+
+| Approved finding | Files |
+|---|---|
+| Hidden-failure QUESTION — mixed-backend stop pin removed | `tests/reviewer_test.sh` |
+| Correctness NIT — trailing newline (rejected here, logged) | `BACKLOG.md` (new OPS-19) |
+
+The approach IMPORTANT was fixed in round 1 at `46bdc4e`, before that round's correctness pass ran,
+so it is inside the round-1 review base and not re-listed here.
+
 ## Fixes (2026-08-04)
 
 **Hidden-failure QUESTION — mixed-backend stop pin → restored as tier-1.** `tests/reviewer_test.sh`
