@@ -14,7 +14,7 @@ headed is in [`ROADMAP.md`](ROADMAP.md).
 ## What this repo is
 
 **This repo is where the workflow itself is authored — then deployed to run everywhere else.** The
-skills (`/frame` `/review` `/close`, plus the recon tools `/dev-audit` and `/deep-audit`) and the
+skills (`/frame` `/review` `/close`, plus the recon tool `/dev-audit`) and the
 guard hook live here as project-local files under `.claude/`; [`install.sh`](install.sh) copies them
 to `~/.claude/`, so they operate across **every project on your machine**. The **loop** skills act on
 whatever repo you're working in; the **recon** tools inspect a *target* repo you point them at.
@@ -44,7 +44,7 @@ On a first review both passes run; scope it with **`/review approach`** (force t
 **`/review correctness`** (skip straight to the line-level pass). Re-reviews that only verify fixes are
 correctness-only by default.
 
-### Before the loop: recon (`/dev-audit`, `/deep-audit`)
+### Before the loop: recon (`/dev-audit`)
 `/dev-audit [path]` is a standalone **pre-loop recon** step. It inspects a repo's languages,
 frameworks, manifests, tests, CI, and secret-handling; classifies its type and maturity tier;
 selects analysis tools that fit *that* repo (via a declarative ecosystem→tool table, **with
@@ -54,14 +54,10 @@ next steps — flagging missing safeguards (CI, tests, pinned deps, secret handl
 and **report-first**: it graduates findings into [`BACKLOG.md`](BACKLOG.md) as `AUDIT-` items only on
 an explicit instruction, and honors the same `docs/ai-protocol.md` stand-down as the loop skills.
 
-`/deep-audit [path]` goes deeper: a **whole-app, multi-lens audit**. It compiles a priced,
-deterministic audit *plan* — which judgment lenses (hidden-failure, security, test-adequacy,
-architecture), at which altitudes (file / subsystem / app), over which files, at what token cost —
-for a target repo, and presents it for approval. **Shipped today: the plan stage** (recon → priced
-plan → consult → stop). Its **execution engine** — running the plan's critic fleet, adversarially
-verifying every finding, synthesizing a report — is **on the roadmap, direction under evaluation**
-(core / plugin / park); see [`ROADMAP.md`](ROADMAP.md). Like `/dev-audit`, it is read-only,
-report-first, and stands down on `docs/ai-protocol.md`.
+A heavier whole-app, multi-lens audit was built and then stood down — the execution engine and its
+library in August 2026, the surviving plan stage with it. Nothing is lost: the trees are preserved as
+`retired/deep-audit-*` tags, recorded in [`BACKLOG.md`](BACKLOG.md) under OPS-13. The loop stays
+diff-scoped by design; a whole-app sweep remains an open direction, not a shipped capability.
 
 **The reviewer is selectable, per pass.** `.claude/workflow.json`'s `reviewer` field — or a
 per-invocation override on `/review` (`/review fireworks`, `/review approach codex`) — picks the
@@ -142,7 +138,7 @@ then merges.
 Because the skills + hook install globally (`~/.claude`), they reach every repo. A repo that already
 runs a heavier/native workflow signals it with a **`docs/ai-protocol.md`** marker at its root. When
 that marker is present, the light workflow **stands down**: the guard hook becomes a no-op (the
-repo's own hooks govern) and `/frame`, `/review`, `/close` — and the recon tools `/dev-audit` and `/deep-audit`, each before it reads or writes anything — stop and point you at the native skills.
+repo's own hooks govern) and `/frame`, `/review`, `/close` — and the recon tool `/dev-audit`, before it reads or writes anything — stop and point you at the native skills.
 Repos without the marker are governed by the light workflow as normal.
 
 ## Test here, then deploy everywhere

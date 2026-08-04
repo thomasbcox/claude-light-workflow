@@ -1,0 +1,4 @@
+{
+  "summary": "Scoped to hidden failure / weak error handling only. The round-2 diff is documentation (BACKLOG.md OPS-19, story-file updates, reviewer-output JSON) plus one test-file change in tests/reviewer_test.sh that restores a `has` pin and widens a block header. The pin restoration *strengthens* assertion coverage rather than weakening it. No bare except/catch, no catch-log-continue, no silent fallbacks, and no deleted assertions or safety checks are present in the diff. No hidden-failure findings.",
+  "findings": []
+}

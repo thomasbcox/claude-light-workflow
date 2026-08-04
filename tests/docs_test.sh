@@ -52,6 +52,32 @@ done < <(printf '%s\n' "$skills")
 n="$(printf '%s\n' "$skills" | grep -c .)"
 { [ "$n" -gt 0 ] && [ "$checked" -eq "$n" ]; } && ok "enumerated + checked all $n deployed skills" || bad "skill enumeration did not run (checked=$checked of $n) — fail-closed"
 
+echo "== no doc advertises a /command that is not deployed (the reverse direction) =="
+# The check above runs ONE WAY ONLY: deployed ⇒ documented. Nothing stopped a doc from promising a
+# command that no longer exists. Verified on main before this was added: appending a stray
+# /deep-audit line to README left this suite green at 13/0. Retiring a skill is exactly the event
+# that creates stale references, so the reverse direction — documented ⇒ deployed — is asserted here.
+#
+# This is STRUCTURAL, not a wording pin: both sides derive from install.sh's ARTIFACTS block, so it
+# cannot break on a rephrase. It earns its place by the reviewer_test.sh bar — a doc promising a
+# command that does not exist is user-facing breakage that would otherwise degrade silently.
+#
+# STRICT BY DESIGN — no allowlist. If a doc ever needs to name a command this repo does not deploy
+# (another repo's native workflow, say), this goes red naming the token. Fix by rephrasing, or add an
+# allowlist THEN with a stated reason — not speculatively now.
+doc_cmds="$(grep -ohE '(^|[^[:alnum:]/._-])/[a-z0-9-]+([^[:alnum:]/._-]|$)' "$README" "$ARCH" |
+  grep -oE '/[a-z0-9-]+' | sed 's|^/||' | sort -u)"
+seen=0
+while IFS= read -r c; do
+  [ -n "$c" ] || continue
+  seen=$((seen + 1))
+  printf '%s\n' "$skills" | grep -qxF -- "$c" &&
+    ok "documented /$c is deployed" ||
+    bad "docs advertise /$c but install.sh does not deploy it"
+done < <(printf '%s\n' "$doc_cmds")
+# Fail CLOSED, same rationale as above: a broken extraction must not read as "nothing to check".
+[ "$seen" -gt 0 ] && ok "extracted $seen documented /commands" || bad "no /commands extracted from docs — fail-closed"
+
 echo "== ROADMAP.md exists =="
 [ -f "$ROADMAP" ] && ok "ROADMAP.md present" || bad "ROADMAP.md missing"
 

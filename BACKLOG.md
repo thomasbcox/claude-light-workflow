@@ -299,13 +299,21 @@ practice. Recorded so whoever builds it doesn't rebuild the wrong shape:
   work was re-sequenced lib-first) and `retired/deep-audit-lib` (`7574a05`, the stdlib-only Python
   port, 2026-07-31). Recover with `git show retired/deep-audit-engine` or branch from either tag.
 
-  **What survives and still ships:** the plan stage — the `/deep-audit` skill, its schema, and
-  `tests/deep_audit_plan_test.sh` in the gate. That slice was always specified as
-  standalone-valuable ("what would a comprehensive audit cost on this repo" as a one-page decision),
-  and it remains so without an executor behind it.
+  **Plan slice: RETIRED 2026-08-04** (superseding the "what survives and still ships" position held
+  for one day). The plan stage — the `/deep-audit` skill, its `plan-schema.json`, and
+  `tests/deep_audit_plan_test.sh` — is stood down by the `thin-the-loop` story
+  ([reviews/thin-the-loop.md](reviews/thin-the-loop.md)). It had been kept on the argument that it
+  was standalone-valuable ("what would a comprehensive audit cost on this repo" as a one-page
+  decision). With the engine retired the day before, that value did not survive contact: a priced
+  plan for an audit nothing can run is a costed quote for a service that no longer exists, and it
+  cost 258 skill lines (the largest in the repo) plus 97 gate checks to keep. Preserved as annotated
+  tag `retired/deep-audit-plan`. Recover with `git show retired/deep-audit-plan` or branch from it.
 
-  **OPS-13 status: closed as partially delivered.** The plan slice shipped; the engine slice is
-  retired, not pending. It is recorded here rather than moved to Done because Done means shipped,
+  **All three tags, one place:** `retired/deep-audit-engine` (`a0131b1`), `retired/deep-audit-lib`
+  (`7574a05`), `retired/deep-audit-plan` (`6606b88`). Nothing about OPS-13 is lost; it is unbuilt,
+  not unrecorded. The ROADMAP's core/plugin/park question is answered by this: **parked**.
+
+  **OPS-13 status: closed, retired in full.** Every slice is now stood down and tagged. It is recorded here rather than moved to Done because Done means shipped,
   and half of this did not. Reopening means a fresh story — the deferred ACs below are the
   starting point, not a live commitment.
 
@@ -460,10 +468,25 @@ restate rules. The prefix-revisit question OPS-11 opened keeps accruing data poi
 OPS-18 — **/review-side falsification companion**: the reviewer proposes mutations for test-bearing
 stories at review time, complementing the frame-side plan (spec-time, criterion-derived, executed as
 step-9 demonstrate-red — shipped via `reviews/frame-falsification-plan.md`). Filed 2026-08-02 as
-that story's declared non-goal; not committed work. **Also owns amendment-log review** —
-retractions and implement-added rows exist only *after* step 9, so no frame-time review can see
-them; `falsification-surface-rows` (2026-08-03) removed that impossible clause from the step-6
-prompt and handed the duty here. **Until OPS-18 ships, retraction reasons go unreviewed.**
+that story's declared non-goal; not committed work.
+
+  **The amendment-log duty attached here is DISCHARGED, not owed** (2026-08-04). OPS-18 formerly
+  also owned review of the `## Falsification-plan amendments` log, handed over by
+  `falsification-surface-rows` (2026-08-03) because retractions exist only after step 9 and no
+  frame-time review can see them. `thin-the-loop` deleted the log itself
+  ([reviews/thin-the-loop.md](reviews/thin-the-loop.md)), so there is nothing left to review. What
+  remains of OPS-18 is only its original idea: reviewer-proposed mutations at review time. The
+  frame-side discipline it complements is now just demonstrate-red.
+
+OPS-19 — **`fireworks_runner.py` writes artifacts without a trailing newline.** Cosmetic and
+runner-wide: every `reviews/<slug>.{approach,codex,hidden-failure}.json` the fireworks backend
+promotes ends at `}` with no final newline, unlike the repo's hand-maintained JSON
+(`workflow.json`, the schemas). Logged 2026-08-04 from a `thin-the-loop` correctness NIT, rejected
+there for two reasons that still hold for any story that isn't about the runner: `/review`'s hard
+constraint forbids editing reviewer output, so the artifact cannot be fixed after the fact, and the
+fix belongs in the writer. Pre-existing, not introduced by that story. **Fix when the runner is next
+open** — one `write` call — rather than as a story of its own; a bookkeeping-only story is against
+doctrine. Recorded so it stops being re-raised as a NIT every round.
 
 _(OPS-10 shipped — see [Done](#done).)_
 
