@@ -1,0 +1,15 @@
+{
+  "verdict": "approve-with-concerns",
+  "findings": [
+    {
+      "severity": "IMPORTANT",
+      "reversibility": "two-way",
+      "standing": "nonstandard",
+      "title": "Manifest source reads from the working tree, not HEAD \u2014 the same snapshot-splicing risk AC-3 fixed for changed files",
+      "locus": ".claude/skills/review/fireworks_runner.py \u2014 `_manifests` (rglob + read_text)",
+      "claim": "AC-3 established that reading at HEAD (not the working tree) is a load-bearing invariant: the diff is computed against HEAD, so reading the working tree splices two snapshots into one payload and lets uncommitted work reach a review of committed work. `_changed_files` honors this with `git show HEAD:<name>`. But `_manifests` uses `ctx[\"root\"].rglob(name)` + `path.read_text()`, which reads the working tree. Two failure modes follow: (1) a manifest that is also a changed file (e.g. `package.json` was modified on this branch) appears in both `changed_files` at HEAD and `manifest` from the working tree \u2014 if there are uncommitted edits, the reviewer sees two contradictory versions of the same file; (2) a manifest that is NOT a changed file but has uncommitted edits reaches the reviewer as uncommitted work, exactly the class of bug AC-3 was created to prevent. The story's own test notes call AC-3 'the bug the first live run exposed' \u2014 the same live-run exposure applies here, just to a narrower set of files.",
+      "alternative": "Read manifests at HEAD the same way changed files are: resolve each candidate path relative to the root, then `git show HEAD:<relative_path>` instead of `read_text()`. Files not present at HEAD (untracked manifests) fall into the 'NOT INCLUDED' listing pattern `_changed_files` already uses. This keeps a single-snapshot invariant across every context source, not just the one a live run happened to catch. Alternatively, if reading from the working tree is intentional (the dependency landscape is meant to be current-state, not committed-state), state that rationale in the code and exclude files that already appear in `changed_files` to avoid the contradiction \u2014 but that still leaves case (2) open.",
+      "win": "Eliminates the last working-tree read in the pushed context, closing the same class of uncommitted-leak bug AC-3 was created from. One invariant \u2014 'every context source reads at HEAD' \u2014 replaces two rules ('changed files at HEAD, manifests from working tree') with one, and removes a contradiction the reviewer could not resolve."
+    }
+  ]
+}

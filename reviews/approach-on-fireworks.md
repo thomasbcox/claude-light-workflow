@@ -85,6 +85,28 @@ plan did not.
 `*"fireworks fireworks"`, which matched any string ending in those two words and therefore could not
 detect what the first two positions held. A reviewer caught it. It is now an exact match on all four.
 
+## Fireworks approach review (2026-08-04, base main, HEAD c234375)
+
+*First approach pass run by the `fireworks` backend — the wiring reviewing itself.*
+
+**Verdict: approve-with-concerns.**
+
+### IMPORTANT — `_manifests` reads the working tree, not HEAD
+*two-way · nonstandard · locus: `fireworks_runner.py` — `_manifests` (rglob + read_text)*
+
+AC-3 establishes reading at HEAD as a load-bearing invariant: the diff is computed against HEAD, so
+reading the working tree splices two snapshots and lets uncommitted work reach a review of committed
+work. `_changed_files` honours it via `git show HEAD:<name>`. `_manifests` does not — it uses
+`rglob` + `read_text()`, straight off the working tree. Two failure modes: a manifest that is *also*
+a changed file appears twice in the payload, at HEAD and from the working tree, contradicting itself
+if there are uncommitted edits; and a manifest that is not a changed file carries uncommitted edits
+into the review — precisely the class AC-3 exists to prevent.
+
+**Alternative:** resolve each candidate relative to the root and `git show HEAD:<relative_path>`;
+manifests absent at HEAD fall into the same "NOT INCLUDED" listing `_changed_files` already uses.
+**Win:** one invariant — *every context source reads at HEAD* — replaces two rules and removes a
+contradiction the reviewer cannot resolve.
+
 ### Known limits
 
 - **Fireworks is unproven at this altitude, on a sample of one.** Run head-to-head against codex on
