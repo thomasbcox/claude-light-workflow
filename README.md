@@ -63,11 +63,29 @@ verifying every finding, synthesizing a report — is **on the roadmap, directio
 (core / plugin / park); see [`ROADMAP.md`](ROADMAP.md). Like `/dev-audit`, it is read-only,
 report-first, and stands down on `docs/ai-protocol.md`.
 
-**The reviewer is selectable.** `.claude/workflow.json`'s `reviewer` field (default `codex`) — or a
-per-invocation override on `/review` (`/review llm`, `/review approach codex`) — picks the backend.
-**Codex is the only wired backend today;** selecting `llm` (the [`llm` CLI](https://llm.datasette.io),
-the designated second source) stops with a "not yet wired" message (a follow-up will wire it). The set
-is extensible to further backends. The resolution rule and dispatch live in
+**The reviewer is selectable, per pass.** `.claude/workflow.json`'s `reviewer` field — or a
+per-invocation override on `/review` (`/review fireworks`, `/review approach codex`) — picks the
+backend. It takes either a bare string (that backend everywhere; the default is `codex`) or a
+purpose→backend map, because a backend can be wired for some altitudes and not others:
+
+```json
+"reviewer": { "design": "codex", "approach": "codex",
+              "correctness": "fireworks", "hidden-failure": "fireworks" }
+```
+
+Two backends are wired. **`codex`** is agentic — it explores the repo itself — and runs at every
+altitude. **`fireworks`** runs open-weight models through the Fireworks API and is wired at the
+**correctness altitude** (the two concurrent critics); design and approach follow in a later story,
+and selecting an unwired pair stops loudly rather than falling back. It is non-agentic, so a
+vendored runner *pushes* the context and owns fan-out, joining, and all-or-nothing promotion; its
+output is schema-enforced at the API and validated again before anything is written. Which model
+serves which purpose lives in
+[`fireworks-models.json`](.claude/skills/review/fireworks-models.json) — edit it to re-route, and
+check it against your account with `fireworks_runner.py --check-models`. One-time setup is a
+user-local venv from [`requirements.txt`](.claude/skills/review/requirements.txt); no admin needed.
+
+Running two different models over one branch is the point, not a side effect — cross-model critics
+are a defense against a single model's blind spots. The resolution rule and dispatch live in
 [`review/SKILL.md`](.claude/skills/review/SKILL.md) → *Reviewer backend*; the role contract is the
 tool-neutral [`AGENTS.md`](AGENTS.md), read automatically by whichever backend runs.
 

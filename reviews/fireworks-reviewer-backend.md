@@ -316,6 +316,25 @@ criterion actually means: every routed purpose must be a real review purpose (`K
 while routing ahead of wiring stays legal. Recorded because it narrows an approved criterion's
 reading, which is Thomas's to reject.
 
+**7 — add · AC-8 · surfaces: `README.md` and `ARCHITECTURE.md` · added at: implement**
+
+AC-8's approved row named "`review/SKILL.md` and `frame/SKILL.md` prose" as the surface for dangling
+`llm` references, and its `surfaces excluded` said `none`. That was **under-enumerated**: both
+`README.md` and `ARCHITECTURE.md` describe the reviewer seam as current behaviour and both named
+`llm` as the second backend, so retiring it left two documents actively wrong while the gate stayed
+green. This is precisely the failure the extent claim exists to prevent, and the approved plan did
+not catch it — the criterion ("removed from the documented set") plainly spans every doc that
+documents the set, not only the two skill files I happened to be editing.
+
+Both updated; pins added for the removal *and* for the positive claim (each doc must describe the
+backend that actually exists, or the next rename leaves them silently empty). Demonstrated red by
+reintroducing an `llm` sentence into `README.md`.
+
+`BACKLOG.md`'s OPS-11 analysis also says `reviewer: {codex, llm}`, but that is a **dated record of
+reasoning**, not a description of current behaviour. It keeps its text with a terminology note
+rather than being rewritten — editing the historical record to match today would destroy the thing a
+backlog is for.
+
 **Sizing correction, no plan change:** the output reservation was first set to 8,000 tokens, and the
 live run truncated a real review of this branch — the runner refused to promote it, which is how it
 was found rather than shipped. Raised to 32,000 (verified accepted up to 131,072 on the routed

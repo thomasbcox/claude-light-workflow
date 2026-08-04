@@ -56,6 +56,11 @@ evidence. Recorded so the analysis survives and whoever picks it up doesn't rebu
 - **Shape (if built).** An optional **parallel anti-pattern critic pass** — one focused prompt whose
   sole job is hunting anti-patterns / weak error handling. **A pass is not a backend:** the
   `reviewer: {codex, llm}` seam selects which backend runs the *existing* design/approach and
+  <!-- Terminology note (2026-08-03): the `llm` backend name was retired and replaced by
+  `fireworks` when the second source was actually wired — see reviews/fireworks-reviewer-backend.md.
+  Read `llm` below as "the non-agentic second backend". The distinction this bullet draws (a pass is
+  not a backend) is unaffected. -->
+  
   correctness passes; this would be an *additional* pass and must not redefine what the `llm`
   **backend** means (that would give `reviewer: llm` two meanings and make dispatch, config, and
   artifacts ambiguous). When built it may *use* an llm **provider** — non-agentic, inherently

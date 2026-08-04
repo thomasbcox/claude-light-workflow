@@ -107,6 +107,15 @@ has "frame routes unwired design backend to stop" "$FRAME" "not wired for the de
 has "override cannot conjure wiring" "$REVIEW" "the override changes the selection, never the wiring"
 absent "no dangling llm backend (review)" "$REVIEW" "\`llm\`"
 absent "no dangling llm backend (frame)" "$FRAME" "\`llm\`"
+# The retirement spans every doc that describes CURRENT behavior, not just the
+# skills — README and ARCHITECTURE both documented `llm` as the second backend.
+# (BACKLOG's OPS-11 analysis is a dated record and keeps its text, annotated.)
+absent "README drops the retired backend" "$ROOT/README.md" "\`llm\`"
+absent "ARCHITECTURE drops the retired backend" "$ROOT/ARCHITECTURE.md" "\`llm\`"
+has "README documents the wired second backend" "$ROOT/README.md" "fireworks"
+has "ARCHITECTURE documents the wired second backend" "$ROOT/ARCHITECTURE.md" "fireworks"
+has "README shows the per-pass map form" "$ROOT/README.md" '"correctness": "fireworks"'
+has "ARCHITECTURE states resolution is per pass" "$ROOT/ARCHITECTURE.md" "resolved **per pass**"
 
 echo "== drift: codex command tokens still present (presence, not per-block) =="
 has "codex exec -s read-only" "$REVIEW" "codex exec -s read-only"
