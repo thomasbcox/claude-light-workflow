@@ -1,13 +1,4 @@
 {
-  "summary": "The diff faithfully implements all seven ACs. /deep-audit is fully retired across skill files, tests, install.sh, workflow.json, ci.yml, and all four docs; the falsification plan in frame/SKILL.md is reduced to demonstrate-red with the matrix, exclusions, and amendment log gone; demonstrate-red survives intact; pins are pruned from ~91 to 19 with a clear two-tier bar stated in the header; the behavioural core (resolver, CI-vs-config, fireworks-in-gate, artifact presence) is preserved; the reverse docs check is added and is structural; and scope is contained to the 14 enumerated files plus the reviews/ trail. The approach review's single IMPORTANT finding (five tier-2 pins contradicting the file's stated bar) was resolved by the final commit, which rewrites the header to define two explicit tiers. No correctness issues found.",
-  "findings": [
-    {
-      "severity": "NIT",
-      "title": "Approach review JSON lacks trailing newline",
-      "file": "reviews/thin-the-loop.approach.json",
-      "line": 15,
-      "claim": "The file ends with `}` and no trailing newline (`\\ No newline at end of file` in the diff). Minor style \u2014 the rest of the repo's JSON files (e.g. plan-schema.json, workflow.json) end with a newline.",
-      "suggestion": "Add a trailing newline for consistency with the repo's other JSON files. Optional."
-    }
-  ]
+  "summary": "The round-2 diff faithfully implements both approved fixes from the round-1 review. The mixed-backend stop pin is restored as tier-1 in reviewer_test.sh with a clear comment distinguishing it from the unwired-stop pins and explaining why it's needed despite the resolver check. OPS-19 is logged in BACKLOG.md for the rejected trailing-newline NIT. The story file is updated with the review trail, decisions, and round-2 build notes. The two new review JSON artifacts lack trailing newlines, but that is the exact pre-existing runner behavior already dispositioned as OPS-19 (rejected for this story, logged for a future runner-touching story). No correctness issues found.",
+  "findings": []
 }

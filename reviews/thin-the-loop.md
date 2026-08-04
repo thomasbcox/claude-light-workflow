@@ -394,6 +394,43 @@ should ride along the next time the runner is open rather than becoming a bookke
 correctness and hidden-failure passes then ran against it, so it is already reviewed. No further
 change here.
 
+## Fireworks review — round 2 (2026-08-04, base 46bdc4e, HEAD f607686) — CLEAN
+
+**Summary.** "The round-2 diff faithfully implements both approved fixes from the round-1 review. The
+mixed-backend stop pin is restored as tier-1 in `reviewer_test.sh` with a clear comment
+distinguishing it from the unwired-stop pins and explaining why it's needed despite the resolver
+check. OPS-19 is logged in `BACKLOG.md` for the rejected trailing-newline NIT. The story file is
+updated with the review trail, decisions, and round-2 build notes. The two new review JSON artifacts
+lack trailing newlines, but that is the exact pre-existing runner behavior already dispositioned as
+OPS-19 (rejected for this story, logged for a future runner-touching story). **No correctness issues
+found.**"
+
+Findings: none.
+
+*Worth noting:* the critic saw the trailing-newline condition on this round's own artifacts and
+declined to re-raise it, citing the OPS-19 disposition. The "never re-raise" rule held without being
+restated in the prompt — the record carried it.
+
+## Hidden-failure review — round 2 (2026-08-04, base 46bdc4e, HEAD f607686) — CLEAN
+
+**Summary.** "Scoped to hidden failure / weak error handling only. The round-2 diff is documentation
+(`BACKLOG.md` OPS-19, story-file updates, reviewer-output JSON) plus one test-file change in
+`tests/reviewer_test.sh` that restores a `has` pin and widens a block header. The pin restoration
+*strengthens* assertion coverage rather than weakening it. No bare except/catch, no
+catch-log-continue, no silent fallbacks, and no deleted assertions or safety checks are present in
+the diff. **No hidden-failure findings.**"
+
+Findings: none.
+
+## Decisions — round 2 (2026-08-04)
+
+Correctness-only re-review (no redesign in round 1, so the approach pass did not re-run). Both
+critics returned empty findings arrays. **Nothing to decide — no findings, so no dispositions.**
+
+Round-1 dispositions stand unchanged: the approach IMPORTANT and the hidden-failure QUESTION were
+fixed, the correctness NIT rejected and logged as OPS-19. Nothing was deferred, so nothing carries
+into a future round.
+
 ## Design sketch — HOW
 
 Deletion, not construction. Order matters only so the gate stays green between commits:

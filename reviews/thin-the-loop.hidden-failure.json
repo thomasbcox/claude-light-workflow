@@ -1,13 +1,4 @@
 {
-  "summary": "Reviewed the diff for hidden failure / weak error handling only. The new code in docs_test.sh is explicitly fail-closed (guards on seen>0, reports bad on empty extraction). The behavioral core of reviewer_test.sh (resolver, CI-vs-config comparison, artifact presence, suite-in-gate) is preserved intact. No bare except/catch, no catch-log-continue, no silent fallbacks were introduced. One finding: a behavior-guard pin for the mixed-backend stop was removed during the pin prune, creating a path where the skill text documenting that stop could disappear without the gate catching it \u2014 potentially letting mixed-backend reviews proceed silently. Flagging as a QUESTION since I cannot determine from the diff alone whether this was an intentional judgment call or an oversight in the prune.",
-  "findings": [
-    {
-      "severity": "QUESTION",
-      "title": "Mixed-backend stop pin removed \u2014 a behavior guard that may meet the retention bar",
-      "file": "tests/reviewer_test.sh",
-      "line": 114,
-      "claim": "The old reviewer_test.sh included `has \"mixed-backend altitude is a stop\" \"$REVIEW\" \"Both passes must resolve to the **same** backend\"`. This pin guarded a real behavior invariant: if /review runs approach on one backend and correctness on another, the skill must STOP rather than proceed silently. The pin was removed in the prune, but it appears to meet AC-4's own retention bar \u2014 its silent failure (the skill text disappearing) would let behaviour degrade unnoticed (mixed-backend reviews running without stopping, with no test catching it and the gate staying green). The retained set lists 'the unwired-backend stop' but the mixed-backend stop is a different scenario (both backends wired, just not the same one). The story's Known limits says 'some doc drift will go uncaught; that is the accepted trade,' but this is not prose drift \u2014 it is a behavior invariant losing its only mechanical guard. Was this an intentional exclusion, or an oversight in the prune?",
-      "suggestion": "If intentional, add a one-line comment in the pin section noting why the mixed-backend stop does not meet the bar (e.g., 'covered by the unwired-stop pins' or 'edge case not worth a pin'). If an oversight, restore it as a tier-1 behavior guard alongside the unwired-backend stop pins it complements."
-    }
-  ]
+  "summary": "Scoped to hidden failure / weak error handling only. The round-2 diff is documentation (BACKLOG.md OPS-19, story-file updates, reviewer-output JSON) plus one test-file change in tests/reviewer_test.sh that restores a `has` pin and widens a block header. The pin restoration *strengthens* assertion coverage rather than weakening it. No bare except/catch, no catch-log-continue, no silent fallbacks, and no deleted assertions or safety checks are present in the diff. No hidden-failure findings.",
+  "findings": []
 }
