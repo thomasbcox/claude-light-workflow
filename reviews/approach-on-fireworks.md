@@ -51,6 +51,17 @@ The predecessor story deliberately left this as the follow-up and pre-routed `ap
 6. **Scope containment.** `git diff --name-only main...HEAD` shows no files beyond those these ACs
    enumerate, excluding this story's own `reviews/` trail.
 
+## Build note (2026-08-04)
+
+| AC | Files |
+|---|---|
+| 1 — `approach` runs on the runner | `.claude/skills/review/fireworks_runner.py` (`PASSES["approach"]`, `ALTITUDES["approach"]`) |
+| 2 — shape-level context profile | `fireworks_runner.py` (`CONTEXT_SOURCES["changed_files"]`, `["manifest"]`, `MANIFEST_NAMES`) |
+| 3 — changed files read at HEAD | `fireworks_runner.py` (`_changed_files`), `tests/fireworks_runner_test.py` |
+| 4 — absent manifest stated, not omitted | `fireworks_runner.py` (`_manifests`, `assemble_context` optional branch) |
+| 5 — dispatch + config + docs | `.claude/skills/review/SKILL.md` (step 6, backend list, unwired-stop scope), `.claude/workflow.json`, `.claude/skills/review/fireworks-models.json`, `README.md`, `ARCHITECTURE.md`, `tests/reviewer_test.sh` |
+| 6 — scope containment | (no file — verified against the branch diff) |
+
 ## Test notes
 
 Gate: unchanged suite list; 355 → 362 checks, all additions behavioral.
