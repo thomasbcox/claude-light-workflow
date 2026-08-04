@@ -3,11 +3,23 @@
 # READ THIS BEFORE ADDING TO IT. This file was cut from ~91 wording pins to the set below
 # (thin-the-loop, 2026-08-04). Re-growing it undoes work that was done on evidence.
 #
-# THE BAR FOR A PIN — a `has`/`absent` grep on Markdown earns its place ONLY if its silent
-# failure would let BEHAVIOR degrade unnoticed. Ask: "if this phrase quietly disappeared,
-# what would go wrong, and would anyone find out?" If the answer is "the docs would read
-# slightly differently", it is not a pin — delete it. If the answer is "reviews would
-# silently run on the wrong backend / publish partial artifacts / get write access", pin it.
+# THE BAR FOR A PIN — two tiers, and only two.
+#
+# TIER 1, BEHAVIOR GUARDS — every block below except the last. A `has`/`absent` grep on
+# Markdown earns its place ONLY if its silent failure would let BEHAVIOR degrade unnoticed.
+# Ask: "if this phrase quietly disappeared, what would go wrong, and would anyone find out?"
+# If the answer is "the docs would read slightly differently", it is not a pin — delete it.
+# If the answer is "reviews would silently run on the wrong backend / publish partial
+# artifacts / get write access", pin it.
+#
+# TIER 2, DECISION GUARDS — the last block only, and CLOSED. These do NOT guard behavior and
+# do not claim to. They guard one thing: that a construct deliberately DELETED on evidence has
+# not been pasted back without a fresh argument. Admission requires all three: the construct
+# was removed by an approved story; the pin is `absent`, never `has` (it guards a deletion,
+# not a wording); and it names that story, so the argument is one link away. "It would be nice
+# to know if this changed" is not a decision guard — if you cannot point at an approved
+# deletion, you are writing a tier-1 pin and tier 1's bar applies. Tier 2 is also not a
+# substitute for review: reworded regrowth gets past it by design.
 #
 # WHY SO FEW. The evidence is the fireworks-reviewer-backend story: six real defects found,
 # NONE caught by a wording pin. Every one came from a reviewer reading code, a behavioral
@@ -120,8 +132,9 @@ for f in fireworks_runner.py fireworks-models.json requirements.txt; do
 done
 
 # ─────────────────────────────────────────────────────────────────────────────
-# PINS. Everything below is a wording grep. Each one is here because its silent
-# failure degrades behavior — the reason is stated with it. Nothing else qualifies.
+# PINS. Everything below is a grep on Markdown. TIER 1 (behavior guards) runs from
+# here through the demonstrate-red block; the FINAL block is the closed TIER 2 set.
+# Every pin states the reason it survived. Nothing outside the two tiers qualifies.
 # ─────────────────────────────────────────────────────────────────────────────
 
 echo "== pin: an unwired (pass, backend) pair is a loud stop, never a silent fallback =="
@@ -163,10 +176,12 @@ has "step-9 demonstrate-red" "$FRAME" "demonstrate red before done"
 has "step-9 names the dead-assertion stop" "$FRAME" "**dead assertion**"
 has "step-5 requires a per-AC check" "$FRAME" "for each AC, **how it will be checked**"
 
-echo "== pin: the retired falsification machinery has not crept back =="
-# Not a behavior guard — a decision guard. These constructs were removed on evidence
-# (thin-the-loop, 2026-08-04); if they reappear, that should be a deliberate choice with a
-# fresh argument, not an unnoticed regrowth of ~40 lines of instruction weight.
+echo "== TIER 2 (decision guards): the retired falsification machinery has not crept back =="
+# THE CLOSED TIER-2 BLOCK — see the header. Not behavior guards, and they do not claim to be.
+# Each construct below was deleted on stated evidence by an approved story (thin-the-loop,
+# 2026-08-04, reviews/thin-the-loop.md); if one reappears, that should be a deliberate choice
+# carrying a fresh argument, not an unnoticed regrowth of ~40 lines of instruction weight.
+# Reworded regrowth gets past these by design — that case is the reviewer's, not a grep's.
 absent "no (AC, surface) matrix" "$FRAME" "surfaces excluded"
 absent "no place-not-mechanism rule" "$FRAME" "place, not a mechanism"
 absent "no three-form exclusion declaration" "$FRAME" "in exactly three permitted forms"
