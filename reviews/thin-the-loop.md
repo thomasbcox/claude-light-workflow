@@ -318,6 +318,38 @@ gate staying green. The retained set lists "the unwired-backend stop", but that 
 scenario (both backends wired, just not the same one). This is not prose drift; it is a behavior
 invariant losing its only mechanical guard. Intentional exclusion, or an oversight in the prune?
 
+## Decisions (2026-08-04)
+
+Round 1. Approach pass ran (first review of the branch), then correctness + hidden-failure.
+
+**Approach — IMPORTANT, "Five 'crept back' absent pins contradict the file's own behavioral bar"
+→ FIX, alternative (a).** Thomas: *"Fix (a) — name two tiers."* Applied in-round at `46bdc4e`
+(comment-only; a tidy, not a redesign, so the shape stayed blessed and the correctness pass ran the
+same round). The header now declares tier 1 (behavior guards) and tier 2 (decision guards), the
+latter explicitly closed: admission requires an approved deletion, an `absent` pin rather than a
+`has`, and a named story. "Nice to know if this changed" is ruled out in so many words, so the tier
+cannot be stretched into a general-purpose exemption. No check moved — 30 before, 30 after.
+
+**Hidden-failure — QUESTION, "Mixed-backend stop pin removed" → FIX, restore as tier-1.** Thomas:
+*"Restore as tier-1."* The finding is correct and the omission was mine. AC-4 gave both a principle
+("silent failure lets behaviour degrade unnoticed") and a five-item enumeration; I treated the
+enumeration as binding, and where the two disagree the principle wins — the list was written at spec
+time, before anyone had gone pin by pin. The pin clears the tier-1 bar: if
+`Both passes must resolve to the **same** backend` vanished from `review/SKILL.md`, reviews would
+silently run split across two models and still read as complete. It is **not** covered by the
+retained unwired-backend stop, which is the different case of a backend selected for a pass it was
+never wired for. The resolver check pins *this repo's* config exactly, so a mixed pair would fail
+here — but the skill deploys globally, and the pin guards the instruction that travels. To be applied
+in `/close`, with demonstrate-red.
+
+**Correctness — NIT, "Approach review JSON lacks trailing newline" → REJECT for this story, log it.**
+Thomas: *"Reject for this story, log it."* Not fixable here on two counts: `/review`'s hard constraint
+forbids editing reviewer output, and the fireworks runner is a declared non-goal. It is also
+pre-existing, not caused by this diff — all three artifacts this round lack the newline, as do the
+`approach-on-fireworks` artifacts already on `main`, so it is runner-wide behaviour. A `BACKLOG.md`
+line against the runner is to be added in `/close` so it is recorded rather than re-raised every
+round.
+
 ## Design sketch — HOW
 
 Deletion, not construction. Order matters only so the gate stays green between commits:
