@@ -1,0 +1,26 @@
+{
+  "_comment": "Model routing for the fireworks reviewer backend: review purpose -> model. Edit this file to re-route; no model id is hardcoded in fireworks_runner.py. Verify against the live account with: fireworks_runner.py --check-models (needs network + FIREWORKS_API_KEY; deliberately not in the local gate). contextLength must match the live value the API reports -- it is what the pre-flight size guard checks against.",
+  "updated": "2026-08-03",
+  "routes": {
+    "correctness": {
+      "model": "accounts/fireworks/models/glm-5p2",
+      "contextLength": 1048576,
+      "why": "Verified 2026-08-03 returning schema-conforming output against finding-schema.json under json_schema enforcement. 1M context absorbs a whole-branch diff plus contract and story without the size guard tripping."
+    },
+    "hidden-failure": {
+      "model": "accounts/fireworks/models/glm-5p2",
+      "contextLength": 1048576,
+      "why": "Verified 2026-08-03 against hidden-failure-schema.json. Shares the correctness route for now; a distinct model here is the obvious first experiment once relative review quality is measurable."
+    },
+    "approach": {
+      "model": "accounts/fireworks/models/glm-5p2",
+      "contextLength": 1048576,
+      "why": "Routed ahead of use so wiring the approach pass is a dispatch change only. NOT yet wired -- the approach pass runs on codex until the follow-up story."
+    },
+    "design": {
+      "model": "accounts/fireworks/models/glm-5p2",
+      "contextLength": 1048576,
+      "why": "Routed ahead of use so wiring the design pass is a dispatch change only. NOT yet wired -- /frame's design review runs on codex until the follow-up story."
+    }
+  }
+}

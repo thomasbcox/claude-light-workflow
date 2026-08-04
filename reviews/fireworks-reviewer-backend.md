@@ -252,6 +252,74 @@ negative one pinned in the row above.
   tested on structured output. The 262k figure attributed to it elsewhere is exactly
   `kimi-k2p7-code`'s window and appears misattributed.
 
+## Falsification-plan amendments
+
+The approved plan is append-only. Every change below is recorded, never applied in place.
+
+**1 — retract · AC-6 · surface: "Temp files" (the shell `mktemp` template row) · added at: implement**
+
+The row's regression is a *shell* `mktemp` template with a suffix after the `X`s. The approved
+design put promotion inside the runner, so the fireworks path has no shell template anywhere — the
+skill's invocation is one command and the runner uses `tempfile.mkstemp`, which is unique by
+construction and cannot take a malformed template. The row therefore targets a mechanism this
+implementation does not have, and could only ever pass vacuously. Retracted, not removed: the
+retraction is itself a claim the reviewer may reject, and the codex block it was modelled on still
+carries the real shell templates (pinned separately in `reviewer_test.sh`).
+
+**2 — add · AC-6 · surface: the runner's temp paths under concurrency · added at: implement**
+
+The risk the retracted row was reaching for is real and still applies at the surface that does
+exist: two concurrent passes must not collide on a temp path, and no temp may survive a successful
+promote. Demonstrated red: forcing both passes through a single fixed temp name collapses
+`each promoted artifact used a unique temp path` (2 unique paths expected, 1 observed).
+
+**3 — add · AC-1 · surface: the repo's `.claude/skills/review/` after a test run · added at: implement**
+
+Implementation revealed a surface spec-time did not anticipate: this repo had no Python before, so
+nothing had ever written bytecode. `tests/fireworks_runner_test.py` *imports* the runner, which
+drops `__pycache__` beside it — inside the directory `install.sh` deploys verbatim. Committing that
+would ship bytecode to every deployment and then read back as drift in `./install.sh --check`,
+permanently. Guarded by `-B` in the suite's wrapper plus a `.gitignore` entry.
+
+*Correction recorded against my own first reading:* I initially attributed this to the skill's
+runtime invocation and wrote that rationale into `review/SKILL.md`. The demonstrate-red disproved
+it — running the runner as a **script** never writes bytecode; only **importing** it does, which is
+what the test suite does. The note in the skill and in `.gitignore` was corrected to state the real
+mechanism. A wrong "keep this because X" is worse than no note, because the next person disproves X
+and removes the guard.
+
+## Test notes — demonstrate-red results (2026-08-03)
+
+Every `gate` oracle in the approved plan was driven red by applying its planned regression, then
+reverted. Full harness output retained in the session; summary:
+
+| AC | Regression applied | Result |
+|---|---|---|
+| AC-2 | `json_schema` → `json_object` | RED (2 checks) |
+| AC-2 | accept `finish_reason: length` | RED (2) |
+| AC-2 | remove local schema validation | RED (6, incl. `{}` accepted and artifacts written) |
+| AC-2 | drop `context_length_exceeded_behavior: error` | RED (1) |
+| AC-3 | reintroduce a hardcoded model id | RED (1) |
+| AC-3 | unknown purpose falls back instead of erroring | RED (1) |
+| AC-5 | run the altitude sequentially | RED (1 — barrier times out) |
+| AC-5 | promote whatever succeeded | RED (13) |
+| AC-6 | accept a missing/empty context input | RED (4) |
+| AC-6 | skip the pre-flight size guard | RED (3) |
+| AC-6 | rebuild context per pass | RED (1) — see note |
+| AC-9 | break one suite assertion | gate exits 1 |
+
+**AC-6 "rebuild context per pass" — first regression was faulty, not the assertion.** Appending a
+constant to the shared payload left both passes still byte-identical, so nothing went red. The
+regression the row actually describes — handing each pass a *different* payload — drives
+`both passes receive byte-identical context` red. The assertion is live; my first attempt at
+falsifying it was not. Recorded because a regression that stays green is indistinguishable from a
+dead assertion until you check which one it is.
+
+**AC-1 deployment/`--check` rows** are `manual` oracles by plan and were run by hand: deploy to a
+temp `CLAUDE_WORKFLOW_DEST`, execute the deployed runner, re-run `./install.sh --check` → in sync,
+8/8 artifacts. Bootstrap into an empty user-local venv completed and ran `--check-models` green
+against the live account (4/4 routes live, stored context lengths match).
+
 ## Open questions
 
 **Q5 — Does the owed OPS-13 note ride with this story?** `retired/deep-audit-engine` and

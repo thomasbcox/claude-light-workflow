@@ -16,11 +16,18 @@ Step 2 of the loop. The **independent reviewer** critiques and classifies; it ne
 
 The independent reviewer is **selectable**. This section is the canonical resolution rule; `/frame` and `/close` reference it.
 
-**Resolve the reviewer once (precedence):** a per-invocation **override** (this skill only — see step 5) **beats** `reviewer` in `.claude/workflow.json`, which **beats** the default `codex`. A missing or empty `reviewer` field ⇒ `codex` (back-compat for every existing repo). The value must be one of `{codex, llm}`; anything else is an error — say so and stop, do not guess. The set is **extensible**: add a backend by adding its name here and a dispatch block below.
+**Backend selection is per pass.** The four reviewer invocations sit at different altitudes and a backend may be wired for some and not others, so `reviewer` resolves **per pass** (`design`, `approach`, `correctness`, `hidden-failure`) rather than once for the whole loop. This also lets two different models review the same branch — the cross-model diversity OPS-13 argues for.
+
+**Resolve the reviewer for each pass (precedence):** a per-invocation **override** (this skill only — see step 5) **beats** `reviewer` in `.claude/workflow.json`, which **beats** the default `codex`.
+- `reviewer` accepts **either** a bare string (that backend for *every* pass — the original form, still valid) **or** a purpose→backend map, e.g. `{"design":"codex","approach":"codex","correctness":"fireworks","hidden-failure":"fireworks"}`. A pass absent from the map ⇒ `codex`.
+- A missing or empty `reviewer` field ⇒ `codex` (back-compat for every existing repo).
+- Every value must be one of `{codex, fireworks}`; anything else is an error — say so and stop, do not guess. The set is **extensible**: add a backend by adding its name here and a dispatch block below.
 
 **Dispatch by backend** at each reviewer invocation (steps 6 and 8 here; the design review in `/frame`):
-- **`codex`** *(the only wired backend)* — run the `codex exec` command shown at that step, unchanged.
-- **`llm`** *(the designated second source — not yet wired)* — **STOP** with: *"The `llm` reviewer backend is selected but not wired yet (follow-up story). Set `reviewer` to `codex` in .claude/workflow.json, or pass `/review codex`."* Do **not** fall back to codex, run a partial review, or write any `*.json` artifact. Wiring `llm` is a follow-up story: unlike codex it is **non-agentic** (it cannot run `git diff` or explore the repo itself), so the harness assembles the context — `git diff <base>...HEAD` + the spec — and pipes it to `llm --schema <finding-schema>`; in exchange it is **inherently read-only** (no file tools, so no sandbox/worktree needed) and emits schema-valid JSON natively. This seam only has to route to it.
+- **`codex`** — run the `codex exec` command shown at that step, unchanged. Agentic: it explores the repo itself.
+- **`fireworks`** — **wired at the correctness altitude only** (step 8). Run the thin invocation shown there. Non-agentic: it cannot run `git diff` or read the repo, so the runner *pushes* the context; that is why it owns context assembly rather than the skill. It is inherently read-only (no file tools, so no sandbox needed) and its output is schema-enforced at the API and validated again before any artifact is written.
+
+**Selecting a backend for a pass it is not wired for is a loud STOP**, never a fallback. Today that means `fireworks` at the design pass (`/frame` step 6) or the approach pass (step 6 here). Stop with: *"The `fireworks` reviewer backend is not wired for the `<pass>` pass yet (follow-up story). Set that pass to `codex` in .claude/workflow.json, or pass `/review codex`."* Do **not** fall back to codex, run a partial review, or write any `*.json` artifact. A silent fallback would report a review that the selected backend never performed.
 
 The reviewer **role contract** is `AGENTS.md` — tool-neutral and read automatically by whichever backend runs.
 
@@ -34,10 +41,10 @@ The reviewer **role contract** is `AGENTS.md` — tool-neutral and read automati
    - **First review of the branch** (base = `<baseBranch>`), or any round **following an accepted redesign**: run **both**, approach first.
    - **Re-review that only verifies approved fixes** (base = the last-reviewed SHA, no redesign last round): **correctness only.**
    - **Overrides (bare args):** `/review approach` forces the approach pass on; `/review correctness` forces it off (correctness only). An override beats the default.
-   - **Reviewer override (bare arg, order-independent):** a `codex` or `llm` token selects the reviewer backend for this run, beating `.claude/workflow.json` (see **Reviewer backend** above). It composes with the pass override — `/review approach llm` (pass→reviewer), `/review llm approach` (reviewer→pass), `/review llm`, and `/review correctness codex` all parse (pass token and reviewer token in either order). An unrecognized token, or a reviewer value outside `{codex, llm}`, is an error — report it and stop, don't silently ignore it.
+   - **Reviewer override (bare arg, order-independent):** a `codex` or `fireworks` token selects the reviewer backend for **every** pass this run, beating `.claude/workflow.json` (see **Reviewer backend** above). It composes with the pass override — `/review approach fireworks` (pass→reviewer), `/review fireworks approach` (reviewer→pass), `/review fireworks`, and `/review correctness codex` all parse (pass token and reviewer token in either order). An unrecognized token, or a reviewer value outside `{codex, fireworks}`, is an error — report it and stop, don't silently ignore it. An override that selects a backend for a pass it is not wired for still STOPs per **Reviewer backend** — the override changes the selection, never the wiring.
 
    Choose the diff base as today: first review → `<baseBranch>`; re-review → the last-reviewed SHA recorded in the story file. (If step 5 selects correctness-only, skip steps 6–7 and go straight to step 8.)
-6. **Approach pass.** The reviewer judges the *shape*, licensed to go beyond the diff. **Dispatch by the resolved reviewer** (see **Reviewer backend**): if `llm` (or any non-codex backend), STOP per that section; for `codex`, run — reads `AGENTS.md` automatically, read-only:
+6. **Approach pass.** The reviewer judges the *shape*, licensed to go beyond the diff. **Dispatch by the backend resolved for the `approach` pass** (see **Reviewer backend**): if it is a backend not wired for this pass — `fireworks` today — STOP per that section; for `codex`, run — reads `AGENTS.md` automatically, read-only:
    ```bash
    codex exec -s read-only \
      --output-schema "$HOME/.claude/skills/review/design-review-schema.json" \
@@ -56,7 +63,18 @@ The reviewer **role contract** is `AGENTS.md` — tool-neutral and read automati
    - **If he rejects/defers all approach findings, or the approach pass was clean** (empty findings): the shape is **blessed** — continue to step 8 **in the same round.**
 
    **Invariant:** the correctness pass only ever runs on a shape that has cleared approach review.
-8. **Correctness pass — two concurrent critics.** The correctness altitude runs **two independent critics at once**: the general **correctness** critic (judges the lines against the spec — everything) and a dedicated **hidden-failure** critic (swallowed / absorbed / silently-degrading error handling ONLY — `AGENTS.md`'s "Hidden failure" bullet). This is **divided parallelism** — different questions, so findings partition by concern; it is *not* the approach→correctness gate (that stays sequential, step 7). **Dispatch by the resolved reviewer** (see **Reviewer backend**): if `llm` (or any non-codex backend), STOP per that section **before launching either** critic; for `codex`, launch both read-only (`-s read-only` — neither can edit the repo). Launch each to a **fresh temp file** with its **PID captured**, `wait` **per-PID** for an **explicit exit status**, then **atomically promote** each temp to its stable artifact **only** on {clean exit AND parseable JSON}:
+8. **Correctness pass — two concurrent critics.** The correctness altitude runs **two independent critics at once**: the general **correctness** critic (judges the lines against the spec — everything) and a dedicated **hidden-failure** critic (swallowed / absorbed / silently-degrading error handling ONLY — `AGENTS.md`'s "Hidden failure" bullet). This is **divided parallelism** — different questions, so findings partition by concern; it is *not* the approach→correctness gate (that stays sequential, step 7). **Dispatch by the backend resolved for the `correctness` and `hidden-failure` passes** (see **Reviewer backend**). Both passes must resolve to the **same** backend — a mixed pair would split one altitude's findings across two models with no reconciliation rule; if they differ, STOP and say so.
+
+**If `fireworks`** — one thin invocation. The runner owns context assembly, the concurrent fan-out, the join, and all-or-nothing promotion, so there is no command block to copy here and nothing for this skill to join:
+   ```bash
+   "$HOME/.claude/fireworks-venv/bin/python" -B \
+     "$HOME/.claude/skills/review/fireworks_runner.py" \
+     --altitude correctness --slug <slug> --base <base>
+   ```
+   **The `-B`** (write no bytecode) is cheap insurance, not load-bearing here: Python writes `__pycache__` for *imported* modules, and this invocation runs the runner as a script, which does not. What does import it is `tests/fireworks_runner_test.py`, so the `-B` that actually matters is in that suite's wrapper; `.gitignore` is the durable guard. Keep this one anyway — it costs nothing and holds if the runner is ever imported rather than executed.
+   Non-zero exit stops the round exactly as the codex path does — the runner promotes **both** artifacts or **neither**, so a partial review can never reach `reviews/`. It writes the same two artifacts the codex path does (`reviews/<slug>.codex.json`, `reviews/<slug>.hidden-failure.json`), so step 9 reads them identically. Model routing lives in `fireworks-models.json` beside the runner, not here; check it against the live account with `fireworks_runner.py --check-models`. Skip the rest of this step's codex block.
+
+**If `codex`** — launch both read-only (`-s read-only` — neither can edit the repo). Launch each to a **fresh temp file** with its **PID captured**, `wait` **per-PID** for an **explicit exit status**, then **atomically promote** each temp to its stable artifact **only** on {clean exit AND parseable JSON}:
    ```bash
    # Temps live INSIDE reviews/ so each promotion is a same-filesystem atomic rename. Bare `mktemp`
    # lands in $TMPDIR (often another volume), where `mv` degrades to copy+delete and a reader can
