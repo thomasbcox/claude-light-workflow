@@ -5,3 +5,10 @@
 #   /dev-audit reports (reviews/audit-<date>.md) + reviewer scratch logs
 reviews/audit-*.md
 reviews/.pluggable-reviewer.*.log
+
+# Python bytecode. tests/fireworks_runner_test.py IMPORTS the runner, which
+# writes __pycache__ next to it under .claude/skills/review/. That directory is
+# deployed verbatim by install.sh, so committing bytecode would ship it and then
+# read back as drift. The test wrapper passes -B so none is written; this entry
+# is the durable guard if that ever regresses.
+__pycache__/

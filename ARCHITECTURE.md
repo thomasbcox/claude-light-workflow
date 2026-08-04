@@ -122,27 +122,44 @@ instruction — merges the feature branch and cleans up.
 
 ### 3.2 Reviewer invocation (and backend selection)
 
-The independent reviewer is a **selectable backend**, resolved per run as *override → config → default*:
-a per-invocation `/review` argument (`/review llm`) beats the `reviewer` field in
-[`.claude/workflow.json`](.claude/workflow.json), which beats the default `codex`. The canonical
-resolution rule and per-backend dispatch live in [`review/SKILL.md`](.claude/skills/review/SKILL.md)
-(→ *Reviewer backend*); `/frame` and `/close`-time re-review use the config default (no override
-surface). The role contract, [`AGENTS.md`](AGENTS.md), is tool-neutral and read automatically by
-whichever backend runs.
+The independent reviewer is a **selectable backend**, resolved **per pass** as *override → config →
+default*: a per-invocation `/review` argument (`/review fireworks`) beats the `reviewer` field in
+[`.claude/workflow.json`](.claude/workflow.json), which beats the default `codex`. Resolution is per
+pass rather than per run because a backend may be wired at some altitudes and not others; `reviewer`
+therefore accepts a bare string (that backend everywhere — the original form, still valid) or a
+purpose→backend map. The canonical rule and per-backend dispatch live in
+[`review/SKILL.md`](.claude/skills/review/SKILL.md) (→ *Reviewer backend*); `/frame` and
+`/close`-time re-review use the config (no override surface). The role contract,
+[`AGENTS.md`](AGENTS.md), is tool-neutral and read automatically by whichever backend runs.
 
-**Codex is the only wired backend.** It is called directly through the `codex` CLI as a read-only
-`codex exec -s read-only` run with a structured-output JSON schema — no copy/paste; it never commits,
-and Claude captures its structured findings into the trail. Selecting **`llm`** — the
-[`llm` CLI](https://llm.datasette.io), the designated second source — is a recognized choice but
-**stops with a "not yet wired" message**: a deliberate seam, not a silent fallback. Wiring it is a
-follow-up, and `llm` is not a `codex exec` drop-in either, but for the *opposite* reason agy wasn't:
-it is **non-agentic** — it cannot run `git diff` or explore the repo, so the harness must assemble the
-context (the diff + the spec) and pipe it in — though in exchange it is **inherently read-only** (no
-file tools, so no sandbox or worktree) and emits schema-valid JSON natively via `--schema`. Either way
-the lesson holds: a backend must *guarantee* read-only execution + schema-valid JSON however it can
-(codex via flags, `llm` via harness-fed context + `--schema`), rather than share codex's command shape.
-This seam keeps codex byte-for-byte unchanged while making that second backend a contained, additive
-change — and the set is extensible to further backends by the same pattern.
+**`codex`** is called directly through the `codex` CLI as a read-only `codex exec -s read-only` run
+with a structured-output JSON schema — no copy/paste; it never commits, and Claude captures its
+structured findings into the trail. It is **agentic**: it explores the repo itself, so the skill
+hands it flags and a prompt and it *pulls* what it needs. It is wired at every altitude.
+
+**`fireworks`** runs open-weight models through the Fireworks API and is wired at the **correctness
+altitude**. It is **non-agentic** — it cannot run `git diff` or read the repo — so the context must
+be *pushed*. That single difference is why it is not a `codex exec` drop-in and why it changed the
+shape of this layer: since something has to assemble context anyway, that something is a real
+module, [`fireworks_runner.py`](.claude/skills/review/fireworks_runner.py), which also owns the
+concurrent fan-out, the join, and all-or-nothing promotion. The skill keeps a one-line invocation.
+
+That is the architecturally significant part. The seam's orchestration used to be **imperative prose
+copied across skill files**, checkable only by a linter with no oracle — `tests/reviewer_test.sh`
+said so in its own charter and predicted that a second backend would force the extraction. It did.
+The fireworks path's fail-closed behaviour now has real tests: schema enforced at the API
+(`json_schema`), overflow set to `error` rather than the provider's default clamp, truncated
+completions rejected, the body validated again locally, and **nothing** promoted unless every pass
+succeeded. Model routing is a data file
+([`fireworks-models.json`](.claude/skills/review/fireworks-models.json)), not constants — a
+hardcoded model id going stale is precisely what broke the predecessor adapter.
+
+Selecting a backend for a pass it is not wired for **stops loudly** — a deliberate seam, never a
+silent fallback, because a fallback would report a review the selected backend never performed.
+The lesson generalizes: a backend must *guarantee* read-only execution and schema-valid JSON however
+it can — codex via flags, fireworks via a pushed context plus API-side schema enforcement — rather
+than share codex's command shape. The set stays extensible by the same pattern, and codex is
+untouched.
 
 (The earlier candidate, Google's Antigravity `agy`, was abandoned: no read-only file sandbox, no
 schema output, fragile non-TTY capture — and Google has since folded the headless Gemini CLI into

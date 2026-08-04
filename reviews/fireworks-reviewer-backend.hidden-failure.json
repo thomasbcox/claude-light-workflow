@@ -1,0 +1,4 @@
+{
+  "summary": "Round-2 diff applies two already-approved fixes: (1) guarding `response.choices[0]` against an empty `choices` list, and (2) tightening `finish_reason` to accept only `stop`, rejecting `length` with a specific message and all other non-`stop` reasons with a general one. Both changes strengthen the fail-closed error model \u2014 every new path raises `RunnerError` with a named cause, writes no artifact, and exits non-zero. Reviewed through the hidden-failure lens only: no swallowed exceptions, no catch-log-continue, no silent fallbacks, no deleted safety checks. The test harness's `except Exception` in the `NoChoices` block is test-side plumbing to capture an exit code, not production error handling. No findings.",
+  "findings": []
+}

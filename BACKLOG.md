@@ -56,6 +56,11 @@ evidence. Recorded so the analysis survives and whoever picks it up doesn't rebu
 - **Shape (if built).** An optional **parallel anti-pattern critic pass** — one focused prompt whose
   sole job is hunting anti-patterns / weak error handling. **A pass is not a backend:** the
   `reviewer: {codex, llm}` seam selects which backend runs the *existing* design/approach and
+  <!-- Terminology note (2026-08-03): the `llm` backend name was retired and replaced by
+  `fireworks` when the second source was actually wired — see reviews/fireworks-reviewer-backend.md.
+  Read `llm` below as "the non-agentic second backend". The distinction this bullet draws (a pass is
+  not a backend) is unaffected. -->
+  
   correctness passes; this would be an *additional* pass and must not redefine what the `llm`
   **backend** means (that would give `reviewer: llm` two meanings and make dispatch, config, and
   artifacts ambiguous). When built it may *use* an llm **provider** — non-agentic, inherently
@@ -194,10 +199,17 @@ practice. Recorded so whoever builds it doesn't rebuild the wrong shape:
   **precision-first reporting** with explicit **coverage accounting** ("what was NOT covered").
   (Evidence: arXiv:2604.19049 Refute-or-Promote; arXiv:2607.01425 Agent4cs; arXiv:2501.18160
   RepoAudit.)
-- **Upgrades the `llm`-backend rationale.** Cross-model critics are now an evidence-backed defense
-  against echo-chamber false positives — wiring the `llm` backend (`review/SKILL.md`'s designated
-  second source, still a loud stop; no standalone backlog item, noted here) graduates from
+- **Upgrades the second-backend rationale — SINCE DELIVERED, see note below.** Cross-model critics
+  are now an evidence-backed defense against echo-chamber false positives — wiring the second
+  backend (`review/SKILL.md`'s designated second source, then a loud stop; no standalone backlog
+  item, noted here) graduates from
   nice-to-have source diversity to best practice once the audit's verify stage exists.
+  **Delivered 2026-08-03, independently of that condition** — the audit engine was retired (above)
+  while the second backend shipped anyway, as `fireworks`, wired at the correctness altitude:
+  story [reviews/fireworks-reviewer-backend.md](reviews/fireworks-reviewer-backend.md). The `llm`
+  name was retired with it. The cross-model rationale in this bullet is what justified it; the
+  audit-engine precondition turned out not to be one. Design and approach altitudes remain on
+  `codex` pending a follow-up story.
 - **Posture invariants** (inherited from `/dev-audit` + OPS-12): read-only against the target,
   report-first, `AUDIT-` hand-off only on explicit instruction, fail-closed orchestration (the
   OPS-12 temp→validate→promote template), per-critic schema + artifact.
@@ -207,10 +219,25 @@ practice. Recorded so whoever builds it doesn't rebuild the wrong shape:
   **First slice: SHIPPED** — the recon → plan-artifact consult (`/deep-audit`, plan stage only),
   standalone-valuable ("what would a comprehensive audit cost on this repo" as a one-page decision) —
   story [reviews/deep-audit-plan.md](reviews/deep-audit-plan.md), `PR #35 / merge: deep-audit-plan`.
-  OPS-13 stays **open** (BEGUN, not done): the execution-engine slice remains, carrying the deferred
-  ACs below.
-  **Engine-slice opening ACs (deferred there from the first slice's round-3 review, Thomas
-  2026-07-19):** (a) patch-phase structural ops — dedicated `exclude-files`/`only-files` union
+  **Engine slice: RETIRED 2026-08-03.** The execution-engine work and its supporting library were
+  stood down rather than finished. Nothing is lost — both are preserved as annotated tags and can be
+  read or resurrected at any time: `retired/deep-audit-engine` (`a0131b1`, parked 2026-07-27 when the
+  work was re-sequenced lib-first) and `retired/deep-audit-lib` (`7574a05`, the stdlib-only Python
+  port, 2026-07-31). Recover with `git show retired/deep-audit-engine` or branch from either tag.
+
+  **What survives and still ships:** the plan stage — the `/deep-audit` skill, its schema, and
+  `tests/deep_audit_plan_test.sh` in the gate. That slice was always specified as
+  standalone-valuable ("what would a comprehensive audit cost on this repo" as a one-page decision),
+  and it remains so without an executor behind it.
+
+  **OPS-13 status: closed as partially delivered.** The plan slice shipped; the engine slice is
+  retired, not pending. It is recorded here rather than moved to Done because Done means shipped,
+  and half of this did not. Reopening means a fresh story — the deferred ACs below are the
+  starting point, not a live commitment.
+
+  **Engine-slice opening ACs — historical, deferred to a retired slice** (from the first slice's
+  round-3 review, Thomas 2026-07-19). Retained as the design record for anyone resurrecting the
+  tags; no longer owed by any open item: (a) patch-phase structural ops — dedicated `exclude-files`/`only-files` union
   branches, selector `remove`/`restrict` reserved for compiled rows; (b) the full executability
   semantic gate — a scope registry incl. L2/L3 membership, structural pricing constants, and
   full-arithmetic checks (`unitIds` ≡ registry, `estTokens` = runs × constant, wall-clock formula) —

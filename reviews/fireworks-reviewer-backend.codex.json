@@ -1,0 +1,4 @@
+{
+  "summary": "The round-2 diff applies exactly the two approved fixes (empty-choices guard and narrow finish_reason check) plus their behavioral tests and story-file documentation. Both code changes are correct, fail-closed, and match the approved dispositions. The empty-choices guard uses getattr to handle both missing-attribute and empty-list cases and names the cause. The finish_reason change accepts only 'stop', keeps the specific 'length' message, and rejects all other reasons (including None and unknown future values) with a named message \u2014 precisely the hidden-failure fix Thomas approved. Tests cover content_filter, tool_calls, empty string, None, and an unknown future reason, plus the empty-choices path, and assert both rejection and no-promotion. The reviews/ artifacts are story-trail files excluded by AC-10. No issues found.",
+  "findings": []
+}

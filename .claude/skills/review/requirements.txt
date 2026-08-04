@@ -1,0 +1,19 @@
+# Runtime contract for fireworks_runner.py.
+#
+# Bounded, not pinned: patch and minor updates are wanted, majors are not — a
+# major bump in either library can change response-parsing or validation
+# behaviour, which is exactly the surface the runner's fail-closed guarantees
+# rest on.
+#
+# Bootstrap once (user-local, no admin — /opt and /usr/local/bin are not used):
+#   python3 -m venv ~/.claude/fireworks-venv
+#   ~/.claude/fireworks-venv/bin/pip install -r ~/.claude/skills/review/requirements.txt
+#
+# The venv lives OUTSIDE ~/.claude/skills/review on purpose: install.sh hard-
+# overwrites that directory (rm -rf then cp -R), so a venv inside it would be
+# destroyed on every deploy and would register as drift in ./install.sh --check.
+#
+# The runner fails closed and names the bootstrap command if either import is missing.
+
+openai>=2.52,<3
+jsonschema>=4.23,<5

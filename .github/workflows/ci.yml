@@ -19,8 +19,21 @@ jobs:
         with:
           fetch-depth: 0
 
+      # The fireworks backend's behavioral suite is the only one with a runtime dependency.
+      # It stubs the API client, so it needs NO network at run time and NO credential — just the
+      # two libraries the runner imports. Bootstrapped to the same user-local path the runner
+      # documents, so CI exercises the same layout a developer has.
+      - name: Fireworks runner deps (behavioral suite; no API key needed)
+        run: |
+          set -euo pipefail
+          python3 -m venv ~/.claude/fireworks-venv
+          ~/.claude/fireworks-venv/bin/pip install --quiet -r .claude/skills/review/requirements.txt
+
+      # MUST stay byte-identical to testCommand in .claude/workflow.json — tests/reviewer_test.sh
+      # pins the two together, because a CI gate that silently runs fewer suites than the local one
+      # is a weaker authoritative check than it appears to be.
       - name: Gate (workflow test suites)
-        run: bash tests/guard_test.sh && bash tests/reviewer_test.sh && bash tests/dev_audit_test.sh && bash tests/deep_audit_plan_test.sh && bash tests/docs_test.sh
+        run: bash tests/guard_test.sh && bash tests/reviewer_test.sh && bash tests/fireworks_runner_test.sh && bash tests/dev_audit_test.sh && bash tests/deep_audit_plan_test.sh && bash tests/docs_test.sh
 
       - name: ShellCheck (tracked *.sh; preinstalled on ubuntu runners)
         run: shellcheck --severity=warning $(git ls-files '*.sh')
