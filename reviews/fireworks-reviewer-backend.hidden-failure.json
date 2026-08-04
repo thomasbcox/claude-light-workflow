@@ -1,13 +1,4 @@
 {
-  "summary": "Reviewed the diff through the hidden-failure / weak-error-handling lens only. The runner's error model is generally sound: exceptions are wrapped in RunnerError and re-raised, failures stop the round and promote nothing, temp files are cleaned up on staging failure, and the catch-all in main() exits non-zero. One finding: the finish_reason check is too narrow and silently accepts abnormal non-length finish reasons (e.g. content_filter), allowing a potentially incomplete or sanitized review to be promoted as complete.",
-  "findings": [
-    {
-      "severity": "IMPORTANT",
-      "title": "finish_reason check accepts content_filter and other abnormal reasons \u2014 a filtered/truncated review can be promoted as complete",
-      "file": ".claude/skills/review/fireworks_runner.py",
-      "line": 300,
-      "claim": "run_pass only rejects finish_reason == \"length\". Any other non-\"stop\" reason \u2014 most importantly \"content_filter\" (the model's output was altered or suppressed by safety filtering) \u2014 falls through silently. The body may still be valid JSON that conforms to the schema (e.g., a partial or sanitized findings array), so schema validation does not catch it. The model is signalling that something went wrong with the completion, and the runner ignores that signal, promoting a potentially degraded review as a clean one. This is exactly the silent-degradation pattern this lens targets: code continues in a state where nothing surfaces.",
-      "suggestion": "Reject any finish_reason that is not \"stop\" (or at minimum also reject \"content_filter\" and any unknown reason), raising a RunnerError that names the abnormal reason. If a future API version introduces a new benign reason, it can be allowlisted explicitly at that time."
-    }
-  ]
+  "summary": "Round-2 diff applies two already-approved fixes: (1) guarding `response.choices[0]` against an empty `choices` list, and (2) tightening `finish_reason` to accept only `stop`, rejecting `length` with a specific message and all other non-`stop` reasons with a general one. Both changes strengthen the fail-closed error model \u2014 every new path raises `RunnerError` with a named cause, writes no artifact, and exits non-zero. Reviewed through the hidden-failure lens only: no swallowed exceptions, no catch-log-continue, no silent fallbacks, no deleted safety checks. The test harness's `except Exception` in the `NoChoices` block is test-side plumbing to capture an exit code, not production error handling. No findings.",
+  "findings": []
 }

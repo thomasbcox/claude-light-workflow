@@ -500,6 +500,33 @@ catch it, and promoting it would repeat the `{}` failure shape that motivated th
 
 Suite grew 66 → 80 checks; full gate 341 → 355, green.
 
+## Fireworks review — round 2 (2026-08-03, base ee53291, HEAD 84c8f05)
+
+**No findings.** The round-2 diff applies exactly the two approved fixes plus their behavioral tests
+and story documentation. Both code changes are correct, fail-closed, and match the approved
+dispositions. The empty-choices guard uses `getattr` so it covers both a missing attribute and an
+empty list, and names the cause. The `finish_reason` change accepts only `stop`, keeps the specific
+`length` message, and rejects every other reason — including `None` and unknown future values — with
+a named message. Tests cover `content_filter`, `tool_calls`, empty string, `None`, and an unknown
+future reason, plus the empty-choices path, asserting both rejection and no-promotion. The `reviews/`
+artifacts were correctly identified as story-trail files excluded by AC-10.
+
+## Hidden-failure review — round 2 (2026-08-03, base ee53291, HEAD 84c8f05)
+
+**No findings.** Both changes strengthen the fail-closed error model: every new path raises
+`RunnerError` with a named cause, writes no artifact, and exits non-zero. No swallowed exceptions, no
+catch-log-continue, no silent fallbacks, no deleted safety checks. The critic correctly distinguished
+the test harness's `except Exception` (plumbing to capture an exit code) from production error
+handling rather than flagging it.
+
+## Decisions — round 2 (2026-08-03)
+
+Both critics returned empty findings arrays. **Nothing to decide** — no findings raised, therefore
+none accepted, deferred, or rejected. The two round-1 fixes are verified.
+
+Routing to `/close`. Zero approved fixes this round, so `/close` applies nothing and goes straight to
+its merge fork — which still requires a separate, explicit merge instruction.
+
 ## Observed, not fixed — for the review round
 
 **A structurally-valid but meaningless schema makes validation vacuous.** JSON Schema treats
