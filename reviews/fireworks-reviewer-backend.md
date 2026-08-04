@@ -1,0 +1,406 @@
+# fireworks-reviewer-backend
+
+Date: 2026-08-03 · Branch: claude/fireworks-reviewer-backend · Status: approved
+
+## Problem
+
+`review/SKILL.md` has carried a pluggable reviewer seam with a second backend (`llm`) parked as
+"the designated second source — not yet wired" since OPS-12. A concrete second source now exists:
+a Fireworks AI adapter at `/usr/local/bin/fireworks-reviewer` → `/opt/fireworks-backend/reviewer.py`.
+Wiring it is worth doing — OPS-13 already records that cross-model critics are an evidence-backed
+defense against single-model echo-chamber false positives, which is the loop's core quality risk.
+
+The adapter as shipped cannot be wired safely. Verified on this machine, 2026-08-03:
+
+1. **It does not enforce the schema, and fails silently toward "clean."** The `--schema` flag
+   pastes the schema into the prompt as text; the API call uses `response_format={"type":
+   "json_object"}`, which guarantees only *syntactically* valid JSON. There is no post-hoc
+   validation (`jsonschema` is not installed in its venv). Observed: `qwen3p7-plus` returned `{}`
+   on both trials. That parses, passes `jq -e .`, and exits 0 — so the loop's fail-closed promote
+   fires and writes an artifact with **no findings**, which in this loop *is* the success signal
+   ("empty findings array if there are no issues"). A review that never ran is indistinguishable
+   from a clean one. This is the defect that makes every other one secondary.
+2. **Its default model is dead.** It defaults to `accounts/fireworks/models/deepseek-r1`, which is
+   not on this account; every call without an explicit `--model` returns 404. A hardcoded model id
+   in code is exactly the thing that goes stale.
+3. **It is unversioned and unreviewable.** It lives outside any repo, owned by `thomasadmin`, so it
+   is invisible to `install.sh --check` drift detection and to the review loop that would depend on
+   it.
+
+Separately, `tests/reviewer_test.sh` states its own charter: it is a documentation linter with no
+oracle, and "if you need a REAL gate, extract the resolver/arg-parser/adapter into executable code
+(the heavy-seam follow-up, **which the llm backend will force anyway**) and unit-test THAT." This
+story is that forcing event. The design review made it a BLOCKER to stop half way: orchestration
+moves into executable code too, not just the API call.
+
+## In scope
+
+**This story wires the correctness altitude only** (the two concurrent critics). Design and approach
+follow in a second story, added to the runner's pass table.
+
+- An executable **Fireworks runner** in the repo that owns the backend boundary for the correctness
+  altitude: context assembly, concurrent fan-out, join, and all-or-nothing artifact promotion.
+- Schema enforcement that fails closed: API-side `json_schema`, explicit overflow `error`, a
+  `finish_reason` check, and local validation before any write.
+- A versioned, routinely-updatable **model routing table** (purpose → model), replacing hardcoded
+  model ids.
+- A **versioned Python runtime contract** in the repo — dependency manifest plus one deterministic
+  user-local bootstrap — so the repo is authoritative for code *and* what it runs against.
+- **Per-pass backend selection**: `reviewer` in `.claude/workflow.json` accepts a purpose→backend
+  map, with the existing bare-string form still valid.
+- Retiring the `llm` backend name.
+- The new behavioral suite added to the configured gate.
+
+## Non-goals
+
+- Wiring the design (`/frame` step 6) and approach (`/review` step 6) passes — second story. They
+  stay on `codex`, and selecting an unwired (pass, backend) pair must still stop loudly.
+- Reimplementing or restructuring the `codex` backend, or touching its command blocks beyond the
+  dispatch line that selects a backend.
+- Cost optimisation as a measured claim — see Known limits.
+- Any change to the approach→correctness gate, the decision menu, or `/close`.
+- `install.sh` building or refreshing a virtualenv — it stays an offline file copier.
+
+## Acceptance criteria
+
+1. **Vendored runner with a versioned runtime contract.** An executable Fireworks runner lives at
+   `.claude/skills/review/fireworks_runner.py` in this repo and is the source of truth. A dependency
+   manifest with bounded versions (`.claude/skills/review/requirements.txt`) and one deterministic
+   user-local bootstrap command are versioned alongside it. Both ride `install.sh`'s existing
+   `.claude/skills/review::skills/review` artifact entry to `$HOME/.claude/skills/review/`, so they
+   are covered by `./install.sh --check` with no new ARTIFACTS entry. Skills invoke the installed
+   copy by absolute path; `/usr/local/bin/fireworks-reviewer` and `/opt/fireworks-backend` are no
+   longer used by this workflow.
+2. **Schema enforcement, fail-closed.** For every model call the runner sends `response_format` of
+   type `json_schema` carrying the caller's schema, sends `context_length_exceeded_behavior: error`,
+   and reserves an explicit output-token budget. It rejects any response whose `finish_reason` is
+   `length`, and validates the parsed body against that same schema locally before writing. On any
+   violation — schema mismatch, unparseable body, truncated completion, API error, missing
+   dependency — it writes **no output file** (not even a partial or `.tmp`) and exits non-zero.
+3. **Model routing by purpose.** The runner resolves the model for each pass from the routing table
+   by purpose. `--model` remains an explicit per-call override. No live model id appears as a literal
+   in runner code; a missing or unknown purpose is an error, never a fallback to some default model.
+4. **Versioned routing table.** `.claude/skills/review/fireworks-models.json` maps each purpose to a
+   model id, a one-line rationale, and the context length the size guard uses, and carries an
+   `updated` date. Two checks exist: an **offline** structural check in the gate (parses; every
+   purpose the runner can be asked for is routed; no unknown purposes) and an **online**
+   `--check-models` mode that verifies each routed id against the live account **and compares the
+   stored context length against the live value**. The online check is not in the local gate.
+5. **The runner owns correctness-altitude orchestration.** A declarative pass table maps each
+   correctness-altitude pass (`correctness`, `hidden-failure`) to its prompt, schema, required
+   context, and output artifact. The runner performs the concurrent fan-out, the join, and
+   all-or-nothing promotion: if any pass fails, **no** artifact is promoted for the round. The skill
+   retains a thin invocation, not a copied command block.
+6. **Declarative context profile, fail-closed.** The correctness altitude's required context is
+   declared in the pass table, not assembled ad hoc. The runner verifies every declared input exists
+   and is non-empty before building the payload; a missing or empty input aborts with a message
+   naming it, and produces no artifact. Assembled size is compared against the routed model's context
+   length and aborts before any request when it exceeds budget. Context is assembled **once** per
+   altitude and the identical payload is given to both concurrent passes.
+7. **Per-pass backend selection.** `reviewer` in `.claude/workflow.json` accepts either a bare string
+   (that backend for every pass — the existing form, still valid, and a missing/empty value still
+   means `codex`) or a purpose→backend map. This repo's own config is set to the map form with
+   `correctness` and `hidden-failure` on `fireworks` and `design` and `approach` on `codex`.
+   Selecting a backend for a pass that is not wired stops loudly and never falls back.
+8. **`llm` retired.** The `llm` backend name is removed from the documented set, from the accepted
+   values, and from its dispatch stops. No configuration may select it; the loud-stop behaviour for
+   *unwired* selections survives its removal.
+9. **The new suite runs in the gate.** `testCommand` in `.claude/workflow.json` includes the new
+   behavioral suite, so ACs 2/3/5/6 are actually exercised by `/review`'s gate rather than existing
+   beside it.
+10. **Scope containment.** `git diff --name-only main...HEAD` shows no files beyond those this spec
+    enumerates, excluding this story's own review-trail artifacts under `reviews/` (per OPS-16, the
+    trail is written by the loop itself and is not a scope leak).
+
+## Test notes
+
+Gate (after AC-9): the existing five suites plus `tests/fireworks_runner_test.sh`.
+
+The runner is the repo's first *executable* seam code, so ACs 2/3/5/6 get real oracles — behavioral
+tests against the runner with a stubbed API client, no network and no key. AC-7's value parse is
+behavioral (it already is, in `reviewer_test.sh`). AC-8 and the thin-invocation half of AC-5 remain
+documentation and stay drift-linted per `reviewer_test.sh`'s charter, which is not relaxed.
+
+### Falsification plan
+
+**AC-1 — vendored runner with a versioned runtime contract**
+
+| Surface | Regression that must be caught | Oracle |
+|---|---|---|
+| The runner file in the repo | Absent, or present but unparseable — nothing to install | `gate` — structural check asserts the path exists and parses as Python |
+| The dependency manifest | Absent, or pins nothing, so a clean machine resolves different library versions than the reviewed ones | `gate` — assert the manifest exists and every entry carries a bounded version |
+| The deployed copy under `$HOME/.claude/skills/review/` | Runner is vendored but never reaches the deployment, so callers run a different copy than the reviewed one | `gate` — `install.sh --check` against a `CLAUDE_WORKFLOW_DEST` temp dir reports runner and manifest in sync |
+| A clean runtime environment | Bootstrap does not in fact produce a working environment; only the missing-dependency error path was ever proven | `manual` — bootstrap into an empty user-local venv and complete one successful stubbed run |
+| The skill's invocation path | An invocation still resolves to `/usr/local/bin` or `/opt`, so the reviewed code is not the running code | `gate` — assert no wired invocation references either path |
+
+`surfaces excluded`: `/opt/fireworks-backend` and `/usr/local/bin/fireworks-reviewer` as *runtime*
+surfaces — under AC-1 they cease to be product surfaces; the only claim retained about them is the
+negative one pinned in the row above.
+
+**AC-2 — schema enforcement, fail-closed**
+
+| Surface | Regression that must be caught | Oracle |
+|---|---|---|
+| Response handling | Model returns `{}` (the observed `qwen3p7-plus` behaviour) and the runner exits 0 having written it — the silent false-clean | `gate` — stubbed client returns `{}`; assert non-zero exit |
+| Response handling | Well-formed JSON with wrong or extra fields is written anyway | `gate` — stubbed wrong-shape object; assert non-zero exit |
+| Response handling | `finish_reason: length` accepted, so a completion cut off mid-object is treated as a real review | `gate` — stubbed truncated response; assert non-zero exit |
+| The output artifact on disk | A failed run leaves a partial file, a stray `.tmp`, or a prior round's artifact standing as this round's result | `gate` — after a forced failure, assert neither the artifact nor any `.tmp` sibling exists |
+| The API request | `response_format` reverts to `json_object`, losing API-side enforcement while local validation masks the loss | `gate` — assert the request carries `type: json_schema` and the caller's schema |
+| The API request | Overflow behaviour left at the provider default (`truncate`), so an oversized prompt yields a clamped completion reported as bad JSON rather than an accurate context error | `gate` — assert the request carries `context_length_exceeded_behavior: error` and an output-token budget |
+| Missing-dependency path | Validation library absent, so validation is skipped rather than failing | `gate` — simulate import failure; assert non-zero exit and a named message |
+
+`surfaces excluded`: none.
+
+**AC-3 — model routing by purpose**
+
+| Surface | Regression that must be caught | Oracle |
+|---|---|---|
+| Runner pass resolution | Unknown or missing purpose quietly falls back to some default model instead of erroring | `gate` — assert non-zero exit for absent and for unknown purpose |
+| Runner source | A model id is reintroduced as a literal, so the table stops being authoritative and goes stale exactly as `deepseek-r1` did | `gate` — assert no `accounts/fireworks/models/` literal appears in runner source |
+| The `--model` override | Override ignored, or applied when it was not given | `gate` — assert the explicit id is what reaches the request, and the table's id otherwise |
+
+`surfaces excluded`: none.
+
+**AC-4 — versioned routing table**
+
+| Surface | Regression that must be caught | Oracle |
+|---|---|---|
+| The table file | Malformed JSON, or a purpose the runner can be asked for is unrouted — discovered only mid-review | `gate` — offline check parses the table and asserts routed purposes exactly match the runner's pass table |
+| Each route entry | An entry loses its context length, so AC-6's size guard silently has nothing to compare against | `gate` — assert every route carries a positive integer context length |
+| The live Fireworks account | A routed id is syntactically fine but no longer served — the `deepseek-r1` failure, silent until a review is attempted | `manual` — `--check-models` against the account; deliberately outside the gate (network + credential) |
+| The live model metadata | Stored context length drifts from the live value, so the size guard passes a payload the model will reject | `manual` — `--check-models` compares stored against live |
+| The table's rationale and `updated` fields | Routing changes land with no recorded reason or date, so "routinely update" degrades into untraceable drift | `reviewer` — judgment at the correctness altitude |
+
+`surfaces excluded`: none.
+
+**AC-5 — the runner owns correctness-altitude orchestration**
+
+| Surface | Regression that must be caught | Oracle |
+|---|---|---|
+| The pass table | A pass loses its schema or output binding and silently reuses another pass's, so two artifacts carry the same review | `gate` — assert each pass resolves to a distinct schema and artifact path |
+| Concurrent execution | Passes run sequentially, losing the divided-parallelism property OPS-12 established | `gate` — stubbed client records call overlap; assert concurrency |
+| The join | One pass fails and the other's artifact is promoted anyway, so the round reports a partial review as complete | `gate` — force one pass to fail; assert **neither** artifact is promoted and exit is non-zero |
+| The promoted artifacts | A prior round's artifacts survive a failed round and are read as this round's result | `gate` — pre-place stale artifacts, force failure, assert they are not presented as current |
+| `review/SKILL.md` step 8 | The thin invocation regrows into a copied command block, returning the logic to unlinted prose | `reviewer` — judgment at the approach altitude |
+
+`surfaces excluded`: none.
+
+**AC-6 — declarative context profile, fail-closed**
+
+| Surface | Regression that must be caught | Oracle |
+|---|---|---|
+| Each declared input (contract, story, diff, history) | A missing file writes to stderr, assembly continues, and the reviewer critiques a diff without its own contract — returning confident findings against rules it never read | `gate` — remove each declared input in turn; assert abort, non-zero, no artifact |
+| An input that exists but is empty | An empty diff or story passes an existence check and yields a review of nothing | `gate` — assert non-empty is required, not merely present |
+| The assembled payload | Payload exceeds the routed model's context and is sent anyway | `gate` — oversized input asserts a named abort before any request is made |
+| The payload given to each concurrent pass | Context is rebuilt per pass, so the two concurrent critics review different payloads and their findings are no longer partitioned by concern alone | `gate` — assert both stubbed calls receive byte-identical context |
+| Temp files | A `mktemp` template with a suffix after the `X`s returns an unrandomised literal path (verified: BSD `mktemp` does this), so concurrent passes share one file and clobber each other | `gate` — assert every template ends in `X`s and resolves to a unique path |
+
+`surfaces excluded`: none.
+
+**AC-7 — per-pass backend selection**
+
+| Surface | Regression that must be caught | Oracle |
+|---|---|---|
+| `.claude/workflow.json` value parse | The map form is rejected as invalid, so per-pass selection cannot be configured at all | `gate` — assert the map form parses to valid per-pass backends |
+| `.claude/workflow.json` value parse | The bare-string form breaks, silently breaking every other repo using this workflow | `gate` — assert bare string still resolves that backend for every pass, and missing/empty still means `codex` |
+| This repo's own config | Correctness and hidden-failure are not actually on `fireworks`, so the story ships without turning on what it built | `gate` — assert this repo's config routes those two passes to `fireworks` |
+| An unwired (pass, backend) pair | Selecting `fireworks` for design or approach falls back to codex instead of stopping — the silent degradation the seam's loud-stop rule exists to prevent | `gate` — drift pin that the stop is scoped to unwired pairs and forbids fallback |
+| `review/SKILL.md` resolution rule | The documented precedence and the implemented one disagree | `reviewer` — judgment at the approach altitude |
+
+`surfaces excluded`: none.
+
+**AC-8 — `llm` retired**
+
+| Surface | Regression that must be caught | Oracle |
+|---|---|---|
+| The accepted value set | `llm` still parses as valid, so a stale config selects a backend that no longer exists anywhere | `gate` — assert `llm` is rejected |
+| `review/SKILL.md` and `frame/SKILL.md` prose | Dangling references to `llm` survive, so the docs describe a backend the tests reject | `gate` — assert no `llm` backend references remain |
+| The loud-stop behaviour itself | Removing `llm` removes the *only* stop, so a future unwired backend silently falls back | `gate` — the unwired-pair stop from AC-7 still passes with `llm` gone |
+
+`surfaces excluded`: none.
+
+**AC-9 — the new suite runs in the gate**
+
+| Surface | Regression that must be caught | Oracle |
+|---|---|---|
+| `testCommand` in `.claude/workflow.json` | The suite exists but is not in the gate, so every oracle above is dead weight — the exact miss the design review caught | `gate` — assert `testCommand` names the new suite |
+| The suite's own exit status | The suite is in the gate but always exits 0, so it can never fail the round | `gate` — demonstrate red: break one assertion, observe the gate fail, revert |
+
+`surfaces excluded`: none.
+
+**AC-10 — scope containment**
+
+| Surface | Regression that must be caught | Oracle |
+|---|---|---|
+| The branch diff | Files land outside what this spec enumerates | `manual` — run `git diff --name-only main...HEAD` and verify no file appears beyond those the ACs enumerate, excluding this story's own `reviews/` trail |
+
+`surfaces excluded`: n/a — the criterion names a single observable (the branch diff).
+
+### Known limits
+
+- **Review quality under these models is unproven and no oracle covers it.** Every gate above checks
+  *shape* — that a finding is schema-valid, that a failure fails. None can tell a thorough review
+  from a shallow one. A model that returns two obvious findings and misses the real defect passes
+  everything here. Thomas has accepted this risk in making `fireworks` the correctness-altitude
+  backend (see Design decisions); it is recorded here because no test in this story retires it.
+- **"Cheap" is unverified.** The Fireworks models endpoint returns capability metadata but no
+  pricing, so the cost half of "cheap high-performing right-fit" cannot be checked from the API. The
+  routing table can carry a cost field, but it must be populated by hand and will go stale the same
+  way a model id does.
+- **`qwen3p7-plus` is not a safe route.** It is `kind: CUSTOM_MODEL`, reports no context length at
+  all (so AC-6's size guard would have nothing to compare against), and was the weakest of three
+  tested on structured output. The 262k figure attributed to it elsewhere is exactly
+  `kimi-k2p7-code`'s window and appears misattributed.
+
+## Open questions
+
+**Q5 — Does the owed OPS-13 note ride with this story?** `retired/deep-audit-engine` and
+`retired/deep-audit-lib` tags exist, but `BACKLOG.md` still reads "OPS-13 stays open (BEGUN, not
+done): the execution-engine slice remains." That note is owed. It is unrelated to this scope, so it
+is **not** assumed in — still Thomas's call, and it can ride with the second story instead.
+
+## Design sketch — HOW
+
+**Shape.** One vendored Python package plus two data files under `.claude/skills/review/`, all
+inheriting the existing install + drift-check path with no change to `install.sh`'s ARTIFACTS array.
+`review/SKILL.md` step 8 loses its fireworks-specific command block in favour of a thin invocation.
+
+**Runner.** `fireworks_runner.py` owns the backend boundary:
+
+- *Pass table* — declarative, mapping each pass (`correctness`, `hidden-failure` this story) to
+  prompt, schema path, required context inputs, and output artifact. Adding the design and approach
+  passes in the second story is a table entry, not new orchestration.
+- *Routing* — read `fireworks-models.json` beside the module; resolve purpose → `{model,
+  contextLength}`; unknown purpose is a hard error. No model literals in code.
+- *Context assembly* — build once per altitude from the pass table's declared inputs; each verified
+  present and non-empty first; size-checked against the route's context length before any request;
+  the identical payload handed to every pass at that altitude.
+- *Request* — `response_format={"type":"json_schema","json_schema":{"name":…,"schema":schema}}`,
+  `context_length_exceeded_behavior="error"`, an explicit `max_tokens` budget. Verified working
+  against both production schemas on `glm-5p2`.
+- *Validation* — reject `finish_reason: length`, parse, then validate against the same schema with
+  the `jsonschema` library. Two layers because API-side enforcement is grammar-constrained but not a
+  guarantee across model versions, and the local check costs nothing. Deliberately **not**
+  hand-rolled: AGENTS.md's guardrail is not to hand-roll what one declarative construct covers.
+- *Concurrency and join* — the passes at one altitude run concurrently; the join is all-or-nothing.
+  Temps are `reviews/`-local with the `X`s last (same-filesystem atomic rename), matching the codex
+  block's proven pattern. Any failure promotes nothing.
+- *Error model* — one failure path. Any of {missing dep, missing or empty input, oversized payload,
+  API error, truncated completion, unparseable body, schema violation} → message naming the cause, no
+  file written, exit non-zero.
+
+**Runtime contract.** `requirements.txt` beside the module with bounded versions for `openai` and
+`jsonschema`, plus a documented one-line bootstrap into a user-local venv under `$HOME/.claude/`.
+`install.sh` stays an offline file copier; the runner fails closed with an actionable message naming
+the bootstrap command if its environment is absent.
+
+**Backend selection.** `reviewer` in `.claude/workflow.json` widens from string to
+string-or-purpose-map. Resolution stays: per-invocation override beats config beats the `codex`
+default; a bare string means that backend for every pass; missing or empty still means `codex`.
+Backend selection lives in the per-repo config while *model* routing lives in the per-machine skill
+artifact — the two are different concerns and belong in different files. `reviewer_test.sh`'s
+existing behavioral parse check widens to cover both forms; the `llm` pins are removed and the
+loud-stop pins are re-scoped from "non-codex" to "unwired", which is what they always meant.
+
+**Testing.** `tests/fireworks_runner_test.sh` drives the runner with a stubbed client — no network,
+no key — for ACs 2/3/5/6, and structurally checks the routing table for AC-4. It is added to
+`testCommand`. `reviewer_test.sh` gains the AC-7/AC-8 pins only; its charter against growing into a
+pseudo-behavioral suite is respected, because the behavioral checks now have real code to live
+against.
+
+## Codex design review (2026-08-03)
+
+**Verdict — not sound yet.** Vendoring the adapter, using Fireworks `json_schema`, validating again
+with `jsonschema`, and centralizing model routes are good choices. But the proposed shape stops short
+of the executable harness this second backend was supposed to force, does not define sufficient
+pass-specific context for a non-agentic reviewer, and leaves the Python runtime unversioned.
+
+### BLOCKER — The executable seam stops at the API adapter
+*one-way · kludgy · locus: Design sketch (Skill dispatch, Testing); AC-5 and AC-7 plans*
+
+Backend orchestration — pass selection, context assembly, correctness fan-out, joining, artifact
+promotion — stays as copied imperative prose across `frame/SKILL.md` and `review/SKILL.md`. That is
+the heavy seam `tests/reviewer_test.sh`'s charter said this backend would force. So AC-5 and AC-7
+still rest on implementation-token drift pins (PID capture, stop wording) rather than behavioral
+oracles. The proposed adapter suite is also **absent from the configured gate** in
+`.claude/workflow.json`, so its real oracles would never run. The AC-7 `reviewer` oracle for
+mismatched sibling payloads is effectively circular with the discrepancy it is meant to catch.
+
+**Alternative:** make one executable Fireworks runner the backend boundary, with a declarative pass
+table mapping each pass to prompt, schema, required context, output, and critic grouping. The runner
+owns concurrency and all-or-nothing promotion; each skill keeps a thin invocation. Exercise it
+behaviorally and add the suite to the gate.
+**Win:** removes repeated command-block logic, centralizes the fail-closed invariant, and turns
+AC-5–AC-7 from prose-token checks into executable behavior.
+
+### BLOCKER — The pushed-context contract cannot preserve reviewer grounding
+*one-way · kludgy · locus: AC-6, its plan, and Design sketch (Adapter / Size guard)*
+
+AC-6 treats `AGENTS.md` + story + non-empty diff as one generic input set, but the four invocations
+have different grounding. **The frame design review runs before any code exists — there is no diff**,
+so AC-6's own non-empty-diff requirement makes that pass impossible. Approach needs the full changed
+files and dependency manifest, not merely their diff; correctness needs story, diff, and history.
+Those product surfaces are unenumerated, so a schema-valid but blind review passes. The byte
+approximation also does not establish fail-closed behavior, and `--check-models` only verifies route
+existence rather than comparing stored context length against live metadata.
+
+**Alternative:** a declarative context profile per pass, each falsified independently; set provider
+overflow behavior to `error`; reserve an explicit output-token budget and fail on
+`finish_reason: length`; have `--check-models` compare stored vs live context length.
+**Win:** eliminates the impossible frame-time diff requirement and stops incomplete or truncated
+context from producing a false-clean review.
+
+*Verified against the Fireworks API reference, 2026-08-03:* `context_length_exceeded_behavior` is
+real, its allowed values are `error` and `truncate`, and **`truncate` is the default**. The precise
+mechanism differs slightly from the finding's wording: `truncate` clamps `max_tokens` to
+`context_window_length - prompt_length` rather than silently dropping prompt text. The practical
+failure is therefore a truncated or empty completion, not a quietly shortened context — but the
+correction stands, because that surfaces as an unparseable-JSON error whose message names the wrong
+cause. Requesting `error` explicitly, plus a `finish_reason` check, is what makes the diagnostic
+accurate.
+
+### IMPORTANT — The runtime dependency contract is outside the repository
+*one-way · kludgy · locus: Open question Q3; Design sketch (Shape / Validation)*
+
+The repo has no Python dependency manifest, yet the vendored "source of truth" is a module plus JSON
+that require `openai` and `jsonschema`. Q3 recommends a hand-made user-local virtualenv with no
+versioned dependency contract or stable entrypoint. Failing closed on missing imports proves only the
+error path; it does not make the success path reproducible. AC-1's `/opt` row is also an
+implementation-shaped legacy surface: under Q2(b) the product surfaces are the installed entrypoint
+and its runtime environment, and `/opt` should be an explicit exclusion instead.
+
+**Alternative:** resolve Q3 before approval; add a versioned dependency manifest with bounded
+versions plus one deterministic user-local bootstrap command. `install.sh` stays an offline file
+copier, but deployment checks verify entrypoint and environment separately. Update AC-8's scope.
+**Win:** makes the repo authoritative for code *and* runtime, drops the admin-owned `/opt`
+dependency, and lets a clean-environment test reproduce a successful run rather than only a failure.
+
+## Design decisions (2026-08-03)
+
+Thomas's scope decision, verbatim: **"go with B, retire llm, all four on glm-5p2; make fireworks the
+default"** — followed by, on the sequencing conflict that raised, **per-pass backend in the table**.
+
+| Design finding | Disposition |
+|---|---|
+| BLOCKER — executable seam stops at the API adapter | **Fix.** Scope option B: the runner owns orchestration, but only the correctness altitude is wired this story. Design and approach follow in a second story as pass-table entries. Deferring the runner itself was rejected because it would mean writing four prose command blocks now and deleting them later. |
+| BLOCKER — pushed-context contract cannot preserve grounding | **Fix.** Context becomes a declarative per-pass profile (AC-6). Only the correctness altitude's profile is built this story; the impossible frame-time non-empty-diff requirement is gone with it. Overflow `error`, output-token budget, `finish_reason` check, and stored-vs-live context comparison all adopted. |
+| IMPORTANT — runtime dependency contract outside the repo | **Fix.** Bounded dependency manifest and a user-local bootstrap versioned in the repo (AC-1). `install.sh` stays a file copier. `/opt` and `/usr/local/bin` are dropped from the workflow and become an explicit exclusion in AC-1's plan. |
+
+**One-way doors ratified:**
+- **Per-pass backend selection.** `reviewer` widens from a scalar to a purpose→backend map. Additive
+  and walkable back by dropping the field, but it is the seam's model going forward — and it is the
+  end state OPS-13's cross-model-diversity argument points at anyway.
+- **`llm` retired.** A name that can only ever stop is dead surface now that a real second source
+  exists. Nothing sets `reviewer: llm` today.
+- **`fireworks` becomes the correctness-altitude backend.** Thomas asked for fireworks as the
+  default; per-pass routing delivers that everywhere it is wired without breaking `/frame` or the
+  approach pass on an unwired backend. **Accepted risk, stated once and not re-litigated:** review
+  quality under `glm-5p2` is unverified, and no gate in this story can distinguish a thorough review
+  from a shallow-but-schema-valid one.
+- **Q2/Q3 taken as recommended, not explicitly ruled on:** skills invoke the installed copy by
+  absolute path; `/usr/local/bin` and `/opt` are abandoned; a user-local venv keeps the privileged
+  account off the routine path. Flagged here so it is visible and correctable.
+
+**Model routing:** all four purposes on `accounts/fireworks/models/glm-5p2` (1,048,576 context;
+verified 2026-08-03 returning schema-conforming output against both production schemas). The two
+unwired purposes are routed in the table now so the second story only has to wire dispatch.
