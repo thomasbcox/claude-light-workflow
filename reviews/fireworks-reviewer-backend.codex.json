@@ -1,0 +1,13 @@
+{
+  "summary": "The diff implements a vendored Fireworks reviewer backend with schema-enforced, fail-closed behavior, declarative context assembly, concurrent fan-out, stage-all-then-commit-all promotion, and per-pass backend selection. The runner, routing table, runtime contract, behavioral test suite, CI integration, and documentation updates all align with the spec's acceptance criteria. The error model is consistently fail-closed \u2014 every failure path stops the round, writes no artifact, and exits non-zero. No swallowed exceptions or silent degradations were found. One minor diagnostic gap noted below.",
+  "findings": [
+    {
+      "severity": "NIT",
+      "title": "response.choices[0] accessed without guarding against empty choices",
+      "file": ".claude/skills/review/fireworks_runner.py",
+      "line": 295,
+      "claim": "After the API call's try/except block, the code accesses `response.choices[0]` directly. If the API were to return a response with an empty `choices` list, this would raise an uncaught `IndexError` that propagates to `run_altitude`'s generic `except Exception` handler and surfaces as 'unexpected error' rather than a named cause like the runner's other error paths. This is still fail-closed (the round stops, nothing is promoted), but the diagnostic is less actionable than the rest of the runner's error model, which consistently names the specific failure.",
+      "suggestion": "Add a guard after the API call: `if not response.choices: raise RunnerError(f\"'{name}' returned no choices\")` before accessing `choices[0]`, or move the access inside the existing try block so the 'API call failed' message covers it."
+    }
+  ]
+}

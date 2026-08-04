@@ -413,6 +413,38 @@ the raw override and require a temporary routing-table entry.
 **Win:** one authoritative model contract, with the preflight guard applying to the model actually
 called.
 
+## Fireworks review (2026-08-03, base main, HEAD ee53291)
+
+*First review run by the `fireworks` backend — `glm-5p2`, correctness altitude, both critics
+concurrent.*
+
+**Summary.** The runner, routing table, runtime contract, behavioral suite, CI integration, and
+documentation updates all align with the spec's acceptance criteria. The error model is consistently
+fail-closed — every failure path stops the round, writes no artifact, and exits non-zero. No
+swallowed exceptions or silent degradations found. One minor diagnostic gap.
+
+### NIT — `response.choices[0]` accessed without guarding against empty choices
+
+If the API returned an empty `choices` list, the direct index raises `IndexError`, which reaches
+`run_altitude`'s generic handler and surfaces as "unexpected error" rather than a named cause. Still
+fail-closed — the round stops and nothing is promoted — but less actionable than the rest of the
+runner's error model, which consistently names its failure.
+
+## Hidden-failure review (2026-08-03, base main, HEAD ee53291)
+
+**Summary.** Error model generally sound: exceptions wrapped in `RunnerError` and re-raised, failures
+stop the round and promote nothing, temps cleaned on staging failure, `main()`'s catch-all exits
+non-zero. One finding.
+
+### IMPORTANT — `finish_reason` accepts `content_filter` and other abnormal reasons
+
+`run_pass` rejects only `finish_reason == "length"`. Any other non-`stop` reason — most importantly
+`content_filter`, where the model's output was altered or suppressed by safety filtering — falls
+through silently. The body may still be valid JSON conforming to the schema (a partial or sanitized
+findings array), so schema validation does not catch it. The model is signalling that the completion
+went wrong and the runner ignores the signal, promoting a degraded review as a clean one — the exact
+silent-degradation pattern this lens targets.
+
 ## Observed, not fixed — for the review round
 
 **A structurally-valid but meaningless schema makes validation vacuous.** JSON Schema treats
