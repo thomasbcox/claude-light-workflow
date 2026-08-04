@@ -372,6 +372,41 @@ live run truncated a real review of this branch — the runner refused to promot
 was found rather than shipped. Raised to 32,000 (verified accepted up to 131,072 on the routed
 model). No falsification row changes; `finish_reason: length` was already covered and is what caught it.
 
+## Codex approach review (2026-08-03, base main, HEAD 2e3f7ff)
+
+**Verdict — not sound yet.** The centralized runner, declarative pass/context tables,
+standard-library concurrency, routing data, and `jsonschema` validation are appropriate. However,
+the publication model cannot provide its promised round-level atomicity, and the model override
+separates model identity from the metadata required by the size guard.
+
+### BLOCKER — Two renames do not form an atomic review round
+*one-way · kludgy · locus: `fireworks_runner.py` (`promote`); `review/SKILL.md` step 8 artifact contract*
+
+One logical review round is represented as two independently replaced stable files. Staging both
+first stops a *staging* failure from publishing partial output, but the `os.replace` loop can still
+publish the first artifact and fail on the second. The runner acknowledges this is not a multi-file
+transaction, while AC-5 and the skill present both-or-neither promotion as an invariant. Every
+future critic added to the altitude copies this pattern.
+
+**Alternative:** write every result into one immutable, round-specific directory, fsync it, then
+publish with a single atomic directory rename or current-round pointer; consumers resolve artifacts
+only through that committed reference.
+**Win:** one atomic commit point instead of a probabilistic sequence, centralizing the invariant for
+all future critics.
+
+### IMPORTANT — The model override bypasses the routing contract's metadata
+*one-way · kludgy · locus: `fireworks_runner.py` (`run_pass`, `--model`)*
+
+`--model` changes the live model id while the size guard keeps using the *configured route's*
+`contextLength`. Model identity and the metadata needed to run it safely come from different
+records: a smaller override passes a preflight sized for the routed model's larger window and fails
+only after the request; a larger override is constrained by unrelated metadata.
+
+**Alternative:** make an override supply a complete route record (id *and* context length), or drop
+the raw override and require a temporary routing-table entry.
+**Win:** one authoritative model contract, with the preflight guard applying to the model actually
+called.
+
 ## Observed, not fixed — for the review round
 
 **A structurally-valid but meaningless schema makes validation vacuous.** JSON Schema treats
