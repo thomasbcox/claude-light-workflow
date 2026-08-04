@@ -130,6 +130,29 @@ only, because including contents would reintroduce the leak just fixed.
 *Red demonstrated:* reverting the manifest read to the working tree trips
 `uncommitted manifest edits never reach the reviewer`. Suite 85 → 89 checks; gate 362 → 366.
 
+## Fireworks review (2026-08-04, base main, HEAD e05e229)
+
+**No findings.** The change wires the approach altitude via a pass-table entry, two context sources,
+dispatch updates, and routing. All ACs appear satisfied — pass-table entry with
+`design-review-schema`, shape-level context profile, reads at HEAD, absent manifest stated,
+dispatch/config/docs updated. Tests cover the key invariants.
+
+## Hidden-failure review (2026-08-04, base main, HEAD e05e229)
+
+### IMPORTANT — `_manifests` silently drops a manifest it found but could not read
+
+Candidates are discovered via `git ls-tree -r --name-only HEAD`, then read with
+`git show HEAD:<rel>` under `check=False`. On a non-zero return the code does `continue` — the
+manifest vanishes from the payload with no accounting. The reviewer cannot distinguish *"a manifest
+exists at HEAD but was unreadable"* from *"no manifest exists at HEAD"*, which is exactly the silent
+omission AC-4 was written to prevent.
+
+The asymmetry is visible one function up: `_changed_files` appends every unreadable file to a
+`skipped` list and emits a "NOT INCLUDED" section. `_manifests` — the same function that goes to
+lengths to state absence explicitly and to name untracked manifests — has no equivalent. If
+`git show` fails (encoding, a git internal error, a submodule edge case) the review proceeds
+degraded, missing a manifest the reviewer was never told existed.
+
 ### Known limits
 
 - **Fireworks is unproven at this altitude, on a sample of one.** Run head-to-head against codex on

@@ -1,0 +1,4 @@
+{
+  "summary": "The change wires the approach altitude to fireworks via a pass-table entry, two context sources (changed_files, manifest), dispatch updates, and routing. The previously identified working-tree read bug in `_manifests` was fixed and now reads at HEAD. All ACs appear satisfied: pass-table entry with design-review-schema, shape-level context profile (whole changed files + manifest), reads at HEAD, absent manifest stated, dispatch/config/docs updated. Tests cover the key invariants. No correctness issues found.",
+  "findings": []
+}
