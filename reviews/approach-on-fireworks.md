@@ -188,6 +188,28 @@ carries the rule both halves came from, as a header comment every future source 
 reviewer cannot go look and will read a degraded context as a complete one. Written where the next
 source gets added rather than left implicit in two function bodies.
 
+## Fireworks review — round 3 (2026-08-04, base e05e229, HEAD 2d98c01)
+
+**No findings.** The fix collects manifests `ls-tree` found at HEAD but `git show` could not read
+into a `skipped` list and emits them under "FOUND AT HEAD BUT NOT READABLE", mirroring the existing
+`_changed_files` pattern. The `CONTEXT_SOURCES` header documents both invariants for future sources.
+The test monkeypatches `git show` to fail for a committed manifest and verifies it is named, not
+dropped. Small, targeted, consistent with the established pattern.
+
+## Hidden-failure review — round 3 (2026-08-04, base e05e229, HEAD 2d98c01)
+
+**No findings.** The `continue` remains but is now preceded by accounting, so the silent drop is
+resolved; git's stderr is carried as the reason. The test restores `subprocess.run` in a `finally`
+block. No new swallowed-error, blind-catch, silent-fallback, or deleted-safety-check patterns.
+
+## Decisions — round 3 (2026-08-04)
+
+Both critics returned empty findings arrays. **Nothing to decide** — the round-2 fix is verified.
+Three rounds, and the pattern of each fix leaving an adjacent gap did not recur.
+
+Routing to `/close`. Zero approved fixes, so it applies nothing and goes to its merge fork, which
+still requires a separate, explicit merge instruction.
+
 ### Known limits
 
 - **Fireworks is unproven at this altitude, on a sample of one.** Run head-to-head against codex on

@@ -1,13 +1,4 @@
 {
-  "summary": "One hidden-failure issue: `_manifests` silently skips a manifest it found at HEAD but failed to read via `git show`, without naming it \u2014 degrading the review's context with no surfacing, in contrast to `_changed_files` which explicitly lists what it could not include.",
-  "findings": [
-    {
-      "severity": "IMPORTANT",
-      "title": "`_manifests` silently drops a manifest it found but could not read at HEAD",
-      "file": ".claude/skills/review/fireworks_runner.py",
-      "line": 175,
-      "claim": "In `_manifests`, candidates are discovered via `git ls-tree -r --name-only HEAD`, then each is read with `git show HEAD:<rel>` using `check=False`. If `returncode != 0`, the code does `continue` \u2014 the manifest is silently dropped from the payload with no accounting. The reviewer cannot distinguish 'a manifest exists at HEAD but was unreadable' from 'no manifest exists at HEAD', which is exactly the class of silent omission AC-4 was written to prevent. This is the same function that goes to lengths to state absence explicitly and name untracked manifests \u2014 but a found-and-then-unreadable manifest vanishes without a trace. The asymmetry is visible one function up: `_changed_files` appends every unreadable file to a `skipped` list and emits a 'NOT INCLUDED' section so the reviewer knows what it has not seen. `_manifests` has no equivalent. If `git show HEAD:<rel>` fails (encoding issue, git internal error, a submodules-related edge case), the review proceeds in a degraded state \u2014 missing a manifest the reviewer was never told existed.",
-      "suggestion": "Collect unreadable candidates into a `skipped` list and append a 'NOT INCLUDED (found at HEAD but unreadable)' section to the output, mirroring `_changed_files`. This keeps the invariant the function already aims for: the reviewer always knows what it has not seen."
-    }
-  ]
+  "summary": "The diff is the fix for the prior hidden-failure finding: `_manifests` now collects manifests that `git show` failed to read into a `skipped` list and emits them under a 'NOT READABLE' section, carrying git's stderr as the reason. The `continue` remains but is now preceded by accounting, so the silent drop is resolved. The test mocks a failing `git show` and verifies the manifest is named in the payload, with proper restoration of `subprocess.run` in a `finally` block. No new swallowed-error, blind-catch, silent-fallback, or deleted-safety-check patterns are introduced by this diff.",
+  "findings": []
 }
