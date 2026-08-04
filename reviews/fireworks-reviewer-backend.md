@@ -445,6 +445,33 @@ findings array), so schema validation does not catch it. The model is signalling
 went wrong and the runner ignores the signal, promoting a degraded review as a clean one — the exact
 silent-degradation pattern this lens targets.
 
+## Decisions (2026-08-03)
+
+Round 1. All three critics that ran this round, with Thomas's call per finding.
+
+**Approach pass (codex)** — *"accept imperfect atomicity and soften the claim in AC-5. accept the
+important-2 recommendation"*
+
+| Finding | Decision |
+|---|---|
+| BLOCKER — two renames do not form an atomic review round | **Accept**, with the overclaim corrected. AC-5, `review/SKILL.md`, and the runner docstrings now state the true guarantee; the residual window is named, and closing it (a round-directory scheme spanning *both* backends) is deferred to its own story. Applied in `ee53291`. |
+| IMPORTANT — `--model` bypasses the routing contract's metadata | **Accept the recommendation.** `--model` now requires `--context-length`, so an override is a complete route and the size guard applies to the model actually called. Applied in `ee53291`. |
+
+**Correctness pass (fireworks / glm-5p2)** — *"fix both"*
+
+| Finding | Decision |
+|---|---|
+| NIT — `response.choices[0]` unguarded against empty `choices` | **Fix.** |
+
+**Hidden-failure pass (fireworks / glm-5p2)** — *"fix both"*
+
+| Finding | Decision |
+|---|---|
+| IMPORTANT — `finish_reason` accepts `content_filter` and other abnormal reasons | **Fix.** Same failure shape as the `{}` defect that motivated this story: an abnormal condition yielding a schema-valid artifact that reads as a clean review. |
+
+Routing to `/close` to apply the two fixes. **This is not a merge authorization** — `/close` stops at
+its merge fork and requires a separate, explicit instruction.
+
 ## Observed, not fixed — for the review round
 
 **A structurally-valid but meaningless schema makes validation vacuous.** JSON Schema treats
