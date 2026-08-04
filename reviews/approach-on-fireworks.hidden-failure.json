@@ -1,0 +1,4 @@
+{
+  "summary": "The diff is the fix for the prior hidden-failure finding: `_manifests` now collects manifests that `git show` failed to read into a `skipped` list and emits them under a 'NOT READABLE' section, carrying git's stderr as the reason. The `continue` remains but is now preceded by accounting, so the silent drop is resolved. The test mocks a failing `git show` and verifies the manifest is named in the payload, with proper restoration of `subprocess.run` in a `finally` block. No new swallowed-error, blind-catch, silent-fallback, or deleted-safety-check patterns are introduced by this diff.",
+  "findings": []
+}

@@ -1,6 +1,6 @@
 {
   "_comment": "Model routing for the fireworks reviewer backend: review purpose -> model. Edit this file to re-route; no model id is hardcoded in fireworks_runner.py. Verify against the live account with: fireworks_runner.py --check-models (needs network + FIREWORKS_API_KEY; deliberately not in the local gate). contextLength must match the live value the API reports -- it is what the pre-flight size guard checks against.",
-  "updated": "2026-08-03",
+  "updated": "2026-08-04",
   "routes": {
     "correctness": {
       "model": "accounts/fireworks/models/glm-5p2",
@@ -15,12 +15,12 @@
     "approach": {
       "model": "accounts/fireworks/models/glm-5p2",
       "contextLength": 1048576,
-      "why": "Routed ahead of use so wiring the approach pass is a dispatch change only. NOT yet wired -- the approach pass runs on codex until the follow-up story."
+      "why": "Wired 2026-08-04. Judges shape, so its context profile pushes whole changed files at HEAD plus any dependency manifest -- not just the diff. 1M context absorbs that for a branch-sized change."
     },
     "design": {
       "model": "accounts/fireworks/models/glm-5p2",
       "contextLength": 1048576,
-      "why": "Routed ahead of use so wiring the design pass is a dispatch change only. NOT yet wired -- /frame's design review runs on codex until the follow-up story."
+      "why": "Routed ahead of use so wiring the design pass is a dispatch change only. NOT yet wired -- /frame's design review runs on codex. Design runs once per story, so it is the cheapest codex consumer and the highest-leverage judgment; moving it is a deliberate later call, not an oversight."
     }
   }
 }

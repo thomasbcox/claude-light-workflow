@@ -69,14 +69,14 @@ backend. It takes either a bare string (that backend everywhere; the default is 
 purpose→backend map, because a backend can be wired for some altitudes and not others:
 
 ```json
-"reviewer": { "design": "codex", "approach": "codex",
+"reviewer": { "design": "codex", "approach": "fireworks",
               "correctness": "fireworks", "hidden-failure": "fireworks" }
 ```
 
 Two backends are wired. **`codex`** is agentic — it explores the repo itself — and runs at every
 altitude. **`fireworks`** runs open-weight models through the Fireworks API and is wired at the
-**correctness altitude** (the two concurrent critics); design and approach follow in a later story,
-and selecting an unwired pair stops loudly rather than falling back. It is non-agentic, so a
+**approach and correctness altitudes**; only `/frame`'s design review still needs `codex`, and
+selecting an unwired pair stops loudly rather than falling back. It is non-agentic, so a
 vendored runner *pushes* the context and owns fan-out, joining, and all-or-nothing promotion; its
 output is schema-enforced at the API and validated again before anything is written. Which model
 serves which purpose lives in

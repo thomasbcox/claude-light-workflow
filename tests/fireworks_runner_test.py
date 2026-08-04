@@ -495,6 +495,102 @@ with repo() as root:
     check("  ↳ passes differ only in the question asked",
           calls[0]["messages"][0]["content"] != calls[1]["messages"][0]["content"])
 
+# ── Approach altitude: shape-level context ────────────────────────────────────
+
+print("== approach altitude pushes whole files, read at HEAD ==")
+
+
+def invoke_approach(root, replies=None, calls=None):
+    replies = replies if replies is not None else {
+        "*": json.dumps({"verdict": "ok", "findings": []})}
+    factory, recorded = stub(replies, calls)
+    original = runner.build_client
+    runner.build_client = factory
+    err = io.StringIO()
+    try:
+        with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+            rc = runner.run_altitude("approach", ctx_for(root), runner.load_routes())
+    except Exception as exc:
+        rc, _ = 1, err.write(repr(exc))
+    finally:
+        runner.build_client = original
+    return rc, recorded, err.getvalue()
+
+
+with repo() as root:
+    calls = []
+    rc, calls, err = invoke_approach(root, calls=calls)
+    check("approach altitude runs", rc == 0, err[:120])
+    body = calls[0]["messages"][1]["content"]
+    check("  ↳ pushes whole changed files, not just the diff",
+          "seed.txt (at HEAD)" in body and "seed\nchanged" in body, body[-300:])
+    check("  ↳ states manifest absence explicitly rather than omitting it",
+          "stated absence" in body or "none present" in body)
+    check("  ↳ writes the approach artifact",
+          artifacts(root) == ["demo.approach.json"], str(artifacts(root)))
+
+# The approach reviewer's finding: _manifests read the working tree while
+# _changed_files read HEAD. The invariant is uniform now — EVERY context source
+# reads at HEAD — so this asserts it for manifests specifically.
+with repo() as root:
+    subprocess.run(["git", "add", "-A"], cwd=root, check=True, capture_output=True)
+    (root / "requirements.txt").write_text("committed-dep==1.0\n")
+    subprocess.run(["git", "add", "-A"], cwd=root, check=True, capture_output=True)
+    subprocess.run(["git", "commit", "-qm", "add manifest"], cwd=root, check=True,
+                   capture_output=True)
+    (root / "requirements.txt").write_text("committed-dep==1.0\nUNCOMMITTED-DEP==9.9\n")
+    (root / "package.json").write_text('{"name":"never-committed"}\n')
+    calls = []
+    invoke_approach(root, calls=calls)
+    body = calls[0]["messages"][1]["content"]
+    check("manifests are read at HEAD", "committed-dep==1.0" in body)
+    check("  ↳ uncommitted manifest edits never reach the reviewer",
+          "UNCOMMITTED-DEP" not in body,
+          "working-tree manifest content leaked")
+    check("  ↳ an untracked manifest is named, not silently omitted",
+          "package.json" in body and "PRESENT BUT UNCOMMITTED" in body)
+    check("  ↳ but its contents are withheld",
+          "never-committed" not in body, "untracked manifest contents leaked")
+
+# Rule 2 for manifests: a manifest that ls-tree found but git show cannot read
+# must be NAMED, not dropped — "unreadable" must never look like "absent".
+with repo() as root:
+    (root / "requirements.txt").write_text("dep==1.0\n")
+    subprocess.run(["git", "add", "-A"], cwd=root, check=True, capture_output=True)
+    subprocess.run(["git", "commit", "-qm", "manifest"], cwd=root, check=True,
+                   capture_output=True)
+    real_run = subprocess.run
+
+    def failing_show(cmd, **kw):
+        if isinstance(cmd, list) and cmd[:2] == ["git", "show"] and "requirements" in cmd[-1]:
+            return SimpleNamespace(returncode=128, stdout="", stderr="fatal: bad object")
+        return real_run(cmd, **kw)
+
+    runner.subprocess.run = failing_show
+    try:
+        calls = []
+        invoke_approach(root, calls=calls)
+        body = calls[0]["messages"][1]["content"]
+    finally:
+        runner.subprocess.run = real_run
+    check("an unreadable manifest is named, not silently dropped",
+          "requirements.txt" in body and "NOT READABLE" in body,
+          "a manifest vanished with no accounting")
+    check("  ↳ the reviewer is told it is missing something",
+          "you are missing these" in body.lower())
+
+# THE bug the first live run exposed: reading the working tree while the diff is
+# computed against HEAD splices two snapshots into one payload, letting
+# uncommitted work leak into a review of committed work.
+with repo() as root:
+    (root / "seed.txt").write_text("seed\nchanged\nUNCOMMITTED LEAK\n")
+    calls = []
+    invoke_approach(root, calls=calls)
+    body = calls[0]["messages"][1]["content"]
+    check("uncommitted working-tree edits never reach the reviewer",
+          "UNCOMMITTED LEAK" not in body,
+          "working tree leaked into a review of committed work")
+
 # Amended row (see the story's Falsification-plan amendments): the runner uses
 # tempfile.mkstemp, not shell mktemp, so temp paths are unique by construction.
 with repo() as root:

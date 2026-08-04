@@ -1,0 +1,4 @@
+{
+  "summary": "The round-3 fix correctly addresses the hidden-failure finding: `_manifests` now collects manifests that `ls-tree` found at HEAD but `git show` could not read into a `skipped` list, and emits them under a 'FOUND AT HEAD BUT NOT READABLE (you are missing these)' section \u2014 mirroring the existing `_changed_files` pattern. The `CONTEXT_SOURCES` header comment documents both invariants (read at HEAD; name what you cannot include) for future sources. The test monkeypatches `git show` to fail for a committed manifest and verifies the manifest is named, not silently dropped. The fix is small, targeted, and consistent with the established pattern. No correctness issues found.",
+  "findings": []
+}
