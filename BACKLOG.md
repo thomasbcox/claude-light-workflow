@@ -199,10 +199,17 @@ practice. Recorded so whoever builds it doesn't rebuild the wrong shape:
   **precision-first reporting** with explicit **coverage accounting** ("what was NOT covered").
   (Evidence: arXiv:2604.19049 Refute-or-Promote; arXiv:2607.01425 Agent4cs; arXiv:2501.18160
   RepoAudit.)
-- **Upgrades the `llm`-backend rationale.** Cross-model critics are now an evidence-backed defense
-  against echo-chamber false positives — wiring the `llm` backend (`review/SKILL.md`'s designated
-  second source, still a loud stop; no standalone backlog item, noted here) graduates from
+- **Upgrades the second-backend rationale — SINCE DELIVERED, see note below.** Cross-model critics
+  are now an evidence-backed defense against echo-chamber false positives — wiring the second
+  backend (`review/SKILL.md`'s designated second source, then a loud stop; no standalone backlog
+  item, noted here) graduates from
   nice-to-have source diversity to best practice once the audit's verify stage exists.
+  **Delivered 2026-08-03, independently of that condition** — the audit engine was retired (above)
+  while the second backend shipped anyway, as `fireworks`, wired at the correctness altitude:
+  story [reviews/fireworks-reviewer-backend.md](reviews/fireworks-reviewer-backend.md). The `llm`
+  name was retired with it. The cross-model rationale in this bullet is what justified it; the
+  audit-engine precondition turned out not to be one. Design and approach altitudes remain on
+  `codex` pending a follow-up story.
 - **Posture invariants** (inherited from `/dev-audit` + OPS-12): read-only against the target,
   report-first, `AUDIT-` hand-off only on explicit instruction, fail-closed orchestration (the
   OPS-12 temp→validate→promote template), per-critic schema + artifact.
