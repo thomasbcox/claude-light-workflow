@@ -137,8 +137,8 @@ with a structured-output JSON schema — no copy/paste; it never commits, and Cl
 structured findings into the trail. It is **agentic**: it explores the repo itself, so the skill
 hands it flags and a prompt and it *pulls* what it needs. It is wired at every altitude.
 
-**`fireworks`** runs open-weight models through the Fireworks API and is wired at the **correctness
-altitude**. It is **non-agentic** — it cannot run `git diff` or read the repo — so the context must
+**`fireworks`** runs open-weight models through the Fireworks API and is wired at the **approach and
+correctness altitudes**. It is **non-agentic** — it cannot run `git diff` or read the repo — so the context must
 be *pushed*. That single difference is why it is not a `codex exec` drop-in and why it changed the
 shape of this layer: since something has to assemble context anyway, that something is a real
 module, [`fireworks_runner.py`](.claude/skills/review/fireworks_runner.py), which also owns the

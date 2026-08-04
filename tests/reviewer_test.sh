@@ -83,12 +83,12 @@ eq "map form resolves per pass, unlisted ⇒ codex" \
 eq "retired backend 'llm' is rejected" "ERR" "$(resolve '{"reviewer":"llm"}')"
 eq "unknown backend is rejected" "ERR" "$(resolve '{"reviewer":"bogus"}')"
 # This repo's own config must actually select what this story wired.
-this_repo="$(resolve "$(cat "$WF")")"
-case "$this_repo" in
-  *"fireworks fireworks") ok "this repo routes correctness+hidden-failure to fireworks" ;;
-  ERR) bad "this repo's reviewer value does not resolve: $this_repo" ;;
-  *) bad "this repo's correctness altitude is not on fireworks: '$this_repo'" ;;
-esac
+# Exact match, not a trailing glob. The old `*"fireworks fireworks"` matched any
+# string ending in those two words, so it could not tell design/approach apart —
+# a reviewer caught that it would pass whatever the first two positions held.
+# Order is: design approach correctness hidden-failure.
+eq "this repo routes approach+correctness+hidden-failure to fireworks, design to codex" \
+  "codex fireworks fireworks fireworks" "$(resolve "$(cat "$WF")")"
 
 echo "== drift: resolution rule + override are still documented =="
 has "missing/empty ⇒ codex" "$REVIEW" "A missing or empty \`reviewer\` field ⇒ \`codex\`"
@@ -152,6 +152,8 @@ echo "== drift: the fireworks dispatch is a THIN invocation, not a copied block 
 # invocation and nothing more. Real behavior lives in tests/fireworks_runner_test.sh;
 # these are presence pins on the seam's prose, per this file's charter.
 has "fireworks invocation present" "$REVIEW" "fireworks_runner.py"
+has "approach altitude wired to fireworks" "$REVIEW" "--altitude approach --slug <slug> --base <base>"
+has "approach pushes whole files, not just the diff" "$REVIEW" "whole changed files at HEAD"
 has "invocation names the altitude" "$REVIEW" "--altitude correctness --slug <slug> --base <base>"
 has "runner uses the bootstrapped interpreter" "$REVIEW" 'fireworks-venv/bin/python'
 has "invocation passes -B" "$REVIEW" 'fireworks-venv/bin/python" -B'

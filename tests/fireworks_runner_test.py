@@ -495,6 +495,52 @@ with repo() as root:
     check("  ↳ passes differ only in the question asked",
           calls[0]["messages"][0]["content"] != calls[1]["messages"][0]["content"])
 
+# ── Approach altitude: shape-level context ────────────────────────────────────
+
+print("== approach altitude pushes whole files, read at HEAD ==")
+
+
+def invoke_approach(root, replies=None, calls=None):
+    replies = replies if replies is not None else {
+        "*": json.dumps({"verdict": "ok", "findings": []})}
+    factory, recorded = stub(replies, calls)
+    original = runner.build_client
+    runner.build_client = factory
+    err = io.StringIO()
+    try:
+        with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+            rc = runner.run_altitude("approach", ctx_for(root), runner.load_routes())
+    except Exception as exc:
+        rc, _ = 1, err.write(repr(exc))
+    finally:
+        runner.build_client = original
+    return rc, recorded, err.getvalue()
+
+
+with repo() as root:
+    calls = []
+    rc, calls, err = invoke_approach(root, calls=calls)
+    check("approach altitude runs", rc == 0, err[:120])
+    body = calls[0]["messages"][1]["content"]
+    check("  ↳ pushes whole changed files, not just the diff",
+          "seed.txt (at HEAD)" in body and "seed\nchanged" in body, body[-300:])
+    check("  ↳ states manifest absence explicitly rather than omitting it",
+          "stated absence" in body or "none present" in body)
+    check("  ↳ writes the approach artifact",
+          artifacts(root) == ["demo.approach.json"], str(artifacts(root)))
+
+# THE bug the first live run exposed: reading the working tree while the diff is
+# computed against HEAD splices two snapshots into one payload, letting
+# uncommitted work leak into a review of committed work.
+with repo() as root:
+    (root / "seed.txt").write_text("seed\nchanged\nUNCOMMITTED LEAK\n")
+    calls = []
+    invoke_approach(root, calls=calls)
+    body = calls[0]["messages"][1]["content"]
+    check("uncommitted working-tree edits never reach the reviewer",
+          "UNCOMMITTED LEAK" not in body,
+          "working tree leaked into a review of committed work")
+
 # Amended row (see the story's Falsification-plan amendments): the runner uses
 # tempfile.mkstemp, not shell mktemp, so temp paths are unique by construction.
 with repo() as root:

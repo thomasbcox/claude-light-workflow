@@ -25,9 +25,9 @@ The independent reviewer is **selectable**. This section is the canonical resolu
 
 **Dispatch by backend** at each reviewer invocation (steps 6 and 8 here; the design review in `/frame`):
 - **`codex`** — run the `codex exec` command shown at that step, unchanged. Agentic: it explores the repo itself.
-- **`fireworks`** — **wired at the correctness altitude only** (step 8). Run the thin invocation shown there. Non-agentic: it cannot run `git diff` or read the repo, so the runner *pushes* the context; that is why it owns context assembly rather than the skill. It is inherently read-only (no file tools, so no sandbox needed) and its output is schema-enforced at the API and validated again before any artifact is written.
+- **`fireworks`** — **wired at the approach (step 6) and correctness (step 8) altitudes.** Run the thin invocation shown there. Non-agentic: it cannot run `git diff` or read the repo, so the runner *pushes* the context; that is why it owns context assembly rather than the skill. It is inherently read-only (no file tools, so no sandbox needed) and its output is schema-enforced at the API and validated again before any artifact is written.
 
-**Selecting a backend for a pass it is not wired for is a loud STOP**, never a fallback. Today that means `fireworks` at the design pass (`/frame` step 6) or the approach pass (step 6 here). Stop with: *"The `fireworks` reviewer backend is not wired for the `<pass>` pass yet (follow-up story). Set that pass to `codex` in .claude/workflow.json, or pass `/review codex`."* Do **not** fall back to codex, run a partial review, or write any `*.json` artifact. A silent fallback would report a review that the selected backend never performed.
+**Selecting a backend for a pass it is not wired for is a loud STOP**, never a fallback. Today that means `fireworks` at the design pass (`/frame` step 6) — the only unwired pair left. Stop with: *"The `fireworks` reviewer backend is not wired for the `<pass>` pass yet (follow-up story). Set that pass to `codex` in .claude/workflow.json, or pass `/review codex`."* Do **not** fall back to codex, run a partial review, or write any `*.json` artifact. A silent fallback would report a review that the selected backend never performed.
 
 The reviewer **role contract** is `AGENTS.md` — tool-neutral and read automatically by whichever backend runs.
 
@@ -44,7 +44,17 @@ The reviewer **role contract** is `AGENTS.md` — tool-neutral and read automati
    - **Reviewer override (bare arg, order-independent):** a `codex` or `fireworks` token selects the reviewer backend for **every** pass this run, beating `.claude/workflow.json` (see **Reviewer backend** above). It composes with the pass override — `/review approach fireworks` (pass→reviewer), `/review fireworks approach` (reviewer→pass), `/review fireworks`, and `/review correctness codex` all parse (pass token and reviewer token in either order). An unrecognized token, or a reviewer value outside `{codex, fireworks}`, is an error — report it and stop, don't silently ignore it. An override that selects a backend for a pass it is not wired for still STOPs per **Reviewer backend** — the override changes the selection, never the wiring.
 
    Choose the diff base as today: first review → `<baseBranch>`; re-review → the last-reviewed SHA recorded in the story file. (If step 5 selects correctness-only, skip steps 6–7 and go straight to step 8.)
-6. **Approach pass.** The reviewer judges the *shape*, licensed to go beyond the diff. **Dispatch by the backend resolved for the `approach` pass** (see **Reviewer backend**): if it is a backend not wired for this pass — `fireworks` today — STOP per that section; for `codex`, run — reads `AGENTS.md` automatically, read-only:
+6. **Approach pass.** The reviewer judges the *shape*, licensed to go beyond the diff. **Dispatch by the backend resolved for the `approach` pass** (see **Reviewer backend**).
+
+   **If `fireworks`** — one thin invocation; the runner assembles the shape-level context (whole changed files at HEAD plus any dependency manifest, not just the diff) and owns validation and promotion:
+   ```bash
+   "$HOME/.claude/fireworks-venv/bin/python" -B \
+     "$HOME/.claude/skills/review/fireworks_runner.py" \
+     --altitude approach --slug <slug> --base <base>
+   ```
+   It writes `reviews/<slug>.approach.json`, the same artifact the codex path writes, so step 7 reads it identically. Non-zero exit stops the round. Skip the codex block below.
+
+   **If `codex`** — run, reads `AGENTS.md` automatically, read-only:
    ```bash
    codex exec -s read-only \
      --output-schema "$HOME/.claude/skills/review/design-review-schema.json" \

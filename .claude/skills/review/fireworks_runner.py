@@ -97,7 +97,85 @@ CONTEXT_SOURCES = {
             ["log", "--oneline", f"{ctx['base']}..HEAD"], ctx["root"]
         ),
     },
+    # The approach altitude judges SHAPE, which a diff cannot show: conventions,
+    # what a file looks like as a whole, what should not exist. The agentic codex
+    # backend reads whole files itself; this one must be handed them.
+    "changed_files": {
+        "title": "Full contents of every file the change touches (NOT just the diff)",
+        "get": lambda ctx: _changed_files(ctx),
+    },
+    # Optional by declaration — plenty of repos have no manifest, and its absence
+    # is stated in the payload rather than silently omitted, so the reviewer knows
+    # it was not withheld.
+    "manifest": {
+        "title": "Dependency manifest(s)",
+        "optional": True,
+        "get": lambda ctx: _manifests(ctx),
+    },
 }
+
+MANIFEST_NAMES = (
+    "package.json", "pyproject.toml", "requirements.txt", "Cargo.toml",
+    "go.mod", "Gemfile", "pom.xml", "build.gradle", "composer.json",
+)
+
+
+def _changed_files(ctx: dict) -> str:
+    """Whole contents of each changed file, with what could not be read named.
+
+    Skipping a file silently would hand the reviewer a partial picture it has no
+    way to detect — the same class of failure as a partial context. Anything not
+    included is listed instead.
+    """
+    names = [
+        n for n in _git(
+            ["diff", "--name-only", f"{ctx['base']}...HEAD"], ctx["root"]
+        ).splitlines() if n.strip()
+    ]
+    if not names:
+        return ""
+    parts, skipped = [], []
+    for name in names:
+        # Read at HEAD, NOT from the working tree. The diff above is computed
+        # against HEAD, so reading the working tree would splice two snapshots
+        # into one payload and let uncommitted work leak into a review of
+        # committed work — the reviewer then reports confidently on a state that
+        # exists in no commit. Found exactly that way on the first live run.
+        proc = subprocess.run(
+            ["git", "show", f"HEAD:{name}"],
+            cwd=ctx["root"], capture_output=True, text=True, check=False,
+        )
+        if proc.returncode != 0:
+            skipped.append(f"{name} (deleted in this change, or unreadable at HEAD)")
+            continue
+        parts.append(f"----- {name} (at HEAD) -----\n{proc.stdout.rstrip()}")
+    if skipped:
+        parts.append(
+            "----- NOT INCLUDED (listed so you know what you have not seen) -----\n"
+            + "\n".join(skipped)
+        )
+    return "\n\n".join(parts)
+
+
+def _manifests(ctx: dict) -> str:
+    """Every dependency manifest found, or an explicit statement that there are none."""
+    found = []
+    for name in MANIFEST_NAMES:
+        for path in sorted(ctx["root"].rglob(name)):
+            if ".git" in path.parts or "node_modules" in path.parts:
+                continue
+            try:
+                found.append(
+                    f"----- {path.relative_to(ctx['root'])} -----\n{path.read_text().rstrip()}"
+                )
+            except (UnicodeDecodeError, OSError):
+                continue
+    if not found:
+        return (
+            "No dependency manifest found in this repository. This is a stated "
+            "absence, not an omission — do not infer dependencies you cannot see."
+        )
+    return "\n\n".join(found)
 
 
 # ── Pass table ────────────────────────────────────────────────────────────────
@@ -111,6 +189,28 @@ CONTEXT_SOURCES = {
 # writes it; renaming touches the codex block and is out of this story's scope.
 
 PASSES = {
+    "approach": {
+        "purpose": "approach",
+        "schema": "design-review-schema.json",
+        "artifact": "reviews/{slug}.approach.json",
+        "context": ["contract", "story", "diff", "log", "changed_files", "manifest"],
+        "prompt": (
+            "You are the independent reviewer doing an APPROACH review per AGENTS.md — judge "
+            "the SHAPE, not lines. Read the story file's spec FIRST and sketch how YOU would "
+            "satisfy the acceptance criteria. THEN read the FULL contents of the changed files "
+            "and the dependency manifest, both provided below — the diff and commit log are "
+            "there for orientation only. You cannot run commands, so judge from what you are "
+            "given; if something you need was not provided, say so in a finding rather than "
+            "assuming it. Ask: does this reinvent what a dependency already does, or hand-roll "
+            "what one declarative construct would cover? Is it larger or more complex than the "
+            "problem? Could it be deleted and handed to the framework? You are licensed to cite "
+            "simpler designs and CODE THAT SHOULD NOT EXIST. Apply the best-practice lens and "
+            "the three guardrails from AGENTS.md. Tag each finding with reversibility "
+            "(one-way/two-way) and standing. Return at most the 3 HIGHEST-LEVERAGE concerns "
+            "strictly per the provided JSON schema, each with alternative and win; empty "
+            "findings array if the shape is sound."
+        ),
+    },
     "correctness": {
         "purpose": "correctness",
         "schema": "finding-schema.json",
@@ -153,6 +253,9 @@ PASSES = {
 # approach→correctness gate stays sequential and lives in the skill, not here.
 ALTITUDES = {
     "correctness": ["correctness", "hidden-failure"],
+    # One pass, so no fan-out — but it runs through the same assemble → validate →
+    # promote path, so the guarantees are identical and there is no second code path.
+    "approach": ["approach"],
 }
 
 # The full review vocabulary, including purposes not yet wired to a pass above.
@@ -220,6 +323,14 @@ def assemble_context(inputs: list[str], ctx: dict) -> str:
         except OSError as exc:
             raise RunnerError(f"required context input '{name}' is unreadable: {exc}")
         if not body or not body.strip():
+            # An input declared optional may legitimately be absent; say so in the
+            # payload so the reviewer knows it was not withheld. A REQUIRED input
+            # that is empty still stops the round.
+            if source.get("optional"):
+                parts.append(
+                    f"# {source['title']}\n\n(none present in this repository)\n"
+                )
+                continue
             raise RunnerError(
                 f"required context input '{name}' is empty — refusing to review "
                 "against material the reviewer cannot see"
