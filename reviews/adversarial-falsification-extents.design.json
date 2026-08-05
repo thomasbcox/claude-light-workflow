@@ -1,0 +1,35 @@
+{
+  "verdict": "Sound shape \u2014 I would satisfy these ACs essentially this way. The re-sequencing resolves the step-5/step-6 chicken-and-egg without a new top-level step; extending the one shared schema instead of forking a second reviewer-output schema is the right declarative instinct (and the story's OPS-17 drift reasoning for it is correct); keeping oracle assignment with the author is well-justified by the fireworks backend's blindness to repo tooling; the pins follow the repo's provisional minimal-phrase convention rather than inventing machinery. Non-goals show real scope discipline. Nothing here reinvents a dependency or is larger than the problem. Three concerns, none fatal to the approach: (1) the mechanism's own failure mode \u2014 an empty or partial reviewer return \u2014 is silent by design, one level up from the failure class this story exists to catch; (2) a pinning asymmetry leaves the backend this repo actually routes its design pass through as the unpinned variant, for a stated non-goal that overestimates the cost of closing it; (3) the story institutionalizes an unproven ceremony as the default frame path with no planned measurement \u2014 the precise gap that gave frame-falsification-plan a full build-then-cut lifecycle. Items 1\u20132 are clause-level fixes; item 3 is Thomas's call as the one-way door.",
+  "findings": [
+    {
+      "severity": "IMPORTANT",
+      "reversibility": "two-way",
+      "standing": "kludgy",
+      "title": "Empty or partial reviewer return silently no-ops the new mechanism",
+      "locus": "Design sketch \u2192 'Schema shape' + AC4 (step-6 write-back); AC2's 'legitimately empty'",
+      "claim": "The schema blesses `regressions: []` as legitimate (needed for the approach-pass reuse), but that same value is what a lazy, truncated, or prompt-drifted design-pass return looks like. Nothing in steps 6\u20139 distinguishes 'reviewer returned nothing' from 'nothing to append': the write-back appends the returned list as-is, an AC left uncovered is not called out anywhere, and step 9 then executes demonstrate-red against a ratified list that may be empty or missing criteria while the story appears compliant. The loop's new failure-detection mechanism cannot surface its own failure \u2014 the exact hidden-failure class this change exists to fight, one level up. Step 7's consult is the implicit safety valve, but AC5 as worded presents the regression list, not the gaps, so the valve depends on a human noticing an absence.",
+      "alternative": "Add one clause to step 6's write-back instruction: before appending, check that every AC has at least one paired regression; append what came, and flag each uncovered AC \u2014 or an all-empty return \u2014 as an explicit line item in step 7's consult presentation, so the gap is ratified or sent back rather than absorbed.",
+      "win": "Eliminates the silent-degradation path where the mechanism no-ops and the story proceeds on author intuition alone while looking like it followed the new doctrine; cost is one sentence in an instruction this story already edits \u2014 no new step, no new machinery, an error path closed."
+    },
+    {
+      "severity": "IMPORTANT",
+      "reversibility": "two-way",
+      "standing": "nonstandard",
+      "title": "Pinning asymmetry: the backend this repo actually routes through is the unpinned one",
+      "locus": "Test notes AC1; Non-goals \u2192 'drift-pin mechanism for fireworks_runner.py'",
+      "claim": "AC1 drift-pins the new regression-ask sentence in frame/SKILL.md (the codex path) but leaves the identical new sentence in fireworks_runner.py's design-pass prompt to a one-time manual confirmation \u2014 while the story itself notes this repo's .claude/workflow.json routes `design` to fireworks, so the only variant this repo will ever execute is the one with no presence check. The cited non-goal assumes pinning a Python-embedded prompt means inventing a new mechanism; it doesn't \u2014 tests/reviewer_test.sh's existing grep/`has` primitive applies to any file, and the load-bearing-phrase convention tolerates reflow the same way it does for Markdown. The outcome deviates from the intent of the repo's own minimal-pin doctrine (load-bearing phrases cannot silently vanish) at the point of highest leverage, protecting the variant that doesn't run here and exposing the one that does.",
+      "alternative": "Add one grep pin on the new fireworks prompt sentence in tests/reviewer_test.sh, in the same load-bearing-phrase style as the SKILL.md pins and demonstrated red the same way; leave the broader question of pinning fireworks prompts generally genuinely out of scope.",
+      "win": "One line closes the asymmetry: the sentence this story adds to the prompt this repo actually runs gets the same can't-silently-vanish protection as the codex variant \u2014 no new mechanism, no live-API dependency in the gate, one silent-deletion path removed."
+    },
+    {
+      "severity": "QUESTION",
+      "reversibility": "one-way",
+      "standing": "standard",
+      "title": "No planned measurement for whether reviewer-sourced regressions earn their place",
+      "locus": "Story-level doctrine change (steps 5\u20139); cf. Design sketch \u2192 'Pinning posture' and Open question 1",
+      "claim": "This story makes reviewer-authored regressions the default path for every non-mechanical frame \u2014 a cross-cutting pattern future stories will copy, i.e. the one-way door Thomas is actually ratifying here. The repo's own precedent shows the working discipline: frame-falsification-plan built the ceremony, thin-the-loop measured it against six real defects and cut what had no teeth. Yet nothing in this story says what evidence would validate Option 3 or when it gets rejudged: the pins are explicitly declared provisional, while the doctrine they guard is not. Open question 1 applies the evidence-based posture to OPS-18's disposition but not to this mechanism itself. Is Thomas willing to attach the revisit trigger now, when it costs a line, rather than rediscover the question later?",
+      "alternative": "Add one line \u2014 in BACKLOG.md's OPS-20 (which stays open regardless) or in this story's close-out \u2014 naming the revisit trigger and the bar: e.g., after N framed stories, count reviewer-sourced regressions an author plausibly wouldn't have written and reds they actually drove; keep / amend / cut on that evidence, mirroring thin-the-loop.",
+      "win": "Pre-commits the measurement that will decide whether this ceremony stays, converting a permanent-feeling doctrine into the same provisional status the story already grants its pins \u2014 so the loop doesn't accumulate another unmeasured process layer; cost is one line."
+    }
+  ]
+}
