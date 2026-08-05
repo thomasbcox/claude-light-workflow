@@ -32,12 +32,16 @@ and shipped together via PR #2 / `5225bdb`; see [Done](#done). BUG-4 shipped via
 `0504e31`; BUG-5 was obviated by `drop-shipped-tag` (the `shipped/<slug>` tag it depended on
 was removed); both in [Done](#done).
 
-BUG-6 and BUG-7 are **open**, both filed 2026-08-04 from `fireworks-reviewer-backend`'s two
+BUG-6 and BUG-7 were both filed 2026-08-04 from `fireworks-reviewer-backend`'s two
 flagged-but-unfixed items — one observed during implementation and deliberately not carried, one an
 approach-review BLOCKER accepted with the claim corrected rather than the window closed.
+**BUG-6 shipped** via PR #49 / `merge: route-design-hidden-failure`; see [Done](#done). **BUG-7
+remains open.** The original BUG-6 analysis is retained below as the design record — the shipped fix
+took candidates (a) and (b) together, and (c)'s open question (whether the codex path, which
+schema-checks nothing locally, needs gate-time structural pins) was **not** closed by it.
 
-BUG-6 — **Schema validation is vacuous if the schema file is well-formed JSON but not a real
-schema.** From that story's "Observed, not fixed" note
+BUG-6 *(SHIPPED — retained as the design record)* — **Schema validation is vacuous if the schema
+file is well-formed JSON but not a real schema.** From that story's "Observed, not fixed" note
 ([reviews/fireworks-reviewer-backend.md](reviews/fireworks-reviewer-backend.md)). JSON Schema treats
 unrecognised keywords as **no-ops**, so a file that parses as JSON but declares no real constraints
 validates **anything** — including the empty object — and the runner promotes the result as a clean
@@ -395,7 +399,10 @@ files and skip its actual logic.
 (Logged 2026-07-23. A **fifth** evaluate-and-decide item under `OPS-`; the prefix-revisit question
 OPS-11 opened keeps accruing data points — still a one-way door left for Thomas.)
 
-OPS-16 — **Scope-containment ACs keep breaking on the loop's own review-trail artifacts.** Filed
+OPS-16 — **SHIPPED** via PR #49 / `merge: route-design-hidden-failure` (see [Done](#done)); the
+analysis below is retained as the design record, and the shipped fix took candidate **(a)**, the
+doctrine exemption, as the item leaned. **Scope-containment ACs keep breaking on the loop's own
+review-trail artifacts.** Filed
 2026-07-23 at Thomas's request as a recurring, estate-wide papercut; evaluate-and-decide. **The
 bug:** `/frame` step 6 writes `reviews/<slug>.design.json` and step 8 commits it *with the spec* —
 before implementation starts; `/review` then writes `.approach.json` and `.codex.json`. But frame's
@@ -478,7 +485,9 @@ that story's declared non-goal; not committed work.
   remains of OPS-18 is only its original idea: reviewer-proposed mutations at review time. The
   frame-side discipline it complements is now just demonstrate-red.
 
-OPS-19 — **`fireworks_runner.py` writes artifacts without a trailing newline.** Cosmetic and
+OPS-19 — **SHIPPED** via PR #49 / `merge: route-design-hidden-failure` (see [Done](#done)) — taken
+while the runner was open for BUG-6, exactly as this item directed. Retained as the design record.
+**`fireworks_runner.py` writes artifacts without a trailing newline.** Cosmetic and
 runner-wide: every `reviews/<slug>.{approach,codex,hidden-failure}.json` the fireworks backend
 promotes ends at `}` with no final newline, unlike the repo's hand-maintained JSON
 (`workflow.json`, the schemas). Logged 2026-08-04 from a `thin-the-loop` correctness NIT, rejected
@@ -623,6 +632,9 @@ _(OPS-10 shipped — see [Done](#done).)_
 | BUG-D3 | Merge could fire without a distinct "merge" instruction (fork skipped). Fixed: the "re-review or merge?" fork is mandatory and non-skippable, even on a clean review with zero fixes. | PR #2 / `5225bdb` |
 | BUG-4 | `/review`'s `codex exec` referenced the finding schema by a repo-relative path (`.claude/skills/review/finding-schema.json`) that only resolved from this repo, so `/review` aborted ("Failed to read output schema file … No such file or directory") from every other project repo. Fixed: absolute user-level `"$HOME/.claude/skills/review/finding-schema.json"`; `-o reviews/<slug>.codex.json` kept repo-relative, with a step-5 note on the asymmetry. Also logged OPS-9. | PR #14 / `0504e31` |
 | BUG-5 | The guard hook blocked the `shipped/<slug>` **tag** push during `/close` (it keys on "on a base branch?" not "is the refspec a base branch?"), since `gh pr merge --delete-branch` leaves HEAD on `main`. **Obviated by design** rather than fixed: `drop-shipped-tag` removed the tag entirely (the merge commit / PR-`MERGED` is the single ship record), so nothing pushes from `main` and the guard is never engaged — no guard change. The earlier smarter-guard fix (`guard-allow-tag-push`) was abandoned (PR #16 closed unmerged). | PR #17 / `merge: drop-shipped-tag` |
+| BUG-6 | Schema validation was vacuous: JSON Schema treats unrecognised keywords as no-ops, so a file that merely parsed as JSON validated anything — including `{}` — and the round promoted an empty body as a clean review. Both enforcement layers (API-side grammar, local validator) read the same dict, so a meaningless schema disabled them together. Fixed with **both** candidate checks, because neither alone closes it: `check_schema` catches a file illegal *as* a schema, and an **empty-object probe** catches the case actually observed — a foreign JSON document, which is a *legal* schema whose keywords are simply unrecognised. The precondition ("every schema MUST reject `{}`") is stated in `load_schema`'s docstring as a contract, naming that the probe's test is narrower than its intent so a future author adds `required` rather than loosening the check. Gate pins it per shipped schema. | PR #49 / `merge: route-design-hidden-failure` |
+| OPS-16 | Scope-containment ACs kept breaking on the loop's **own** review-trail artifacts — `.design.json` is written and committed at *frame* time, before implementation, so it became the N+1 file that failed the story's own scope AC. Fixed with candidate (a), the **doctrine exemption**: `workflow-protocol.md` states that `reviews/<slug>.*` is workflow bookkeeping and never the change's product, so scope ACs categorically exempt it and **no story enumerates those files**; `/frame`'s step-5 guidance now carries the canned check `git diff --name-only <base>...HEAD -- . ':(exclude)reviews/'`. Exempts only the workflow's own artifacts — product files stay fully in scope. Estate-wide via `install.sh`. | PR #49 / `merge: route-design-hidden-failure` |
+| OPS-19 | `fireworks_runner.py` promoted every artifact without a trailing newline, unlike the repo's hand-maintained JSON. Fixed in `promote()` — one `handle.write("\n")` — taken while the runner was open for BUG-6, exactly as the item directed, rather than as a bookkeeping-only story. | PR #49 / `merge: route-design-hidden-failure` |
 
 Shipped together as the `close-gate-and-backlog` story ([reviews/close-gate-and-backlog.md](reviews/close-gate-and-backlog.md)); also added the declared-vs-observed doctrine, the `shipped/<slug>` tag convention, and the `/review` decision-menu consistency tweak.
 
