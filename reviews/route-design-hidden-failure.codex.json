@@ -1,0 +1,21 @@
+{
+  "summary": "The change wires the design pass to fireworks, re-routes hidden-failure to deepseek-v4-pro and design to kimi-k3, fixes BUG-6 (vacuous schema validation), updates doctrine, and adds OPS-20 to the backlog. The implementation is sound and well-grounded in the spec. I found no correctness defects \u2014 the BUG-6 fix is thorough (both check_schema and empty-object probe), the design pass wiring is consistent across pass table/altitude/frame dispatch/config, --base is correctly derived from needs_base flags, and OPS-19's trailing newline is applied. One minor observation and one question.",
+  "findings": [
+    {
+      "severity": "QUESTION",
+      "title": "Empty-object probe assumes every schema has `required` \u2014 is that an invariant or a latent gap?",
+      "file": ".claude/skills/review/fireworks_runner.py",
+      "line": 507,
+      "claim": "load_schema's probe validates instance={} against the schema and expects rejection. The docstring states 'Every schema here carries a non-empty `required`'. The gate test 'shipped schema for <pass> rejects the empty object' enforces this per-pass. But if a future schema legitimately validates {} (e.g., a schema with only optional fields), load_schema would reject it as 'constrains nothing' even if it does constrain via type/property constraints. The test guards against silent drift, which is good \u2014 but the probe's semantics are 'rejects empty object' not 'constrains something', and those are not identical for all possible schemas. Is the team comfortable that 'non-empty required' is a permanent invariant for every schema this runner will ever load?",
+      "suggestion": "If this is intended as a permanent invariant, consider stating it explicitly in the docstring as a precondition rather than an observation ('every schema here carries...'), so future schema authors know the probe will reject them. No code change needed if the team confirms the invariant holds."
+    },
+    {
+      "severity": "NIT",
+      "title": "reviewer_test.sh still pins a frame STOP phrase that is now partially stale",
+      "file": "tests/reviewer_test.sh",
+      "line": 151,
+      "claim": "The test 'frame still routes an unwired design backend to the stop' pins the phrase 'not wired for the design pass, STOP' in frame/SKILL.md. The frame/SKILL.md text now says 'if it is a backend not wired for the design pass, STOP per that section' \u2014 so the pin passes. But the comment above the test says 'Every pass is wired at both backends as of 2026-08-04, so nothing trips the stop today' while still testing the design-specific wording. This is a design-specific pin for a now-generic rule; the review/SKILL.md text was generalized to '<backend> ... not wired for the <pass> pass' but frame/SKILL.md retained design-specific language. Minor inconsistency between the two skills' phrasing of the same rule.",
+      "suggestion": "No action required \u2014 the pin correctly reflects what frame/SKILL.md says. Noting only that frame/SKILL.md's STOP text is design-specific while review/SKILL.md's is generic; aligning them would be cleaner but is out of this story's scope."
+    }
+  ]
+}

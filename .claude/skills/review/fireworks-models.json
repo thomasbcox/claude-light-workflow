@@ -8,9 +8,9 @@
       "why": "Verified 2026-08-03 returning schema-conforming output against finding-schema.json under json_schema enforcement. 1M context absorbs a whole-branch diff plus contract and story without the size guard tripping."
     },
     "hidden-failure": {
-      "model": "accounts/fireworks/models/glm-5p2",
+      "model": "accounts/fireworks/models/deepseek-v4-pro",
       "contextLength": 1048576,
-      "why": "Verified 2026-08-03 against hidden-failure-schema.json. Shares the correctness route for now; a distinct model here is the obvious first experiment once relative review quality is measurable."
+      "why": "FOR NOW (Thomas, 2026-08-04): moved off glm-5p2 to split the two parallel correctness critics across model lineages. Sharing one model made correctness and hidden-failure a same-model panel -- the echo-chamber shape OPS-13 documents, where shared training distributions validate each other's hallucinations. Picked for reasoning strength at near-zero cost (GPQA-Diamond 90.1, ~1.15M output tokens/$) and a lineage distinct from both GLM and Kimi. Verified 2026-08-04 against hidden-failure-schema.json under json_schema enforcement, on a diff carrying a planted swallowed error, which it reported. Revisit once relative review quality is measurable."
     },
     "approach": {
       "model": "accounts/fireworks/models/glm-5p2",
@@ -18,9 +18,9 @@
       "why": "Wired 2026-08-04. Judges shape, so its context profile pushes whole changed files at HEAD plus any dependency manifest -- not just the diff. 1M context absorbs that for a branch-sized change."
     },
     "design": {
-      "model": "accounts/fireworks/models/glm-5p2",
+      "model": "accounts/fireworks/models/kimi-k3",
       "contextLength": 1048576,
-      "why": "Routed ahead of use so wiring the design pass is a dispatch change only. NOT yet wired -- /frame's design review runs on codex. Design runs once per story, so it is the cheapest codex consumer and the highest-leverage judgment; moving it is a deliberate later call, not an oversight."
+      "why": "FOR NOW (Thomas, 2026-08-04): strongest judgment served on this account (Artificial Analysis Intelligence Index ~57, #3 overall, frontier band alongside GPT-5.5; GPQA-Diamond 93.5), and design runs once per story so the cost premium is the cheapest in the loop to pay. WIRED 2026-08-04 -- /frame step 6 dispatches here. Verified the same day against design-review-schema.json under json_schema enforcement on a real sketch, returning tagged findings at the shape altitude. Measured ~48s wall clock for a small sketch; use routers/kimi-k3-fast if consult latency bites."
     }
   }
 }

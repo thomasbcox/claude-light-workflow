@@ -1,0 +1,4 @@
+{
+  "summary": "The diff adds explicit error handling (load_schema's multi-layered checks, _jsonschema's import guard) and removes no safety checks or assertions. All new error paths surface loudly as RunnerError; the conditional --base requirement is derived from the pass table and cannot silently skip when needed. No bare except, catch-log-continue, silent fallback, or analogous hidden failure is introduced.",
+  "findings": []
+}
