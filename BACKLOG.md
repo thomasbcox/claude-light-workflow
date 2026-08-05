@@ -755,6 +755,42 @@ here is a restatement that drifted from its source, which is that item's thesis 
 evidence set; and OPS-21, since two findings are in `AGENTS.md`, the file that is both this repo's
 contract and every other repo's template.)
 
+OPS-24 — **`install.sh --check` reports HAND-EDITED for any deployment whose runner has been
+imported.** Filed 2026-08-05 from `adversarial-falsification-extents` round 1, while verifying a
+correctness NIT. A **false alarm in a warning that exists to prevent data loss**, so it degrades the
+one signal telling you a re-install is unsafe.
+
+- **The mechanism.** `classify_drift` compares the deployed artifact against `git archive <manifest
+  commit>` of the same path. `git archive` emits **tracked files only**. But `.gitignore` line 14
+  ignores `__pycache__/`, and Python writes exactly that beside `fireworks_runner.py` whenever the
+  module is *imported* rather than executed. So the deployed tree carries a directory the archive
+  can never contain, `diff -rq` always differs, and the classifier falls through to **HAND-EDITED**
+  — whose printed meaning is *"local changes a re-install would destroy."*
+- **Confirmed, not theorised.** On this machine, `./install.sh --check` reports `skills/review —
+  HAND-EDITED` while the only difference from the manifest commit is `Only in
+  <dest>/skills/review: __pycache__`. Every other artifact classified correctly (`STALE` /
+  `IN SYNC`), which is why this reads as a real edit rather than an obvious bug.
+- **Why it matters beyond cosmetics.** `do_install` counts hand-edits and prints `⚠ N hand-edited
+  artifact(s) above will be OVERWRITTEN — local changes lost`. Once that warning fires on a
+  deployment nobody edited, it becomes noise — and the next time it is *true*, it reads the same.
+  This is the "cry wolf" failure mode, in the guard whose whole job is to be believed.
+- **Candidate fixes (evaluate).** (a) **Compare tracked files only** — have `classify_drift` diff
+  against the archive's file list rather than the whole directory, so untracked artifacts in the
+  deployment are ignored by construction; (b) **exclude known-generated paths** (`__pycache__/`,
+  `*.pyc`) from the comparison — narrower, but a hardcoded list that will need extending; (c) **stop
+  deploying bytecode** by having the runner write none, which does not help, since the `__pycache__`
+  appears at the *destination* from importing the deployed copy. Lean: (a) — it derives what to
+  compare from the same source that decided what to deploy, instead of maintaining a second list.
+  That is OPS-20's **computed-extents** rule applied to the installer, and this repo just shipped the
+  doctrine.
+- **Not a blocker for anything today.** The misclassification is conservative in the safe direction:
+  it over-warns, never under-warns. Filed rather than fixed in the story that found it, which was
+  scoped to `/frame`'s test-notes doctrine.
+
+(Logged 2026-08-05. A **twelfth** `OPS-` item, filed here rather than as `AUDIT-` — that prefix means
+*findings graduated from a `/dev-audit` run*, and this came from a review round, not a recon pass.
+**Interacts with:** OPS-20's computed-extents rule, which candidate (a) is a direct application of.)
+
 _(OPS-10 shipped — see [Done](#done).)_
 
 ---

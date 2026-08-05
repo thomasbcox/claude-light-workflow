@@ -587,7 +587,10 @@ NIT. Thomas: *"fix the question, reject the nit, file the install.sh issue."*
 
 **Filed, not fixed here**
 
-- **`install.sh --check` misclassifies any imported deployment as HAND-EDITED** → **file** (AUDIT-3).
+- **`install.sh --check` misclassifies any imported deployment as HAND-EDITED** → **file** (filed as
+  **OPS-24**, not `AUDIT-3` as first written here — `AUDIT-` means *findings graduated from a
+  `/dev-audit` run*, and this came from a review round; there are also no existing `AUDIT-` items, so
+  the number would have been invented too).
   Surfaced while verifying the NIT. `classify_drift` compares the deployment against `git archive`
   of the manifest commit, which contains only tracked files; a deployed runner that has been
   imported has a gitignored `__pycache__` beside it, so the comparison always differs and the
@@ -601,3 +604,30 @@ NIT. Thomas: *"fix the question, reject the nit, file the install.sh issue."*
   stated in AC1's test note, but worth pinning down as a fact OPS-22's lookback needs: reviewer-
   sourced regressions have still never run end-to-end. **Loop 1 of the 5-loop trigger is the next
   story framed after this merges and redeploys — not this one.**
+
+## Fixes (2026-08-05)
+
+Round 1 — one approved fix, one rejection (no action), one filing.
+
+- **QUESTION (mechanism-critique role dropped) → fixed.** Step 6's design prompt regains a clause
+  covering what the replaced sentence still had work to do: *critique the oracle mode and mechanism
+  the author DID assign each criterion — flag any check derived from an implementation shape (a
+  selector, assertion, or file token) rather than from the criterion, and any criterion whose named
+  oracle cannot fail.* Scoped to what survives: the **regression** half of the old sentence stays
+  gone, because the reviewer now authors that itself.
+  **Applied to both backend copies** (`frame/SKILL.md` and `fireworks_runner.py`) — the finding named
+  only the codex copy, which is the one that lost text, but the fireworks copy never carried the
+  critique at all, and this repo routes `design` to fireworks. Fixing only the cited file would have
+  re-created the exact asymmetry design finding 2 caught: protecting the variant that never runs
+  here. Both copies pinned (`tests/reviewer_test.sh`), **both demonstrated red** against the
+  pre-fix files before being confirmed green.
+- **NIT (approach.json lacks `regressions`) → rejected, no action.** Per the recorded decision: the
+  artifact conforms to the schema it was actually produced under (the stale deployment), and editing
+  reviewer output is forbidden by `/review`'s hard constraints.
+- **`install.sh --check` misclassification → filed as OPS-24.** Includes the confirmed mechanism
+  (gitignored `__pycache__` at the destination vs. a tracked-files-only `git archive`), why the
+  false alarm matters in a warning meant to prevent data loss, and three candidate fixes. Correcting
+  my own earlier note: it is **OPS-24**, not `AUDIT-3` — `AUDIT-` is reserved for `/dev-audit`
+  findings and no `AUDIT-` items exist.
+
+Reviewer-seam checks: 40 → **42** (the two new mechanism-critique pins).

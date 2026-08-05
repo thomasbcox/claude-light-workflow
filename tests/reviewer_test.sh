@@ -204,6 +204,11 @@ has "design ask, fireworks copy" "$RUNNER" "propose at least one plausible regre
 has "step-5 defers regressions to the reviewer" "$FRAME" "sourced from the step-6 design review"
 has "step-6 write-back checks coverage" "$FRAME" "check every AC received at least one"
 has "step-7 can send a gapped review back" "$FRAME" "send the design review back"
+# Round-1 QUESTION: the mechanism-critique half of the old test-notes sentence was dropped when
+# the regression ask replaced it — the author still assigns oracle + mechanism at step 5, so that
+# critique was never moot. Restored and pinned in BOTH copies, since either backend may run it.
+has "mechanism critique, codex copy" "$FRAME" "any criterion whose named oracle cannot fail"
+has "mechanism critique, fireworks copy" "$RUNNER" "any criterion whose named oracle cannot fail"
 
 # Structural, not a phrase: the schema is real code with a real oracle, so read the JSON and
 # assert the field is required rather than grepping for text that could drift independently.
