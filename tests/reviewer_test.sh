@@ -43,6 +43,10 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 REVIEW="$ROOT/.claude/skills/review/SKILL.md"
 FRAME="$ROOT/.claude/skills/frame/SKILL.md"
 WF="$ROOT/.claude/workflow.json"
+# The design-pass prompt exists in TWO copies — one per backend — and this repo routes its
+# design pass to fireworks, so the Python copy is the one that actually executes here.
+RUNNER="$ROOT/.claude/skills/review/fireworks_runner.py"
+DESIGN_SCHEMA="$ROOT/.claude/skills/review/design-review-schema.json"
 
 pass=0 fail=0
 ok() {
@@ -187,6 +191,37 @@ echo "== pin: demonstrate-red survives (the falsification discipline with teeth)
 has "step-9 demonstrate-red" "$FRAME" "demonstrate red before done"
 has "step-9 names the dead-assertion stop" "$FRAME" "**dead assertion**"
 has "step-5 requires a per-AC check" "$FRAME" "for each AC, **how it will be checked**"
+
+echo "== pin: regressions come from the REVIEWER, not the author (OPS-20 option 3) =="
+# Silent failure: the design pass stops being asked for regressions, or the write-back stops
+# checking coverage, and the mechanism no-ops while stories still look compliant — the author
+# is back to writing both the regression list and the tests that judge it, which is the exact
+# single-head coupling this was built to break. Nothing else would surface that.
+# BOTH backend copies of the ask are pinned: this repo routes `design` to fireworks, so
+# pinning only the Markdown copy would protect the variant that never runs here.
+has "design ask, codex copy" "$FRAME" "propose at least one plausible regression"
+has "design ask, fireworks copy" "$RUNNER" "propose at least one plausible regression"
+has "step-5 defers regressions to the reviewer" "$FRAME" "sourced from the step-6 design review"
+has "step-6 write-back checks coverage" "$FRAME" "check every AC received at least one"
+has "step-7 can send a gapped review back" "$FRAME" "send the design review back"
+
+# Structural, not a phrase: the schema is real code with a real oracle, so read the JSON and
+# assert the field is required rather than grepping for text that could drift independently.
+schema_requires() { # <field> → yes/no/ERR
+  /usr/bin/env python3 - "$DESIGN_SCHEMA" "$1" <<'PY' 2>/dev/null || echo ERR
+import json, sys
+print("yes" if sys.argv[2] in json.load(open(sys.argv[1]))["required"] else "no")
+PY
+}
+eq "design-review-schema requires 'regressions' (structural)" "yes" "$(schema_requires regressions)"
+
+echo "== pin: computed extents (OPS-20 option 4) =="
+# Silent failure: the rule vanishes and future stories hand-type extents that stop covering
+# what they name the moment the source grows — the drift is invisible precisely because the
+# check still passes. The caveat is pinned separately: a rewrite can keep the headline rule
+# and drop the vacuity warning, which is the failure mode that makes a derived extent useless.
+has "computed-extents rule" "$FRAME" "derive that extent from the source"
+has "vacuous-extent caveat" "$FRAME" "passes vacuously"
 
 echo "== TIER 2 (decision guards): the retired falsification machinery has not crept back =="
 # THE CLOSED TIER-2 BLOCK — see the header. Not behavior guards, and they do not claim to be.

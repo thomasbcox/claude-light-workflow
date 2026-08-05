@@ -659,6 +659,49 @@ prefix-revisit question OPS-11 opened keeps accruing data points — still a **o
 Thomas. **Interacts with:** OPS-17 — option B creates exactly the restatement-drift pattern that item
 exists to eliminate, which is the strongest argument for B′ over B.)
 
+OPS-22 — **Lookback: do reviewer-sourced regressions earn their place?** Filed 2026-08-05 by
+`adversarial-falsification-extents`, which shipped OPS-20's Tier-1 items (3 and 4). **This is a
+commitment to re-judge, not an open design question.**
+
+- **What shipped, and why it needs re-judging.** The independent reviewer now proposes each
+  acceptance criterion's regression list at `/frame` step 6, before any test exists, and the author
+  writes tests against *that* list instead of one they authored themselves. It is **new and
+  unproven**, and it adds instruction weight to every non-mechanical `/frame` in **every repo
+  `install.sh` reaches** — the reach-vs-lightweight tension `ROADMAP.md` → *Direction* names.
+- **The precedent that makes this necessary.** `frame-falsification-plan` (2026-08-02) built an
+  author-written falsification plan; `thin-the-loop` (2026-08-04) measured it against one story's six
+  real defects, found it caught **none** of them, and cut it back to demonstrate-red. That was a
+  retrospective that happened **because Thomas noticed** — nothing scheduled it. This item is the
+  attempt to not rely on noticing twice.
+- **Trigger: after 5 or more full loops** (`/frame → /review → /close`) have run under the
+  mechanism.
+- **What to weigh.** (a) How many reviewer-proposed regressions the author plausibly would **not**
+  have written; (b) how many actually **drove a gate red** at step 9; (c) how often the step-6
+  coverage check found the reviewer returning **gaps** (an uncovered AC or an empty array) — a high
+  rate means the mechanism is unreliable, not merely unhelpful.
+- **The decision it feeds:** keep / amend / **cut back to demonstrate-red only** — the same bar
+  `thin-the-loop` applied, stated in advance this time.
+- **Judge OPS-18 on the same evidence, at the same time** (Thomas, 2026-08-05: *"fold OPS-18 into
+  the lookback"*). OPS-18 proposes reviewer-generated mutations at **review** time, against the
+  diff; this mechanism works at **frame** time, against the spec. They are different altitudes and
+  could coexist, but committing to a second unproven ceremony before the first has evidence is the
+  mistake this item exists to avoid. OPS-18 stays open and unchanged in substance until then.
+- **Enforcement was considered and declined** (Thomas, 2026-08-05: *"don't build in the revisit
+  trigger as software - just file it as a backlog item"*). Options weighed at that consult: this
+  backlog item (**chosen**); a story-count expiry assertion in `tests/reviewer_test.sh` that goes red
+  when the trigger comes due (**declined** — it adds gate machinery to police an anti-ceremony rule);
+  and an SRE-style measured threshold with a pre-committed consequence (**ruled out on analysis** —
+  its measurement is the author self-assessing whether they would have written a given regression
+  anyway, which reproduces the single-head coupling OPS-20 exists to break). **Accepted cost:**
+  nothing mechanically forces this lookback. It happens because someone reads this item. The
+  documented failure mode of every sunset-style commitment is renewal without scrutiny, and a solo
+  repo is where that risk is highest — named here rather than discovered later.
+
+(Logged 2026-08-05. A **tenth** `OPS-` workflow item, and the first that exists purely to re-judge a
+shipped mechanism rather than to decide an open one. **Interacts with:** OPS-20 — which stays open,
+since its Tier-2 items 1 and 2 (property-based and mutation testing, routed via `/dev-audit` Table A)
+are untouched by this — and OPS-18, folded in above.)
+
 _(OPS-10 shipped — see [Done](#done).)_
 
 ---

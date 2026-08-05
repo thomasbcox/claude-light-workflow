@@ -134,9 +134,20 @@ both ship everywhere"), so this is one story, not two.
    declined**, and names the accepted cost — nothing mechanically forces the lookback to happen.
 10. Scope containment: the diff touches only `.claude/skills/frame/SKILL.md`,
     `.claude/skills/review/design-review-schema.json`, `.claude/skills/review/fireworks_runner.py`,
-    `tests/reviewer_test.sh`, and `BACKLOG.md` — plus this story's own review-trail artifacts under
-    `reviews/adversarial-falsification-extents.*`, categorically exempt per `workflow-protocol.md` →
-    *Per-repo artifacts* and never enumerated.
+    `tests/reviewer_test.sh`, `tests/fireworks_runner_test.py`, and `BACKLOG.md` — plus this story's
+    own review-trail artifacts under `reviews/adversarial-falsification-extents.*`, categorically
+    exempt per `workflow-protocol.md` → *Per-repo artifacts* and never enumerated.
+
+    *(Amended at implementation, 2026-08-05 — `tests/fireworks_runner_test.py` added. **A spec-time
+    blind spot, logged for veto, not a silent widening.** AC2 makes `regressions` a required field on
+    `design-review-schema.json`, which **both** the design and approach passes bind. Two stub
+    reviewer replies in that suite were literals omitting the new field, so the runner's own
+    validation correctly rejected them and the design/approach altitude tests went red. The gate
+    cannot be green without this, and AC8 requires a green gate, so the fix was mandatory rather than
+    optional. What changed is the two stubs, replaced by one named `VALID_DESIGN` constant so the two
+    altitudes cannot drift apart — no assertion was weakened, removed, or reshaped, and the suite's
+    113 checks all still run. Two-way and trivially revertible; flagged at hand-off so Thomas can
+    veto.)*
 
 ## Test notes
 
@@ -188,6 +199,39 @@ schema field, a doctrine line) is a binary presence check, and a `has`/structura
 *is* the renders-nothing case — there's no separate empty-vs-absent state to add for Markdown
 instruction text or a JSON Schema `required` array, unlike a UI element that can render an empty
 state distinct from not rendering at all.
+
+### Demonstrate-red record (2026-08-05, at implementation)
+
+All eight new checks were run against the **pre-change files** (`git show origin/main:<path>`),
+where each pinned phrase is genuinely absent and the schema field genuinely missing — the maximal
+form of each planned regression, exercised at once rather than as eight delete-and-rerun cycles
+(the technique `frame-falsification-plan` established):
+
+| Check | AC | Red on `origin/main` |
+|---|---|---|
+| `propose at least one plausible regression` (codex copy, `frame/SKILL.md`) | AC1 | ✓ |
+| `propose at least one plausible regression` (fireworks copy, `fireworks_runner.py`) | AC1 | ✓ |
+| `sourced from the step-6 design review` | AC3 | ✓ |
+| `check every AC received at least one` | AC4 | ✓ |
+| `send the design review back` | AC5 | ✓ |
+| `derive that extent from the source` | AC7 | ✓ |
+| `passes vacuously` | AC7 | ✓ |
+| `regressions` in the schema's top-level `required` (structural, not a phrase) | AC2 | ✓ (`no`) |
+
+Red on `origin/main` → green on the branch proves all eight are live, not vacuous. The three
+existing TIER-1 pins (`demonstrate red before done`, `**dead assertion**`, `for each AC, **how it
+will be checked**`) and all five TIER-2 absent-pins were re-verified **green and unmodified** — the
+rewording of steps 5, 7 and 9 did not disturb them (AC6's oracle).
+
+**Full gate: green** — guard, reviewer-seam 40, fireworks-runner 113, dev-audit 46, docs 16; zero
+failures.
+
+**One check found red for real, not by design.** Adding `regressions` as a required field broke two
+design/approach-altitude tests in `tests/fireworks_runner_test.py`, whose stub reviewer replies were
+literals omitting it. That is the runner's fail-closed validation behaving correctly, and it is the
+one place in this change where a *behavioral* test — not a wording pin — caught a real consequence
+the spec had not anticipated. Recorded because it is evidence about which checks in this repo have
+teeth, which is exactly what OPS-22's lookback will need. See AC10's amendment note.
 
 ## Open questions
 

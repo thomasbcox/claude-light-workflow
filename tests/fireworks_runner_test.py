@@ -89,6 +89,10 @@ class StubClient:
 
 
 VALID_FINDING = json.dumps({"summary": "no issues", "findings": []})
+# A clean reply under design-review-schema, which BOTH the design and approach passes bind.
+# `regressions` is required there, so a stub omitting it is rejected by the runner's own
+# validation — correctly. Named once so the two altitudes cannot drift apart.
+VALID_DESIGN = json.dumps({"verdict": "ok", "findings": [], "regressions": []})
 
 
 def stub(replies, calls=None, barrier=None, raise_on=None):
@@ -577,8 +581,7 @@ print("== approach altitude pushes whole files, read at HEAD ==")
 
 
 def invoke_approach(root, replies=None, calls=None):
-    replies = replies if replies is not None else {
-        "*": json.dumps({"verdict": "ok", "findings": []})}
+    replies = replies if replies is not None else {"*": VALID_DESIGN}
     factory, recorded = stub(replies, calls)
     original = runner.build_client
     runner.build_client = factory
@@ -694,7 +697,7 @@ print("== design altitude reviews the sketch, with no diff to read ==")
 
 
 def invoke_design(root, base=None, calls=None):
-    factory, recorded = stub({"*": json.dumps({"verdict": "ok", "findings": []})}, calls)
+    factory, recorded = stub({"*": VALID_DESIGN}, calls)
     original = runner.build_client
     runner.build_client = factory
     ctx = ctx_for(root)
