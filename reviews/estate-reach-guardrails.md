@@ -220,3 +220,47 @@ paragraph in each file.
 for each AC whose test notes name the gate as its oracle. **No AC here does** — this story adds no
 assertion to the gate, by design (see Test notes). The gate's role is AC-4 only: proving the two
 prose changes broke nothing. Both design-review IMPORTANTs were applied as decided.
+
+## Fireworks approach review (2026-08-05, base main, HEAD b66d938)
+
+Backend `fireworks`, model `glm-5p2`. **Empty findings.**
+
+> The shape is sound and the implementation faithfully applies both design-review IMPORTANTs.
+> CLAUDE.md anchors to install.sh's ARTIFACTS as a verifiable mechanism and phrases the rule as a
+> pre-judgment action […] not a restated abstract fact — exactly the fix the design review
+> prescribed, and Q2 dissolves by construction (no count, no world-claim). The AGENTS.md bullet
+> names its own triggers […] so it self-activates where reach exists and self-disables where it does
+> not […] and AC-3 holds because no claim specific to claude-light-workflow ships. OPS-21 records
+> both deferred options with costs, risks, and a trigger, satisfying AC-5. […] No higher-leverage
+> simplification exists: the two-actor redundancy (builder vs reviewer) is deliberate and justified,
+> not OPS-17 drift, because neither reader can substitute for the other.
+
+**Note on this pass's standing:** the runner reads `AGENTS.md` from the *repo*, so this review ran
+under the very directive the story adds — the change was live for its own review. That cuts both
+ways and is recorded rather than claimed as validation.
+
+## Fireworks correctness review (2026-08-05, base main, HEAD b66d938)
+
+Backend `fireworks`, model `glm-5p2`.
+
+> The branch faithfully implements the spec and applies both design-review IMPORTANTs as decided.
+> […] AC-6 scope is clean: only CLAUDE.md, AGENTS.md, and BACKLOG.md change outside reviews/. No
+> correctness issues found.
+
+### NIT — `CLAUDE.md` enumerates "the four skills", a count that can go stale silently
+
+*Claim.* The line hard-codes an item count. **The design review's own IMPORTANT — and Q2 — argued
+against counts precisely because they go stale with no signal.** The ARTIFACTS reference on the
+preceding line is the authoritative source and makes the enumeration redundant; if a skill is added
+or removed, the count drifts.
+
+*Suggestion.* Drop the count, or remove the enumeration entirely, since "Every path listed in
+`install.sh`'s ARTIFACTS array" already makes the point concretely and verifiably.
+
+## Hidden-failure review (2026-08-05, base main, HEAD b66d938)
+
+Backend `fireworks`, model `deepseek-v4-pro`. **No findings.**
+
+> The diff consists entirely of prose additions […] There are no executable code changes, no
+> exception handling, no assertions, and no logic that could silently degrade on error. No
+> hidden-failure concerns are present.

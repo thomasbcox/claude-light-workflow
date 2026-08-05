@@ -1,0 +1,4 @@
+{
+  "summary": "The diff consists entirely of prose additions (a new CLAUDE.md, a paragraph in AGENTS.md, a backlog entry in BACKLOG.md) and two review artifacts. There are no executable code changes, no exception handling, no assertions, and no logic that could silently degrade on error. No hidden-failure concerns are present.",
+  "findings": []
+}

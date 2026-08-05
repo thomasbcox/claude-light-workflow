@@ -1,0 +1,13 @@
+{
+  "summary": "The branch faithfully implements the spec and applies both design-review IMPORTANTs as decided. CLAUDE.md anchors reach to install.sh's ARTIFACTS as a pre-judgment action (not a restated abstract fact), AGENTS.md carries a self-activating conditional directive that names its own triggers and contains no repo-specific claim, and OPS-21 records both deferred options B and B\u2032 with costs and risks. AC-6 scope is clean: only CLAUDE.md, AGENTS.md, and BACKLOG.md change outside reviews/. No correctness issues found.",
+  "findings": [
+    {
+      "severity": "NIT",
+      "title": "CLAUDE.md enumerates 'the four skills' \u2014 a count that can go stale silently",
+      "file": "CLAUDE.md",
+      "line": 8,
+      "claim": "The line 'the four skills, the guard hook, workflow-protocol.md, and the reviewer-contract template' hard-codes an item count. The design review's own IMPORTANT (and Q2) argued against counts because they go stale with no signal. The ARTIFACTS reference on the preceding line is the authoritative source and makes the enumeration redundant; if a skill is added or removed, this count drifts.",
+      "suggestion": "Drop the count: 'the skills, the guard hook, workflow-protocol.md, and the reviewer-contract template' \u2014 or remove the enumeration entirely since 'Every path listed in install.sh's ARTIFACTS array' already makes the point concretely and verifiably."
+    }
+  ]
+}
