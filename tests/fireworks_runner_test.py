@@ -292,9 +292,16 @@ check("no model id hardcoded in runner source",
 with repo() as root:
     calls = []
     invoke(root, calls=calls)
-    check("table model reaches the request",
-          all(c["model"] == routes["correctness"]["model"] for c in calls),
-          str({c["model"] for c in calls}))
+    # Per PURPOSE, not one shared model. Asserting a single model across the round
+    # held only while the two correctness critics happened to share a route, and it
+    # would silently re-couple them if routing ever collapsed — the same-model panel
+    # this altitude exists to avoid. The json_schema name is the purpose (see the
+    # request builder), so it identifies which critic made each call.
+    by_purpose = {c["response_format"]["json_schema"]["name"]: c["model"] for c in calls}
+    check("table model reaches the request, per purpose",
+          by_purpose == {p.replace("-", "_"): routes[p]["model"]
+                         for p in ("correctness", "hidden-failure")},
+          str(by_purpose))
 
 with repo() as root:
     calls = []
@@ -387,15 +394,84 @@ with repo() as root:
           "not valid JSON" in err, err[:110])
     check("  ↳ nothing promoted", artifacts(root) == [])
 
+# BUG-6: a schema file that PARSES but constrains nothing must stop the round.
+# This is the hole that made validation vacuous — unrecognised keywords are
+# no-ops, so a foreign JSON document substituted for a schema validates anything
+# (including {}) and the round promoted an empty body as a clean review. Both
+# enforcement layers read this one dict, so they failed together.
+print("== BUG-6: a schema that constrains nothing is not a schema ==")
+
+# The exact substitution that surfaced it: a real, valid JSON file from this
+# skill that is not a schema. Legal as a schema; every keyword unrecognised.
+foreign = (Path(__file__).resolve().parent.parent
+           / ".claude/skills/review/fireworks-models.json").read_text()
+with repo() as root:
+    shim = Path(tempfile.mkdtemp())
+    (shim / "finding-schema.json").write_text(foreign)
+    (shim / "hidden-failure-schema.json").write_text(foreign)
+    real_here = runner.HERE
+    runner.HERE = shim
+    try:
+        rc, calls, err = invoke(root)
+    finally:
+        runner.HERE = real_here
+        shutil.rmtree(shim, ignore_errors=True)
+    check("a foreign JSON document used as a schema is rejected", rc != 0)
+    check("  ↳ names the empty object, not a generic schema error",
+          "ACCEPTS THE EMPTY OBJECT" in err, err[:160])
+    check("  ↳ nothing promoted", artifacts(root) == [])
+    check("  ↳ rejected BEFORE any request was made", calls == [])
+
+# check_schema's half: illegal AS a schema, which the probe alone would miss.
+with repo() as root:
+    shim = Path(tempfile.mkdtemp())
+    (shim / "finding-schema.json").write_text('{"type": 123}')
+    (shim / "hidden-failure-schema.json").write_text('{"type": 123}')
+    real_here = runner.HERE
+    runner.HERE = shim
+    try:
+        rc, calls, err = invoke(root)
+    finally:
+        runner.HERE = real_here
+        shutil.rmtree(shim, ignore_errors=True)
+    check("a file that is illegal as a schema is rejected", rc != 0)
+    check("  ↳ named as an invalid schema", "not a valid JSON Schema" in err, err[:160])
+    check("  ↳ nothing promoted", artifacts(root) == [])
+
+# The standing guarantee the probe rests on: every SHIPPED schema rejects {}.
+# If one ever stops carrying a non-empty `required`, the probe would fail the
+# round at runtime — catch that here, in the gate, not mid-review.
+for pass_name, spec in sorted(runner.PASSES.items()):
+    path = runner.HERE / spec["schema"]
+    try:
+        runner.load_schema(pass_name, path)
+        bites = True
+    except runner.RunnerError:
+        bites = False
+    check(f"  ↳ shipped schema for '{pass_name}' rejects the empty object", bites)
+
 
 # ── AC-5: the runner owns orchestration ───────────────────────────────────────
 
 print("== AC-5: orchestration is concurrent and all-or-nothing ==")
 
-schemas = [p["schema"] for p in runner.PASSES.values()]
 arts = [p["artifact"] for p in runner.PASSES.values()]
-check("each pass binds a distinct schema", len(set(schemas)) == len(schemas))
+# Artifacts must be distinct GLOBALLY — two passes writing one path clobber each
+# other whenever they run, altitude notwithstanding.
 check("each pass binds a distinct artifact", len(set(arts)) == len(arts))
+
+# Schemas must be distinct WITHIN AN ALTITUDE, which is what OPS-12's standing
+# rule governs: concurrent critics are told apart structurally, by their own
+# schema and their own artifact, with no `lens` field to read. Passes at
+# different altitudes never run together, so `design` and `approach` sharing
+# design-review-schema.json is not ambiguity — both judge shape and emit the same
+# tagged finding shape, and the codex path has fed them the same schema since
+# before this backend existed. Scoping the check here rather than dropping it
+# keeps the guard that matters: two passes fanned out at once staying separable.
+for altitude, names in runner.ALTITUDES.items():
+    at_altitude = [runner.PASSES[n]["schema"] for n in names]
+    check(f"  ↳ {altitude}: concurrent passes bind distinct schemas",
+          len(set(at_altitude)) == len(at_altitude), str(at_altitude))
 
 with repo() as root:
     barrier = threading.Barrier(2)
@@ -610,6 +686,61 @@ with repo() as root:
     check("each promoted artifact used a unique temp path", len(seen) == 2, str(seen))
     check("  ↳ no temp survives a successful promote",
           not any(Path(p).exists() for p in seen))
+
+
+# ── Design altitude: judged before any code exists ────────────────────────────
+
+print("== design altitude reviews the sketch, with no diff to read ==")
+
+
+def invoke_design(root, base=None, calls=None):
+    factory, recorded = stub({"*": json.dumps({"verdict": "ok", "findings": []})}, calls)
+    original = runner.build_client
+    runner.build_client = factory
+    ctx = ctx_for(root)
+    ctx["base"] = base  # frame time: there is nothing to diff against
+    err = io.StringIO()
+    try:
+        with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+            rc = runner.run_altitude("design", ctx, runner.load_routes())
+    except Exception as exc:
+        rc, _ = 1, err.write(repr(exc))
+    finally:
+        runner.build_client = original
+    return rc, recorded, err.getvalue()
+
+
+with repo() as root:
+    rc, calls, err = invoke_design(root)
+    check("design altitude runs with no base", rc == 0, err[:140])
+    check("  ↳ writes the design artifact", "demo.design.json" in artifacts(root))
+    body = calls[0]["messages"][1]["content"]
+    check("  ↳ pushes the contract and the story",
+          "AGENTS.md" in body and "story file" in body)
+    # The whole point of the altitude: it judges intent. Handing it a diff would
+    # invite findings about an implementation that does not exist yet.
+    check("  ↳ pushes NO diff and NO commit log",
+          "git diff" not in body and "git log" not in body, body[:160])
+    check("  ↳ tells the reviewer no code exists yet",
+          "NO CODE HAS BEEN WRITTEN YET" in calls[0]["messages"][0]["content"])
+
+# --base is required where a pass reads it, and only there. Derived from the pass
+# table, so this checks the derivation rather than a hardcoded altitude name.
+check("design declares no base-dependent context source",
+      not any(runner.CONTEXT_SOURCES[s].get("needs_base")
+              for s in runner.PASSES["design"]["context"]))
+for altitude in ("approach", "correctness"):
+    check(f"  ↳ {altitude} still declares one (so --base stays required there)",
+          any(runner.CONTEXT_SOURCES[s].get("needs_base")
+              for n in runner.ALTITUDES[altitude]
+              for s in runner.PASSES[n]["context"]))
+
+# OPS-19: artifacts end with a newline, like the repo's hand-maintained JSON.
+with repo() as root:
+    invoke_design(root)
+    written = (root / "reviews" / "demo.design.json").read_text()
+    check("promoted artifacts end with a trailing newline", written.endswith("}\n"),
+          repr(written[-12:]))
 
 
 print()

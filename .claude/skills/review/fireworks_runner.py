@@ -98,12 +98,18 @@ CONTEXT_SOURCES = {
         "title": "The story file — spec, acceptance criteria, falsification plan",
         "get": lambda ctx: (ctx["root"] / "reviews" / f"{ctx['slug']}.md").read_text(),
     },
+    # `needs_base` is declared, not inferred: main() derives whether --base is a
+    # required argument from the passes actually being run. The design altitude
+    # reviews a sketch before any commit exists, so demanding a diff base there
+    # would be asking for a ref to compare nothing against.
     "diff": {
         "title": "git diff (base...HEAD) — the change under review",
+        "needs_base": True,
         "get": lambda ctx: _git(["diff", f"{ctx['base']}...HEAD"], ctx["root"]),
     },
     "log": {
         "title": "git log (base..HEAD) — the commits on this branch",
+        "needs_base": True,
         "get": lambda ctx: _git(
             ["log", "--oneline", f"{ctx['base']}..HEAD"], ctx["root"]
         ),
@@ -113,6 +119,7 @@ CONTEXT_SOURCES = {
     # backend reads whole files itself; this one must be handed them.
     "changed_files": {
         "title": "Full contents of every file the change touches (NOT just the diff)",
+        "needs_base": True,
         "get": lambda ctx: _changed_files(ctx),
     },
     # Optional by declaration — plenty of repos have no manifest, and its absence
@@ -237,8 +244,8 @@ def _manifests(ctx: dict) -> str:
 
 # ── Pass table ────────────────────────────────────────────────────────────────
 # Declarative: each pass binds a purpose (which routes to a model), a schema, the
-# context it requires, and its artifact. Wiring the design and approach passes is
-# an entry here plus a dispatch line — not new orchestration.
+# context it requires, and its artifact. All four review purposes are wired; a new
+# critic is an entry here plus an ALTITUDES line — not new orchestration.
 #
 # NOTE ON ARTIFACT NAMES: `<slug>.codex.json` is the correctness artifact the
 # loop already reads at review/SKILL.md step 9, so this backend writes to it too
@@ -246,6 +253,35 @@ def _manifests(ctx: dict) -> str:
 # writes it; renaming touches the codex block and is out of this story's scope.
 
 PASSES = {
+    # Runs at FRAME time, before any code exists — so its context is the contract
+    # and the story (spec + design sketch) ONLY. There is no diff to read and no
+    # changed file to push; declaring either would fail the round closed on
+    # material that cannot exist yet.
+    "design": {
+        "purpose": "design",
+        "schema": "design-review-schema.json",
+        "artifact": "reviews/{slug}.design.json",
+        "context": ["contract", "story"],
+        "prompt": (
+            "You are the independent reviewer doing a DESIGN review per AGENTS.md — "
+            "judge the SKETCH, before any code exists. The story file below carries "
+            "the spec, its acceptance criteria, and the design sketch; the reviewer "
+            "contract is also provided. NO CODE HAS BEEN WRITTEN YET, so there is no "
+            "diff and you must judge intent, not lines — do not ask to see an "
+            "implementation and do not treat its absence as a finding. Sketch how YOU "
+            "would satisfy the acceptance criteria, then ask: does this shape reinvent "
+            "what a dependency or one declarative construct already covers? Is it "
+            "larger or more complex than the problem? Which decisions here are "
+            "ONE-WAY DOORS the human must ratify before building starts? Apply the "
+            "best-practice lens and the three guardrails from AGENTS.md — a flag must "
+            "name a concrete win, not novelty; internal consistency can outweigh "
+            "ecosystem fashion; the repo's conventions are the local standard. Tag "
+            "each finding with reversibility (one-way/two-way) and standing. Return "
+            "at most the 3 HIGHEST-LEVERAGE concerns strictly per the provided JSON "
+            "schema, each with alternative and win; empty findings array if the shape "
+            "is sound."
+        ),
+    },
     "approach": {
         "purpose": "approach",
         "schema": "design-review-schema.json",
@@ -310,15 +346,16 @@ PASSES = {
 # approach→correctness gate stays sequential and lives in the skill, not here.
 ALTITUDES = {
     "correctness": ["correctness", "hidden-failure"],
-    # One pass, so no fan-out — but it runs through the same assemble → validate →
-    # promote path, so the guarantees are identical and there is no second code path.
+    # One pass each, so no fan-out — but they run through the same assemble →
+    # validate → promote path, so the guarantees are identical and there is no
+    # second code path.
     "approach": ["approach"],
+    "design": ["design"],
 }
 
-# The full review vocabulary, including purposes not yet wired to a pass above.
-# The routing table is allowed to route ahead of use — `design` and `approach`
-# are routed so the follow-up story is a dispatch change — but it may not route a
-# purpose that is not a review purpose at all, which would be a silent typo.
+# The full review vocabulary. Every purpose is now wired to a pass above; the
+# routing table may still route ahead of use, but it may not route a purpose that
+# is not a review purpose at all, which would be a silent typo.
 KNOWN_PURPOSES = {"design", "approach", "correctness", "hidden-failure"}
 
 
@@ -428,11 +465,8 @@ def build_client(api_key: str):
     return OpenAI(api_key=api_key, base_url=BASE_URL)
 
 
-def validate(payload: dict, schema: dict, purpose: str) -> None:
-    """Second enforcement layer. API-side json_schema is grammar-constrained but not
-    a guarantee across model versions, and this check costs nothing. Deliberately
-    not hand-rolled — AGENTS.md's guardrail is not to reimplement what one
-    declarative construct already covers."""
+def _jsonschema():
+    """Import the validator, or fail closed naming the bootstrap."""
     try:
         import jsonschema
     except ImportError:
@@ -443,6 +477,62 @@ def validate(payload: dict, schema: dict, purpose: str) -> None:
             "~/.claude/fireworks-venv/bin/pip install -r "
             f"{HERE / 'requirements.txt'}"
         )
+    return jsonschema
+
+
+def load_schema(name: str, path: Path) -> dict:
+    """Read a schema AND prove it constrains something. Fails closed if it does not.
+
+    JSON Schema treats UNRECOGNISED KEYWORDS AS NO-OPS, so a file that merely
+    parses as JSON can validate anything — including {} — and the round would
+    promote an empty body as a clean review. Both enforcement layers share this
+    one dict (the API-side grammar and the local validator below), so a
+    meaningless schema disables them together.
+
+    Two checks, because neither alone is sufficient:
+
+    `check_schema` catches a file that is ILLEGAL as a schema. It does NOT catch
+    the case actually observed — a foreign JSON document (the routing table)
+    substituted for a schema is a LEGAL schema whose keywords are simply
+    unrecognised, so it accepts everything and check_schema is happy.
+
+    The probe catches that one. Every schema here carries a non-empty `required`,
+    so the empty object MUST be rejected. If it passes, the file is not
+    constraining this pass and nothing validated against it can be trusted.
+    """
+    try:
+        schema = json.loads(path.read_text())
+    except FileNotFoundError:
+        raise RunnerError(f"schema for '{name}' not found: {path}")
+    except json.JSONDecodeError as exc:
+        raise RunnerError(f"schema for '{name}' is not valid JSON ({path}): {exc}")
+
+    jsonschema = _jsonschema()
+    try:
+        jsonschema.validators.validator_for(schema).check_schema(schema)
+    except jsonschema.SchemaError as exc:
+        raise RunnerError(
+            f"schema for '{name}' is not a valid JSON Schema ({path}): {exc.message}"
+        )
+
+    try:
+        jsonschema.validate(instance={}, schema=schema)
+    except jsonschema.ValidationError:
+        return schema  # rejected the probe, so it constrains something
+    raise RunnerError(
+        f"schema for '{name}' ({path}) ACCEPTS THE EMPTY OBJECT, so it constrains "
+        "nothing — both the API-side grammar and the local validator are disabled "
+        "by it, and any reply would promote as a clean review. Refusing to run a "
+        "review that cannot fail."
+    )
+
+
+def validate(payload: dict, schema: dict, purpose: str) -> None:
+    """Second enforcement layer. API-side json_schema is grammar-constrained but not
+    a guarantee across model versions, and this check costs nothing. Deliberately
+    not hand-rolled — AGENTS.md's guardrail is not to reimplement what one
+    declarative construct already covers."""
+    jsonschema = _jsonschema()
     try:
         jsonschema.validate(instance=payload, schema=schema)
     except jsonschema.ValidationError as exc:
@@ -465,13 +555,7 @@ def run_pass(name: str, context: str, ctx: dict, routes: dict) -> dict:
     model = ctx["model_override"] or route["model"]
     context_length = ctx["context_length_override"] or route["contextLength"]
 
-    schema_path = HERE / spec["schema"]
-    try:
-        schema = json.loads(schema_path.read_text())
-    except FileNotFoundError:
-        raise RunnerError(f"schema for '{name}' not found: {schema_path}")
-    except json.JSONDecodeError as exc:
-        raise RunnerError(f"schema for '{name}' is not valid JSON ({schema_path}): {exc}")
+    schema = load_schema(name, HERE / spec["schema"])
 
     check_size(context, spec["prompt"], schema, context_length, purpose)
 
@@ -564,6 +648,7 @@ def promote(results: dict, ctx: dict) -> list[Path]:
             fd, tmp = tempfile.mkstemp(dir=dest.parent, prefix=f".{dest.name}.")
             with os.fdopen(fd, "w") as handle:
                 json.dump(payload, handle, indent=2)
+                handle.write("\n")  # OPS-19: match the repo's hand-maintained JSON
                 handle.flush()
                 os.fsync(handle.fileno())
             staged.append((Path(tmp), dest))
@@ -719,15 +804,18 @@ def main() -> int:
         if args.context_length is not None and args.context_length <= 0:
             raise RunnerError("--context-length must be a positive number of tokens")
 
-        missing = [
-            flag
-            for flag, value in (
-                ("--altitude", args.altitude),
-                ("--slug", args.slug),
-                ("--base", args.base),
-            )
-            if not value
-        ]
+        required = [("--altitude", args.altitude), ("--slug", args.slug)]
+        # --base is required only where a declared context source actually reads
+        # it. Derived from the pass table so a new pass inherits the right answer
+        # instead of this list needing an edit. Unknown altitude falls through to
+        # argparse's choices, which already rejected it.
+        if args.altitude in ALTITUDES and any(
+            CONTEXT_SOURCES[src].get("needs_base")
+            for name in ALTITUDES[args.altitude]
+            for src in PASSES[name]["context"]
+        ):
+            required.append(("--base", args.base))
+        missing = [flag for flag, value in required if not value]
         if missing:
             raise RunnerError(f"missing required argument(s): {', '.join(missing)}")
 

@@ -9,7 +9,7 @@ A small, human-controlled development loop. One idea above all:
 ## Actors
 - **Thomas** — owner / decider. Approves scope **and high-level design**, ratifies one-way-door decisions, decides each finding's disposition, approves the merge.
 - **Claude** — builder / scribe. Writes the spec, the design sketch, the code, and the audit trail; calls the reviewer; applies approved fixes; merges on Thomas's word. Never self-approves scope, design, or merge.
-- **The reviewer** — independent reviewer with a **selectable backend** (`reviewer` in `.claude/workflow.json`, default `codex`; a `/review` override can switch it per run). **Codex is the only wired backend today** — `codex exec -s read-only` with a structured-output schema; the canonical resolution rule + commands live in `review/SKILL.md` (→ *Reviewer backend*) and `frame/SKILL.md`. Selecting `llm` (the designated second source) stops as "not yet wired." Reviews at **two altitudes** — design/approach (the *shape*, judged against modern best practice) and correctness (the *diff*). Critiques and classifies; never fixes or merges. The role contract is the tool-neutral `AGENTS.md`, read automatically by whichever backend runs.
+- **The reviewer** — independent reviewer with a **selectable backend**, resolved **per pass** (`reviewer` in `.claude/workflow.json` takes a bare string *or* a `pass→backend` map over `design`/`approach`/`correctness`/`hidden-failure`; default `codex`; a `/review` override can switch it per run). **Two backends are wired, both at every pass:** `codex` (`codex exec -s read-only`, agentic — it explores the repo itself) and `fireworks` (open-weight models via API, non-agentic — the runner *pushes* context, and output is schema-enforced at the API then validated again locally). Per-pass selection is what lets two different models review one branch — the cross-model diversity OPS-13 argues for. The canonical resolution rule + commands live in `review/SKILL.md` (→ *Reviewer backend*) and `frame/SKILL.md`; selecting a backend for a pass it is not wired for is a **loud stop, never a fallback**. Reviews at **two altitudes** — design/approach (the *shape*, judged against modern best practice) and correctness (the *diff*), where **parallel critics** partition the question: a general correctness pass alongside a hidden-failure pass, each with its own schema and its own artifact, presented as separate sections and never consensus-voted. Critiques and classifies; never fixes or merges. The role contract is the tool-neutral `AGENTS.md`, read automatically by whichever backend runs.
 - **Tests / gate** — the mechanical judge. Objective pass/fail. Green never implies business approval.
 - **The repo** — the one source of truth; the per-branch story file `reviews/<slug>.md` is the audit trail.
 
@@ -61,12 +61,22 @@ drift from reality because it never holds the merge fact — the same discipline
 - `reviews/<slug>.md` — the story file / audit trail.
 - `reviews/<slug>.design.json` — frame-time design-sketch review (`design-review-schema`).
 - `reviews/<slug>.approach.json` — review-time approach-pass output (`design-review-schema`).
-- `reviews/<slug>.codex.json` — review-time correctness output per round (`finding-schema`).
+- `reviews/<slug>.codex.json` — review-time correctness output per round (`finding-schema`). The name predates the second backend and is now a misnomer — `fireworks` writes it too, so the loop keeps one read path.
+- `reviews/<slug>.hidden-failure.json` — the parallel hidden-failure critic's output per round (`hidden-failure-schema`).
 - `.claude/workflow.json` — config: `baseBranch`, `branchPrefix`, `testCommand`, `reviewer`, `codexModel`.
 - `AGENTS.md` — the (tool-neutral) reviewer contract (tunable per repo).
 
+> **The review trail is never the change's product.** Everything under `reviews/<slug>.*` is
+> workflow bookkeeping the loop writes about itself — `.design.json` lands at *frame* time, before
+> implementation even starts, and each review round adds more. So a **scope-containment acceptance
+> criterion categorically exempts it**: read every such AC as "no *non-review-trail* file beyond
+> those enumerated," and **never enumerate these files in a story's allowed set**. Stories kept
+> tripping their own scope ACs on artifacts the workflow itself created — a defect the loop
+> inflicted on itself. A canned check: `git diff --name-only <base>...HEAD -- . ':(exclude)reviews/'`.
+> This exempts only the workflow's *own* artifacts; product files stay fully in scope.
+
 ## Global (installed once, shared by every app)
-- `~/.claude/skills/{frame,review,close}/` — the three skills (+ `review/finding-schema.json` and `review/design-review-schema.json`).
+- `~/.claude/skills/{frame,review,close,dev-audit}/` — the loop's three skills plus the pre-loop recon skill, with `review/` carrying its schemas (`finding-schema.json`, `design-review-schema.json`, `hidden-failure-schema.json`) and the `fireworks` backend's runtime (`fireworks_runner.py`, `fireworks-models.json`, `requirements.txt`).
 - `~/.claude/hooks/block-main-writes.sh` — the guard hook, wired in `~/.claude/settings.json`.
 - `~/.claude/workflow-protocol.md` — this document.
 - `~/.claude/workflow-AGENTS-template.md` — the contract template `/frame` copies into new repos.

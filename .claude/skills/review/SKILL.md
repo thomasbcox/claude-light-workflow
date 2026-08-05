@@ -25,9 +25,11 @@ The independent reviewer is **selectable**. This section is the canonical resolu
 
 **Dispatch by backend** at each reviewer invocation (steps 6 and 8 here; the design review in `/frame`):
 - **`codex`** — run the `codex exec` command shown at that step, unchanged. Agentic: it explores the repo itself.
-- **`fireworks`** — **wired at the approach (step 6) and correctness (step 8) altitudes.** Run the thin invocation shown there. Non-agentic: it cannot run `git diff` or read the repo, so the runner *pushes* the context; that is why it owns context assembly rather than the skill. It is inherently read-only (no file tools, so no sandbox needed) and its output is schema-enforced at the API and validated again before any artifact is written.
+- **`fireworks`** — **wired at every altitude: design (`/frame` step 6), approach (step 6) and correctness (step 8).** Run the thin invocation shown there. Non-agentic: it cannot run `git diff` or read the repo, so the runner *pushes* the context; that is why it owns context assembly rather than the skill. It is inherently read-only (no file tools, so no sandbox needed) and its output is schema-enforced at the API and validated again before any artifact is written.
 
-**Selecting a backend for a pass it is not wired for is a loud STOP**, never a fallback. Today that means `fireworks` at the design pass (`/frame` step 6) — the only unwired pair left. Stop with: *"The `fireworks` reviewer backend is not wired for the `<pass>` pass yet (follow-up story). Set that pass to `codex` in .claude/workflow.json, or pass `/review codex`."* Do **not** fall back to codex, run a partial review, or write any `*.json` artifact. A silent fallback would report a review that the selected backend never performed.
+**Selecting a backend for a pass it is not wired for is a loud STOP**, never a fallback. Stop with: *"The `<backend>` reviewer backend is not wired for the `<pass>` pass yet. Set that pass to a wired backend in .claude/workflow.json, or pass `/review <backend>`."* Do **not** fall back to codex, run a partial review, or write any `*.json` artifact. A silent fallback would report a review that the selected backend never performed.
+
+**As of 2026-08-04 there is no unwired pair** — `codex` and `fireworks` are both wired at all four passes. The rule above is therefore currently unreachable, and it stays anyway: it is the fail-closed guard every *future* backend inherits the moment its name is added to the value set, and deleting it would mean the first partially-wired backend silently falls back instead of stopping. Do not "simplify" it away because nothing trips it today.
 
 The reviewer **role contract** is `AGENTS.md` — tool-neutral and read automatically by whichever backend runs.
 

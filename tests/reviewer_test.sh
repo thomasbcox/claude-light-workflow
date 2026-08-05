@@ -94,8 +94,8 @@ eq "unknown backend is rejected" "ERR" "$(resolve '{"reviewer":"bogus"}')"
 # string ending in those two words, so it could not tell design/approach apart —
 # a reviewer caught that it would pass whatever the first two positions held.
 # Order is: design approach correctness hidden-failure.
-eq "this repo routes approach+correctness+hidden-failure to fireworks, design to codex" \
-  "codex fireworks fireworks fireworks" "$(resolve "$(cat "$WF")")"
+eq "this repo routes all four passes to fireworks" \
+  "fireworks fireworks fireworks fireworks" "$(resolve "$(cat "$WF")")"
 
 echo "== behavioral: the configured gate and the AUTHORITATIVE CI gate are the same command =="
 # CI is the server-side gate branch protection requires, so a CI list that drifts below the
@@ -144,7 +144,11 @@ echo "== pin: a bad (pass, backend) pairing is a loud stop, never a silent fallb
 # review/SKILL.md and routed to from frame/SKILL.md's design pass.
 has "no codex fallback" "$REVIEW" "Do **not** fall back to codex"
 has "stop is scoped to unwired, not to non-codex" "$REVIEW" "**Selecting a backend for a pass it is not wired for is a loud STOP**"
-has "frame routes unwired design backend to stop" "$FRAME" "not wired for the design pass"
+# Every pass is wired at both backends as of 2026-08-04, so nothing trips the stop today.
+# That is exactly when a rule gets "simplified" away — and the next partially-wired backend
+# would then fall back silently instead of stopping. Pin the note that says keep it.
+has "unreachable-but-kept is stated, not left to be inferred" "$REVIEW" "there is no unwired pair"
+has "frame still routes an unwired design backend to the stop" "$FRAME" "not wired for the design pass, STOP"
 # The MIXED-pair stop is a DIFFERENT failure from the unwired one above: there both backends
 # are fine but one is not wired for its pass; here both are wired and simply differ, splitting
 # ONE altitude's findings across two models with no reconciliation rule. Silent failure: the
