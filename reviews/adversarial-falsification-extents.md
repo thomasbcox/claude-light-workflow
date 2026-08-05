@@ -554,3 +554,50 @@ instruction and surfaced to the human, rather than being hidden. The test change
 not remove them. The diff's failure posture is thus not weakened."
 
 **Findings:** none.
+
+## Decisions (2026-08-05)
+
+Round 1 — approach pass clean, hidden-failure pass clean, correctness returned one QUESTION and one
+NIT. Thomas: *"fix the question, reject the nit, file the install.sh issue."*
+
+**Correctness**
+
+- **QUESTION — replacing the test-notes critique sentence also dropped the reviewer's
+  oracle/mechanism critique role** → **fix.** The finding is correct on the facts: AC1's rationale
+  ("moot once Test notes' regression half no longer exists yet at review time") holds for the
+  *regression* half only. The oracle mode and mechanism are still authored at step 5 and still
+  present when step 6 runs, so the critique of *those* was never moot — the whole sentence was
+  removed on a rationale that covered half of it. Step 5 still tells the **author** to derive the
+  check from the criterion rather than an implementation shape; after the replacement, no one was
+  asked to police that. A rule with no second head behind it is the exact decay mode this story
+  exists to prevent, so the clause is restored — scoped to what genuinely survives (the mechanism
+  critique), not reinstated wholesale.
+- **NIT — committed `approach.json` is missing the now-required `regressions` field** → **reject.**
+  The observation is accurate but the diagnosis is not. The artifact was **not** produced under the
+  new schema: `./install.sh --check` shows the deployment is stale (`skills/frame` STALE,
+  `workflow-AGENTS-template.md` STALE), the deployed `design-review-schema.json` still requires only
+  `verdict, findings`, and the deployed runner's design prompt contains zero occurrences of the new
+  ask. The artifact conforms exactly to the schema it actually ran against. The suggested remedy
+  would also violate `/review`'s hard constraint — *do not edit the reviewer's output*. The real
+  condition is deployment staleness, which `/close` resolves post-merge by running `install.sh`.
+
+**Approach** — no findings; shape blessed.
+
+**Hidden-failure** — no findings.
+
+**Filed, not fixed here**
+
+- **`install.sh --check` misclassifies any imported deployment as HAND-EDITED** → **file** (AUDIT-3).
+  Surfaced while verifying the NIT. `classify_drift` compares the deployment against `git archive`
+  of the manifest commit, which contains only tracked files; a deployed runner that has been
+  imported has a gitignored `__pycache__` beside it, so the comparison always differs and the
+  artifact is reported HAND-EDITED — whose stated meaning is "local edits a re-install would
+  destroy." Nothing was edited. Out of scope for this story; filed so the warning stops crying wolf.
+
+**Recorded, not a finding**
+
+- **This round did not exercise the new mechanism.** Because the deployment is stale, the design
+  pass that reviewed *this* story ran the old prompt against the old schema. Expected and already
+  stated in AC1's test note, but worth pinning down as a fact OPS-22's lookback needs: reviewer-
+  sourced regressions have still never run end-to-end. **Loop 1 of the 5-loop trigger is the next
+  story framed after this merges and redeploys — not this one.**
