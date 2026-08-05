@@ -488,6 +488,119 @@ fix belongs in the writer. Pre-existing, not introduced by that story. **Fix whe
 open** — one `write` call — rather than as a story of its own; a bookkeeping-only story is against
 doctrine. Recorded so it stops being re-raised as a NIT every round.
 
+OPS-20 — **Break the single-head coupling between a change and the tests that judge it.**
+**Priority: HIGH (Thomas, 2026-08-04.)** Filed from an analysis Thomas lifted from another repo (a
+TypeScript/React codebase) and asked to be *interpreted* for this one, not transplanted. **The root
+cause as stated there holds verbatim here:** the regression list and the tests come from the same
+head at the same time, so a test can be confidently wrong in exactly the way the change is wrong,
+and nothing in the loop notices.
+
+- **Evidence from this repo, not theory — three instances, two of them from the session that filed
+  this.** (1) `tests/reviewer_test.sh`'s `resolve()` is a **test-local Python reimplementation** of
+  the reviewer-resolution rule whose only authoritative statement is **prose** in
+  `review/SKILL.md` (→ *Reviewer backend*). The check proves the shim agrees with the expectations
+  beside it; **nothing ties either to the skill**, because nothing executes prose. Shim and
+  expectations were written together, by one head. (2) During `route-design-hidden-failure`, two
+  assertions were judged wrong and rewritten **by the same head that made the change they were
+  failing** — `table model reaches the request` and `each pass binds a distinct schema`. Both
+  rewrites look correct on inspection; that is precisely the problem, since the same inspection
+  produced them. (3) BUG-6's fix was demonstrated red **against a mutation its own author chose**
+  (disable the probe) — the strongest verification the loop currently offers, and still
+  self-selected.
+- **Scope this ESTATE-WIDE, not to this repo (Thomas, 2026-08-04 — a correction to the first
+  filing).** `/frame`, `/review`, `/close` and `/dev-audit` ship globally via `install.sh` to every
+  project, across many languages and stacks. So the question is **not** "which of the four bite in
+  `claude-light-workflow`" — that is a parochial test that would rank them by this repo's Python and
+  Markdown mix and get the answer wrong. The question is **what the loop can mandate or support in
+  an arbitrary repo whose language it does not know in advance.** That splits the four cleanly:
+- **Tier 1 — loop-level, language-neutral, ships in the skills.** Options **3 and 4** are *process
+  and doctrine*: they contain no tool, no dependency, and no syntax, so they behave identically in
+  TypeScript, Go, Rust, Java, SQL or shell. They are stated once here and every repo inherits them.
+  This is the tier that earns work first, because its cost is paid once and its reach is total.
+- **Tier 2 — per-ecosystem, belongs in `/dev-audit` Table A.** Options **1 and 2** are *tool
+  categories* with a mature implementation per ecosystem, exactly like the linters Table A already
+  routes. They cannot be mandated globally (the loop cannot know the target's stack), but they can
+  be **detected and recommended** by the existing recon step — the pattern Table A was built for.
+- **Option 3 — adversarial-first falsification (Tier 1; the recommendation).** Invert who writes the
+  regression list: the independent reviewer generates it **from the spec, at frame time, before any
+  test is written**, and the author writes tests against *its* list. Attacks the root cause at the
+  source rather than mitigating it downstream. **Why it is first under estate framing:** (a) the
+  reviewer reads the **spec**, not the code's syntax, so it is the *only* one of the four that works
+  unchanged in a language nobody anticipated — including repos with no test framework at all; (b) it
+  is the only one that reaches product **no executable test can reach**, and every repo has some:
+  config, IaC, SQL migrations, CI YAML, prompt files, docs-as-contract. A second reader is the only
+  oracle prose has, in any language; (c) it is a re-sequenced, sharper **OPS-18**, which today
+  proposes reviewer mutations at *review* time — too late, since the tests already exist by then and
+  anchor the reviewer's thinking; (d) it answers the objection that **retired the frame-side
+  falsification plan** in `thin-the-loop` ("an optional discipline in a solo repo is one you either
+  always write from habit or never write") — that plan was cut because it came from the same head,
+  and sourcing it from the reviewer is the version that survives its own critique; (e) the machinery
+  **already exists** — the design review runs at `/frame` step 6, so this is one added schema and
+  one added ask on a call already being made. **Cost:** one reviewer call's tokens at frame time, a
+  new schema, and frame step 5 gains a dependency on step 6's output (ordering change) — paid in
+  every repo, every story. **Risk:** it re-grows `/frame`, which `thin-the-loop` deliberately
+  thinned, and that weight lands estate-wide; it must land as a **replacement** for author-written
+  regression lists, not an addition alongside them, or every repo pays twice.
+- **Option 4 — computed extents (Tier 1).** Where a criterion quantifies ("every deployed skill",
+  "each pass", "both directions × both keys", "every user"), the test derives the cross-product **in
+  code from the real source list** instead of the author retyping members. Language-neutral as a
+  **doctrine line in `/frame`'s test-notes guidance** — every language can iterate a list, so the
+  rule ships once and applies everywhere. **Cost:** near zero; no dependency, no runtime, available
+  immediately; one more line of always-loaded `/frame` guidance (the OPS-11 every-line-costs
+  lesson). **Risk:** an extent derived from the *same* source the code reads can be vacuously true —
+  BUG-6's lesson applied to test construction, and the guidance must say so. **Precedent, not
+  invention:** this repo already does it in two places (`docs_test.sh` parses `install.sh`'s
+  `ARTIFACTS` block rather than listing skills; the BUG-6 suite loops `PASSES`/`ALTITUDES`), and
+  violates it in one (`reviewer_test.sh` hand-enumerates resolver cases). That is local evidence the
+  rule is followable and forgettable — the case for writing it down, not a reason to scope it here.
+- **Option 2 — mutation testing (Tier 2).** The framing that earns it: it is **demonstrate-red,
+  exhaustive and not chosen by the author** — a generalization of a discipline the loop *already
+  mandates* (`frame` step 9), not a new idea to sell. Mature per ecosystem, so it routes through
+  Table A like any linter: **Stryker** (JS/TS), **mutmut** / **cosmic-ray** (Python), **PIT** (JVM),
+  **cargo-mutants** (Rust), **go-mutesting** (Go), **Stryker.NET** (C#), **infection** (PHP).
+  **Cost:** reruns the whole suite once per mutant — hundreds of runs. Per the estate standard
+  (dependencies belong in **CI**, never the local gate, which stays dependency-light) *and* its
+  runtime, this is a **scheduled** CI job, not a PR gate — the pattern
+  `.github/workflows/scheduled.yml` already establishes here. **Risk:** equivalent-mutant noise, and
+  a green mutation score reading as "well tested" while the untestable fraction of the repo stays
+  unmeasured — which is why it complements option 3 rather than substituting for it.
+- **Option 1 — property-based testing (Tier 2, behind a detection signal).** Also mature per
+  ecosystem — **fast-check** (JS/TS), **Hypothesis** (Python), **proptest**/**quickcheck** (Rust),
+  **jqwik** (JVM), **gopter** (Go), **FsCheck** (.NET). Its payoff depends on something the loop
+  cannot assume: whether the target repo **has a pure, total core** worth generating against. A
+  roster/filter/sort layer is ideal; a thin I/O shell is not. That makes it a `/dev-audit`
+  **detection signal → recommendation**, never a global mandate: recommend it where recon finds a
+  substantial pure-function surface, stay quiet elsewhere. **Cost:** a dependency plus a genuinely
+  different way of thinking, per repo that adopts it. **Risk (general, not local):** aiming a
+  generator at a test that **reimplements** the rule it checks hardens the reimplementation and
+  proves nothing about what ships — see the hazard below.
+- **A cross-language hazard this repo happens to exemplify: tests that reimplement the rule they
+  test.** `tests/reviewer_test.sh`'s `resolve()` is a test-local reimplementation of a rule stated
+  authoritatively only as **prose** in `review/SKILL.md`. This is not a Python or a Markdown problem
+  — it is the classic "test doubles the implementation" antipattern, reachable in every language,
+  and it is *invisible* to options 1, 2 and 4 (all three would faithfully exercise the double).
+  Option 3 catches it, because a reviewer working from the spec asks what proves the **shipped rule**
+  says this. Worth stating in whatever guidance lands, and worth fixing here: giving that rule **one
+  executable home** both the skill and the tests defer to is a prerequisite for ever pointing a
+  generator at it — but it means the loop's most doctrinal rule stops being prose, a shape change to
+  how skills express behavior. Named, not assumed.
+- **Lean: 3 first, 4 alongside it (both Tier 1, both ship everywhere), then 2 and 1 as Table A
+  recommendations gated on recon.** 3 is the only option that works in an unknown language and the
+  only one that reaches untestable product; 4 is nearly free and pure doctrine; 2 and 1 are real but
+  are per-repo tooling decisions the loop should *inform*, not impose.
+
+(Logged 2026-08-04; **re-scoped estate-wide the same day** after Thomas corrected a first filing
+that had ranked the four options by *this* repo's language mix — the tiering above replaces that
+reasoning. An **eighth** evaluate-and-decide workflow/architecture item under `OPS-`, and the second
+about the loop's **verification discipline** rather than its reviewer layer. The prefix-revisit
+question OPS-11 opened keeps accruing data points — still a **one-way door** left for Thomas.
+**Interacts with:** OPS-18 (option 3 re-sequences it — resolve them together, not separately),
+OPS-15 (Tier 2 lands as Table A rows, the same table that item wants to teach about prompt-code),
+OPS-17 (single-sourcing; the reimplementation hazard is the same disease), and `thin-the-loop`'s
+retired falsification plan. **Estate note:** any Tier 1 change ships to every repo through
+`install.sh`, so its instruction weight is paid on every invocation everywhere — the standing
+tension the ROADMAP names as *reach* vs. the *lightweight* identity.)
+
 _(OPS-10 shipped — see [Done](#done).)_
 
 ---
