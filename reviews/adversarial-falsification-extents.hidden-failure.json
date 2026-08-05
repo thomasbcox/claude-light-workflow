@@ -1,0 +1,4 @@
+{
+  "summary": "The diff does not introduce new executable code that would swallow, absorb, or silently degrade on error. The changed files are documentation, JSON schema, a static prompt string, and test infrastructure; no bare except/catch, catch-log-continue, silent fallbacks, or deleted assertions/safety checks appear. The one acknowledgement of a possible silent-degradation path (an empty 'regressions' return from the design review) is addressed by an explicit coverage-check instruction and surfaced to the human, rather than being hidden. The test changes add assertions, not remove them. The diff\u2019s failure posture is thus not weakened.",
+  "findings": []
+}

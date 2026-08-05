@@ -508,3 +508,49 @@ the problem; no code should not exist."
 
 **Findings:** none — clean pass. Shape blessed; the correctness pass runs this same round per
 `review/SKILL.md` step 7's gate.
+
+## Fireworks correctness review (2026-08-05, base main, HEAD 47977fc)
+
+**Summary:** "The diff faithfully implements all 12 ACs: the step-5→6→7→9 re-sequencing, the schema
+extension, both prompt copies, the coverage check, the computed-extents doctrine, the drift pins,
+the backlog items, and the four doc corrections. The gate-affecting changes (schema, test stubs,
+pins) are correct and internally consistent. Two findings: one QUESTION about a reviewer role
+silently dropped when the test-notes critique sentence was replaced, and one NIT about a committed
+review artifact that doesn't conform to the schema it was produced under."
+
+### QUESTION
+
+- **Replacing the test-notes critique sentence also dropped the reviewer's oracle/mechanism critique
+  role** · `.claude/skills/frame/SKILL.md:52`
+  AC1 says the new regression ask "replaces" the old "Critique the spec's test notes" sentence,
+  calling it "moot once Test notes' regression half no longer exists yet at review time." But the old
+  sentence covered more than the regression half — it also told the reviewer to flag any planned
+  check derived from an implementation shape rather than from the criterion, and any criterion the
+  notes leave unchecked or check only where it cannot fail. The oracle mode/mechanism half of Test
+  notes **does** still exist at review time (AC3 preserves it), so that critique is not moot — yet
+  the new text removes the entire sentence, and nothing else in step 6 asks the reviewer to police
+  it.
+  **Suggestion:** confirm whether the loss is intentional; if not, restore a clause covering the
+  mechanism critique, and if so, record it as a conscious decision rather than a side effect.
+
+### NIT
+
+- **Committed `approach.json` is missing the now-required `regressions` field** ·
+  `reviews/adversarial-falsification-extents.approach.json:1`
+  The artifact carries only `verdict` and `findings`, omitting the field AC2 makes required on the
+  schema the approach pass binds. The critic reasoned that since the runner validates required
+  fields, a runner-generated artifact should have included `regressions: []`.
+  **Suggestion:** add `"regressions": []` to the artifact so it conforms to the schema it was
+  produced under.
+
+## Hidden-failure review (2026-08-05, base main, HEAD 47977fc)
+
+**Summary:** "The diff does not introduce new executable code that would swallow, absorb, or
+silently degrade on error. The changed files are documentation, JSON schema, a static prompt string,
+and test infrastructure; no bare except/catch, catch-log-continue, silent fallbacks, or deleted
+assertions/safety checks appear. The one acknowledgement of a possible silent-degradation path (an
+empty 'regressions' return from the design review) is addressed by an explicit coverage-check
+instruction and surfaced to the human, rather than being hidden. The test changes add assertions,
+not remove them. The diff's failure posture is thus not weakened."
+
+**Findings:** none.
