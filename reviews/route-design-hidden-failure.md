@@ -127,3 +127,71 @@ runner is next open. OPS-20 was filed in a separate commit (`BACKLOG.md`).
 The unwired-pair STOP in `review/SKILL.md` is now **unreachable** — every pass is wired at both
 backends — and was deliberately kept, with a note and a gate pin saying so. It is the fail-closed
 guard any future backend inherits the moment its name enters the value set.
+
+## Fireworks approach review (2026-08-04, base main, HEAD ebb1c5b)
+
+Backend `fireworks`, model `glm-5p2`. **Verdict: approve.** Empty findings array — the shape
+cleared without a single concern raised, so the correctness altitude ran in the same round per
+`/review` step 7.
+
+**Caveat recorded, not glossed:** this pass judged the shape against a spec written *after* that
+shape (see the header). A clean approach verdict under those conditions carries less weight than a
+clean verdict on a framed story, and should not be cited later as evidence the retroactive-spec
+route is sound.
+
+## Fireworks correctness review (2026-08-04, base main, HEAD ebb1c5b)
+
+Backend `fireworks`, model `glm-5p2`.
+
+> The change wires the design pass to fireworks, re-routes hidden-failure to deepseek-v4-pro and
+> design to kimi-k3, fixes BUG-6 (vacuous schema validation), updates doctrine, and adds OPS-20 to
+> the backlog. The implementation is sound and well-grounded in the spec. I found no correctness
+> defects — the BUG-6 fix is thorough (both check_schema and empty-object probe), the design pass
+> wiring is consistent across pass table/altitude/frame dispatch/config, --base is correctly derived
+> from needs_base flags, and OPS-19's trailing newline is applied. One minor observation and one
+> question.
+
+### QUESTION — Empty-object probe assumes every schema has `required`
+
+*Claim.* `load_schema`'s probe validates `instance={}` and expects rejection; the docstring states
+"Every schema here carries a non-empty `required`". A future schema that legitimately validates `{}`
+(only-optional fields, constraining via `type`/property constraints instead) would be rejected as
+"constrains nothing". The probe's semantics are *rejects empty object*, not *constrains something*,
+and those are not identical for all possible schemas. Is "non-empty `required`" a permanent
+invariant for every schema this runner will ever load?
+
+*Suggestion.* If intended as a permanent invariant, state it in the docstring as a **precondition**
+rather than an observation, so future schema authors know the probe will reject them. No code change
+needed if the invariant is confirmed.
+
+### NIT — `frame/SKILL.md`'s STOP text stayed design-specific while `review/SKILL.md`'s went generic
+
+*Claim.* The pin `frame still routes an unwired design backend to the stop` passes, and correctly
+reflects what `frame/SKILL.md` says. But `review/SKILL.md`'s STOP text was generalised to
+"`<backend>` … not wired for the `<pass>` pass" while `frame/SKILL.md` kept design-specific
+language — a minor inconsistency between two skills stating one rule.
+
+*Suggestion.* No action required; aligning them would be cleaner but is out of this story's scope.
+
+## Hidden-failure review (2026-08-04, base main, HEAD ebb1c5b)
+
+Backend `fireworks`, model `deepseek-v4-pro` — **the first round run with the two correctness
+critics on different model lineages**, which is AC-1's purpose.
+
+> The diff adds explicit error handling (load_schema's multi-layered checks, _jsonschema's import
+> guard) and removes no safety checks or assertions. All new error paths surface loudly as
+> RunnerError; the conditional --base requirement is derived from the pass table and cannot silently
+> skip when needed. No bare except, catch-log-continue, silent fallback, or analogous hidden failure
+> is introduced.
+
+**No findings.**
+
+### Deviation recorded — which runner performed this review
+
+`/review`'s command blocks invoke `$HOME/.claude/skills/review/fireworks_runner.py`, the **deployed**
+copy. That copy is stale on this branch (`install.sh --check`: `skills/review`, `skills/frame`,
+`workflow-protocol.md` all STALE), and its routing table still sends **every** purpose to
+`glm-5p2`. Running it would have reviewed this change with the pre-change engine *and* put both
+correctness critics back on one model — the exact coupling AC-1 removes. All three passes were
+therefore run from the **repo copy** (`.claude/skills/review/fireworks_runner.py`). Deliberate
+deviation, recorded because it means this review did not exercise the deployed path.
