@@ -195,3 +195,25 @@ copy. That copy is stale on this branch (`install.sh --check`: `skills/review`, 
 correctness critics back on one model — the exact coupling AC-1 removes. All three passes were
 therefore run from the **repo copy** (`.claude/skills/review/fireworks_runner.py`). Deliberate
 deviation, recorded because it means this review did not exercise the deployed path.
+
+## Decisions (2026-08-04)
+
+Thomas, on the round-1 findings:
+
+- **Correctness · QUESTION — empty-object probe assumes every schema has `required`** → **FIX.**
+  "apply the docstring precondition fix". Applied: `load_schema`'s docstring now states the
+  precondition as a **contract** rather than an observation, names explicitly that the probe's test
+  ("rejects `{}`") is *narrower* than its intent ("constrains something"), and directs a future
+  schema author who trips it to add `required` rather than loosen the check — the path that would
+  reopen BUG-6. Docstring only; no behaviour change, so the gate result is unchanged at 226.
+- **Correctness · NIT — `frame/SKILL.md` STOP wording design-specific vs `review/SKILL.md` generic**
+  → **ACCEPT.** "accept the nit". No change. The reviewer itself marked it no-action; the layering is
+  deliberate — `review/SKILL.md` carries the general rule, `/frame` step 6 applies it to the one pass
+  that step is about. Not to be re-raised on re-review.
+- **Hidden-failure** → no findings, nothing to decide.
+- **Approach** → clean (empty findings), nothing to decide.
+
+**Deploy decision (same turn):** "then redeploy" — `install.sh` run against this branch, before
+merge. Recorded because it means `~/.claude/` carries branch code that is not yet on `main`; if the
+branch changes before merge, the estate needs a second redeploy. Reversible, and re-running
+`install.sh` from `main` after merge restores the invariant.

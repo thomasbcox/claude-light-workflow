@@ -496,9 +496,18 @@ def load_schema(name: str, path: Path) -> dict:
     substituted for a schema is a LEGAL schema whose keywords are simply
     unrecognised, so it accepts everything and check_schema is happy.
 
-    The probe catches that one. Every schema here carries a non-empty `required`,
-    so the empty object MUST be rejected. If it passes, the file is not
-    constraining this pass and nothing validated against it can be trusted.
+    The probe catches that one: the empty object MUST be rejected, or the file is
+    not constraining this pass and nothing validated against it can be trusted.
+
+    PRECONDITION on every schema this runner loads — a contract, not an
+    observation: it MUST reject `{}`. Today all four satisfy it by carrying a
+    non-empty `required`, and the gate pins that per pass. The probe tests
+    "rejects the empty object", which is NARROWER than "constrains something": a
+    schema whose fields are all optional but which constrains via `type` or
+    property rules would be legitimate and still rejected here. That is a
+    deliberate trade — the narrow test is the one that catches the observed bug —
+    so a schema author who trips it should add `required`, NOT loosen this check.
+    Loosening it is how BUG-6 comes back.
     """
     try:
         schema = json.loads(path.read_text())
