@@ -81,8 +81,14 @@ inventing checks that cannot fail. Both artifacts are prose whose *content* is t
 pinning their wording would be exactly the pin regrowth `thin-the-loop` argued against, and a
 wording pin would pass against text that says the right words and means nothing.
 
-- **AC-1** — *Mechanical:* `CLAUDE.md` exists at the repo root. *Not mechanical:* whether it states
-  the reach usefully. Oracle: the design/approach reviewer, named here deliberately.
+- **AC-1** — *Not mechanical.* Oracle: the design/approach reviewer, named here deliberately.
+  **Correction at implementation (step 9):** the plan said a mechanical "`CLAUDE.md` exists at the
+  repo root" check. **No such check was added**, and the note is corrected rather than the claim
+  quietly dropped. Reason: a bare existence pin fails this repo's stated pin bar — its silent
+  failure is a *deleted file*, which every `git diff` and every review already surfaces loudly, so
+  the pin would guard nothing that is not already guarded. Adding it would be the pin regrowth
+  `thin-the-loop` pruned. **Consequence, stated plainly: no AC in this story is verified by the
+  gate.** The gate only proves nothing else broke (AC-4).
 - **AC-2** — No mechanical oracle. Oracle: the reviewer, which is also the party the directive is
   addressed to — so it is reading its own instructions, and its verdict is weaker than usual.
   Recorded rather than hidden.
@@ -199,3 +205,18 @@ on a structural decision the story itself defers.
 
 Both IMPORTANTs are two-way and advisory; if either reading is wrong, the fix is one reworded
 paragraph in each file.
+
+## Build note (2026-08-05)
+
+| AC | Files |
+|---|---|
+| 1 | `CLAUDE.md` (new) |
+| 2, 3 | `AGENTS.md` |
+| 4 | no files — verified by the gate |
+| 5 | `BACKLOG.md` (OPS-21) |
+| 6 | no files — verified by `git diff --name-only` |
+
+**Demonstrate-red: not applicable, and not skipped quietly.** Step 9 requires a red demonstration
+for each AC whose test notes name the gate as its oracle. **No AC here does** — this story adds no
+assertion to the gate, by design (see Test notes). The gate's role is AC-4 only: proving the two
+prose changes broke nothing. Both design-review IMPORTANTs were applied as decided.
