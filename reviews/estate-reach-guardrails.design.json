@@ -1,0 +1,35 @@
+{
+  "verdict": "The shape is right-sized and honest: two prose artifacts for two distinct readers, no gate check, no wording pin, no dependency \u2014 fully consistent with thin-the-loop's pin purge and OPS-17/OPS-20's framing, and the redundancy across CLAUDE.md (builder) and AGENTS.md (reviewer) is defensible because neither reader can substitute for the other. Nothing here reinvents a library or a declarative construct, and AC-5's two-file scope is appropriately tight. The leverage is in the content shape, not the structure: the story's own evidence shows the estate already existed as an abstract prose claim (the global CLAUDE.md) and was under-weighted twice while loaded, so the deliverables only earn their keep if they are concrete and procedural \u2014 anchored to install.sh's ARTIFACTS as the verifiable source of truth and phrased as a pre-judgment lookup \u2014 rather than a second statement of the abstract fact. On Q1, proceed under A: it is the reversible path and does not foreclose B.",
+  "findings": [
+    {
+      "severity": "IMPORTANT",
+      "reversibility": "two-way",
+      "standing": "standard",
+      "title": "CLAUDE.md re-states the abstract claim that already failed twice \u2014 anchor it to ARTIFACTS as a pre-judgment action",
+      "locus": "Design sketch \u2014 `CLAUDE.md` (new, repo root)",
+      "claim": "The problem statement says the estate 'exists only as a claim in prose \u2014 the global CLAUDE.md', and both documented failures occurred with that claim already loaded into context. A project CLAUDE.md that states the reach at the same abstraction level ('deployed by install.sh to every project on this machine', per Q2's suggestion) repeats the exact shape the story diagnoses as losing to concrete local evidence \u2014 and 'every project on this machine' is an unverifiable world-claim that goes stale exactly like the '~8 repos' count Q2 worries about. The story's own conclusion \u2014 'structurally present rather than remembered' \u2014 implies the content must be concrete and actionable, not a second copy of the abstract fact.",
+      "alternative": "State reach as a verifiable property of the mechanism: 'every file in install.sh's ARTIFACTS mapping ships verbatim to consumer repos across many languages', then phrase the rule as an action: 'before ranking a technique, severity, or fit, check whether the artifact under review is in that mapping; if you are nonetheless reasoning repo-locally, say so explicitly.' Reference the mapping; do not count or describe the estate.",
+      "win": "Q2 is solved by construction \u2014 no count, no world-claim, nothing to go stale, and the claim is checkable from inside the repo by opening one file. Converts a twice-ignored abstract fact into a concrete lookup tied to an artifact the reasoner can actually read at judgment time, which is the only differentiator the story's own evidence supports."
+    },
+    {
+      "severity": "IMPORTANT",
+      "reversibility": "two-way",
+      "standing": "standard",
+      "title": "Option-A reviewer bullet presupposes the reach knowledge it is meant to supply \u2014 phrase it as a manifest lookup",
+      "locus": "Design sketch \u2014 `AGENTS.md` bullet under Q1 option A",
+      "claim": "The sketched generic wording ('reach is judged *where artifacts are consumed elsewhere*') only fires for a reader who already knows whether the reviewed repo's artifacts are consumed elsewhere. The reviewer runs on AGENTS.md as its contract \u2014 codex does not auto-load CLAUDE.md \u2014 so in this repo the reviewer's only reach signal is the bullet itself. The independent check therefore depends on the very estate awareness the story exists because Claude lacked, and in consumer repos the bullet is inert text whose trigger condition the reader cannot evaluate.",
+      "alternative": "Word the directive as a conditional lookup: 'If the reviewed repo maps files to external consumers \u2014 an install script, a template/ARTIFACTS manifest, a published package \u2014 judge changes to those files against their consumers, and flag any recommendation, ranking, or severity derived from the repo's own stack, test surface, or layout.'",
+      "win": "The directive self-activates exactly where reach exists and no-ops where it does not, so AC-3 holds without any repo-specific claim shipping. The reviewer needs zero prior knowledge of the estate \u2014 the bullet names its own trigger (the manifest), eliminating the hidden dependency on CLAUDE.md reaching a reader it never reaches. One conditional sentence; no drift surface, no deploy-contract change."
+    },
+    {
+      "severity": "QUESTION",
+      "reversibility": "two-way",
+      "standing": "standard",
+      "title": "Q1's 'one-way door' label is misplaced \u2014 A is the reversible path; ratify it and keep B open",
+      "locus": "Open questions \u2014 Q1",
+      "claim": "The story calls Q1 the one-way door and holds the sketch's assumption of A pending Thomas's call. But option A is one generic, rewordable bullet in an existing file: it changes no deploy contract, creates no second artifact, and can be revised or superseded by B at any time \u2014 two-way by any reading of the contract. B is the actual door (new template source, install.sh ARTIFACTS change, every future repo sourcing its contract from a new place, and \u2014 per the story's own words \u2014 'two contracts that can drift apart (OPS-17's disease, freshly created)'). Treating A as requiring the same ratification weight as B risks stalling a narrow guardrail on a structural decision the story itself says 'deserves its own story'.",
+      "alternative": "Have Thomas ratify A explicitly as the reversible default and record B as the deferred one-way decision, scoped to its own story. Building proceeds now; nothing about landing A forecloses or prejudices B later.",
+      "win": "Unblocks a two-file guardrail without a structural commitment, keeps AC-5's scope containment intact, and avoids shipping a second reviewer contract \u2014 a brand-new drift pair \u2014 inside a story whose stated purpose is fixing drift-driven failures."
+    }
+  ]
+}
