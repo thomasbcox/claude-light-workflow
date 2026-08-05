@@ -487,3 +487,24 @@ AC → file map:
 *Numbering note:* an earlier amendment left a gap (the list ran 9 → 11 → 13 with two
 references pointing at a vacated number). Renumbered contiguous 1–12 before this review;
 no criterion's content changed.
+
+## Fireworks approach review (2026-08-05, base main, HEAD 54204ec)
+
+**Verdict:** "Sound shape. I would satisfy these ACs essentially this way. The re-sequencing
+resolves the step-5/step-6 chicken-and-egg without a new top-level step — step 5 defers the
+regression half, step 6 generates and appends it, step 7 ratifies it, step 9 executes it. Extending
+the one shared schema with a required `regressions` array (legitimately empty at the approach-pass
+reuse) is the right declarative instinct — forking a second reviewer-output schema would restate the
+same concept and invite the OPS-17 drift the story correctly flags. The schema descriptions double
+as model guidance in the API push, so they are functional, not documentation-only DRY violations.
+Keeping oracle-assignment with the author is well-justified: the fireworks backend is non-agentic
+and cannot judge repo tooling. The coverage check (AC4) closes the one-level-up hidden-failure path
+the frame-time design review caught — an empty or partial reviewer return is surfaced as an explicit
+gap, not absorbed. Both prompt copies are pinned, including the one this repo actually executes. The
+computed-extents doctrine is one sentence with its vacuity caveat, matching the repo's precedent.
+The doc corrections are factual and verified against ground truth. The backlog items are
+well-structured with their accepted costs named. Nothing reinvents a dependency or is larger than
+the problem; no code should not exist."
+
+**Findings:** none — clean pass. Shape blessed; the correctness pass runs this same round per
+`review/SKILL.md` step 7's gate.
