@@ -610,6 +610,55 @@ retired falsification plan. **Estate note:** any Tier 1 change ships to every re
 `install.sh`, so its instruction weight is paid on every invocation everywhere — the standing
 tension the ROADMAP names as *reach* vs. the *lightweight* identity.)
 
+OPS-21 — **`AGENTS.md` is both this repo's reviewer contract and the template every other repo
+starts from; give this repo a way to say something repo-specific.** Filed 2026-08-05 from
+`estate-reach-guardrails`'s design review (Thomas: *"backlog B and B-prime for future
+consideration"*). Evaluate-and-decide; **not** committed work.
+
+- **The coupling.** `install.sh`'s ARTIFACTS maps `AGENTS.md::workflow-AGENTS-template.md`, so the
+  file the reviewer reads when reviewing *this* repo is byte-identical to the template `/frame`
+  copies into every new repo (`frame/SKILL.md` step 1). One file, two jobs. Anything written to
+  sharpen review *here* becomes the starting contract *everywhere*, so this repo structurally
+  **cannot** give its reviewer repo-specific guidance. `workflow-protocol.md` calls the contract
+  "tunable per repo" — true of every repo except the one that ships it.
+- **Why it surfaced.** `estate-reach-guardrails` wanted a strong, concrete directive ("every artifact
+  in *this* repo's ARTIFACTS reaches every project; never rank from this repo's Python/Markdown
+  mix"). It could not have one, and shipped the **generic conditional** form instead — true
+  everywhere, therefore weaker here. That story's option **A**; these are the deferred alternatives.
+- **Option B — decouple the template.** Add a `workflow-AGENTS-template.md` file holding the
+  portable contract, repoint ARTIFACTS at it, and let `AGENTS.md` become repo-specific.
+  **Cost:** a new file (~84 duplicated lines initially), the ARTIFACTS change, doc updates in at
+  least four places (`README.md` ×2, `ARCHITECTURE.md`, `workflow-protocol.md`), and a gate check
+  worth its place — ARTIFACTS must deploy the *template*, never `AGENTS.md`, since silent failure
+  ships this repo's self-description to every project as their contract. **Risk — the real
+  objection:** it *manufactures* a drift pair that does not exist today. Two contracts sharing most
+  of their text, and whoever improves the contract edits the file in front of them — almost always
+  `AGENTS.md`, being the one governing the repo they are in — so the template rots silently and
+  every **new** repo bootstraps from the stale copy. That is OPS-17's disease, created rather than
+  inherited, and inside a change meant to reduce drift failures. **The obvious mitigation fails:**
+  making `AGENTS.md` reference the template instead of duplicating it does not work on the fireworks
+  path, which reads the file's *contents* and pushes them as one blob — a pointer never reaches the
+  reviewer.
+- **Option B′ — an optional repo-local addendum (probably the better structural answer).** Leave
+  `AGENTS.md` as the template source; add an optional repo-local file (e.g. `AGENTS.local.md`) as a
+  **new optional context source** in `fireworks_runner.py`, pushed alongside the contract, following
+  the existing `manifest` optional-input pattern (absent ⇒ stated as absent, never silently
+  omitted). **No duplication, so no drift pair** — the addendum holds only what is repo-specific.
+  Generalizes: any repo on the estate gains repo-specific reviewer guidance, a capability none has
+  today. **Cost:** a runner change with its own review surface, plus a codex-path equivalent — codex
+  does not auto-read arbitrary files, so that prompt must name the addendum explicitly, and the two
+  backends must agree or the contract differs by backend. **Risk:** more machinery than the problem
+  has yet earned; and an optional input that is silently empty is the fail-open shape BUG-6 and the
+  fireworks context guard both exist to prevent — it must state absence, not omit it.
+- **Trigger (what would make this worth building).** A second occasion where this repo needs to tell
+  its reviewer something the template must not carry. One instance (`estate-reach-guardrails`) was
+  absorbed by generic wording; a second would show the generic form is not enough.
+
+(Logged 2026-08-05. A **ninth** evaluate-and-decide workflow/architecture item under `OPS-`. The
+prefix-revisit question OPS-11 opened keeps accruing data points — still a **one-way door** left for
+Thomas. **Interacts with:** OPS-17 — option B creates exactly the restatement-drift pattern that item
+exists to eliminate, which is the strongest argument for B′ over B.)
+
 _(OPS-10 shipped — see [Done](#done).)_
 
 ---

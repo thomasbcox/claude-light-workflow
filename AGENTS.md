@@ -51,6 +51,13 @@ choice still gets flagged if it's substandard. Three guardrails keep this honest
    norm and the repo's conventions.
 3. **Repo conventions are the local standard** — this file and any contributing docs define it.
 
+**Deployment reach.** If the repo maps files to consumers outside itself — an install script, a
+template or artifact manifest, a published package, a shared config — then changes to those files
+are judged against **those consumers**, not against this repo alone. Where that is so, flag any
+recommendation, ranking, or severity that was derived from this repo's own stack, test surface, or
+file layout: the repo you can see is not a representative sample of where the artifact runs. Say
+which it is. If the repo ships nothing outward, this does not apply.
+
 ## Classify (design / approach findings)
 Tag each design/approach finding on two axes; its disposition follows from them:
 
