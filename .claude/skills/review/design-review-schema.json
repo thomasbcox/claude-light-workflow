@@ -8,6 +8,25 @@
       "type": "string",
       "description": "Required, even when there are no findings. Frame: is this sketch a sound, modern way to satisfy the spec — and if not, what shape would you build instead? Review: if you built this from the spec yourself, would you build it this way? Name the simpler/declarative/library-based design when one exists."
     },
+    "regressions": {
+      "type": "array",
+      "description": "Adversarial regressions the reviewer proposes, one or more per acceptance criterion, so the author writes tests against a list they did not author. Populated ONLY at the frame-time design pass, where no test or implementation exists yet; the review-time approach pass reuses this schema and returns an empty array here.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "criterion": {
+            "type": "string",
+            "description": "Which acceptance criterion this targets — its number or a short quote identifying it."
+          },
+          "regression": {
+            "type": "string",
+            "description": "A plausible way an implementation could satisfy this criterion's LETTER while violating its INTENT. Derived from the criterion itself, never from an intended implementation shape (a selector, an assertion, a file token) — none exists yet."
+          }
+        },
+        "required": ["criterion", "regression"]
+      }
+    },
     "findings": {
       "type": "array",
       "description": "Empty array if the shape is sound and idiomatic. Approach pass: at most the 3 highest-leverage concerns.",
@@ -43,5 +62,5 @@
       }
     }
   },
-  "required": ["verdict", "findings"]
+  "required": ["verdict", "findings", "regressions"]
 }

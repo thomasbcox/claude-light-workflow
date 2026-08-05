@@ -1,0 +1,21 @@
+{
+  "summary": "The diff faithfully implements all 12 ACs: the step-5\u21926\u21927\u21929 re-sequencing, the schema extension, both prompt copies, the coverage check, the computed-extents doctrine, the drift pins, the backlog items, and the four doc corrections. The gate-affecting changes (schema, test stubs, pins) are correct and internally consistent. Two findings: one QUESTION about a reviewer role silently dropped when the test-notes critique sentence was replaced, and one NIT about a committed review artifact that doesn't conform to the schema it was produced under.",
+  "findings": [
+    {
+      "severity": "QUESTION",
+      "title": "Replacing the test-notes critique sentence also dropped the reviewer's oracle/mechanism critique role",
+      "file": ".claude/skills/frame/SKILL.md",
+      "line": 52,
+      "claim": "AC1 says the new regression ask 'replaces' the old 'Critique the spec's test notes' sentence, calling it 'moot once Test notes' regression half no longer exists yet at review time.' But the old sentence covered more than the regression half \u2014 it also told the reviewer to 'flag any planned check derived from an implementation shape (a selector, assertion, or file token) rather than from the criterion, and any criterion the notes leave unchecked or check only where it cannot fail.' The oracle mode/mechanism half of Test notes DOES still exist at review time (AC3 preserves it), so the critique is not fully moot \u2014 yet the new text removes the entire sentence, and nothing else in step 6 tells the reviewer to flag implementation-shape-derived checks or unchecked criteria. The reviewer's role in policing the mechanism half is gone without explicit acknowledgment.",
+      "suggestion": "Confirm whether dropping the mechanism-critique guidance is intentional. If the reviewer should still flag oracle/mechanism issues at the design pass, add a clause preserving that part of the old sentence (e.g., 'Flag any planned check derived from an implementation shape rather than from the criterion'). If the general 'judge the SHAPE' mandate is judged sufficient, note the loss in the story file so it's a conscious decision, not a silent side effect of the replacement."
+    },
+    {
+      "severity": "NIT",
+      "title": "Committed approach.json is missing the now-required `regressions` field",
+      "file": "reviews/adversarial-falsification-extents.approach.json",
+      "line": 1,
+      "claim": "The approach.json artifact contains only `verdict` and `findings`, omitting `regressions` \u2014 which AC2 makes a required field on design-review-schema.json, the schema the approach pass binds. The design.json has the same omission, but it is explained by 'this story is itself framed under the old prompt.' The approach pass, however, was run at HEAD 54204ec (commit 47977fc), after the schema change landed (275e582). The test-suite changes confirm the runner validates required fields (the stub fix was mandatory because 'the runner's own validation correctly rejected' literals omitting `regressions`), so a runner-generated approach artifact should include `regressions: []`. The artifact is categorically exempt from scope containment and the gate does not validate it, so this is cosmetic \u2014 but it is an inconsistency in the trail record.",
+      "suggestion": "Add `\"regressions\": []` to the approach.json (and optionally to design.json with a note that it predates the schema change) so the committed artifacts conform to the schema they were produced under."
+    }
+  ]
+}

@@ -65,14 +65,14 @@ backend. It takes either a bare string (that backend everywhere; the default is 
 purpose→backend map, because a backend can be wired for some altitudes and not others:
 
 ```json
-"reviewer": { "design": "codex", "approach": "fireworks",
+"reviewer": { "design": "fireworks", "approach": "fireworks",
               "correctness": "fireworks", "hidden-failure": "fireworks" }
 ```
 
-Two backends are wired. **`codex`** is agentic — it explores the repo itself — and runs at every
-altitude. **`fireworks`** runs open-weight models through the Fireworks API and is wired at the
-**approach and correctness altitudes**; only `/frame`'s design review still needs `codex`, and
-selecting an unwired pair stops loudly rather than falling back. It is non-agentic, so a
+Two backends are wired, both at **every** pass. **`codex`** is agentic — it explores the repo
+itself. **`fireworks`** runs open-weight models through the Fireworks API. Selecting a pass/backend
+pair that is *not* wired stops loudly rather than falling back — no such pair exists today, and the
+rule stays as the guard every future backend inherits. `fireworks` is non-agentic, so a
 vendored runner *pushes* the context and owns fan-out, joining, and all-or-nothing promotion; its
 output is schema-enforced at the API and validated again before anything is written. Which model
 serves which purpose lives in
@@ -120,9 +120,11 @@ design it does **not** catch:
 So the hook keeps you from *fat-fingering* a commit while sitting on `main`; it is not an adversarial
 sandbox. The real backstop is **server-side branch protection**: `main` requires the CI `gate` check
 to pass, requires a PR to merge, and enforces this for admins too (`enforce_admins=true`) — closing
-the gaps the cooperative hook can't cover server-side. `/close` establishes this protection as part
-of the merge flow (using the CI check's observed context) and then merges via auto-merge. The hook's
-own behavior is still pinned by [`tests/guard_test.sh`](tests/guard_test.sh) (the gate).
+the gaps the cooperative hook can't cover server-side. That protection is **repo setup, configured
+once** with `gh api` after observing the CI check's context name — not something `/close` performs.
+`/close` only *reads* whether required checks exist, to pick its merge strategy, and then merges via
+auto-merge. The hook's own behavior is still pinned by
+[`tests/guard_test.sh`](tests/guard_test.sh) (the gate).
 
 ## Continuous integration
 [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs the **gate** (the configured workflow test suites) plus
