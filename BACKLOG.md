@@ -702,6 +702,59 @@ shipped mechanism rather than to decide an open one. **Interacts with:** OPS-20 
 since its Tier-2 items 1 and 2 (property-based and mutation testing, routed via `/dev-audit` Table A)
 are untouched by this — and OPS-18, folded in above.)
 
+OPS-23 — **Documentation drift sweep: the remaining findings from the 2026-08-05 audit.** Filed
+2026-08-05 from a full doc-drift audit Thomas commissioned during
+`adversarial-falsification-extents`. **The four highest-severity findings were fixed in that story**
+(see its AC11); everything below is the remainder, deliberately left out of it to keep a
+doctrine-change diff from absorbing a documentation sweep.
+
+- **Why the gate did not catch any of this.** `tests/docs_test.sh` enforces exactly one doc
+  invariant in each direction: every skill in `install.sh`'s ARTIFACTS is named as a `/command` in
+  `README.md` **and** `ARCHITECTURE.md`, and no doc names an undeployed one. It **cannot check
+  whether a sentence is true**, and its reverse scan reads only those two files — `BACKLOG.md`,
+  `ROADMAP.md`, `CLAUDE.md`, `AGENTS.md` and the `SKILL.md` files are never scanned. That is
+  precisely how `/deep-audit` was retired in full with the suite green while an *open* backlog item
+  went on reasoning from it in the present tense.
+- **MEDIUM — claims that are stale rather than dangerous.** `AGENTS.md` says the reviewer works at
+  "two altitudes" and documents two schemas; a third pass (hidden-failure) with its own schema has
+  run since 2026-07-17, so the contract gives the reviewer no Output entry for a pass it is actually
+  running. `README.md` and `ARCHITECTURE.md` omit `reviews/<slug>.hidden-failure.json` from their
+  artifact lists and describe `/review`'s correctness stage without mentioning it runs **two
+  concurrent critics**. Both skills instruct a `## Codex <pass> review` heading that no story has
+  used since the second backend shipped — following it literally mislabels a fireworks review in the
+  permanent trail. CI is described without `shfmt` (which runs on every event) and overstates
+  gitleaks, which is pull-request-only. `BACKLOG.md` OPS-13 still says design and approach are
+  pending a follow-up; both shipped. OPS-12 lists cross-model source diversity as unbuilt; it
+  shipped with `fireworks-models.json`. OPS-15 reasons in the present tense from the retired
+  `/deep-audit`. `ROADMAP.md` says one backend is wired. `ARCHITECTURE.md` calls a single script
+  "the gate" when `testCommand` runs five suites.
+- **LOW — mostly one systemic rename.** "Codex" is used as a synonym for "the reviewer" across at
+  least eight files (`README.md`'s tagline, four `SKILL.md` frontmatters, `AGENTS.md`, the
+  "Claude↔Codex" branding, `install.sh`'s header). This is **one decision, not eight bugs**, and it
+  interacts with the deliberately-kept `.codex.json` filename misnomer that `workflow-protocol.md`
+  already documents — so decide the naming question once. Also: "recon tools" plural after the second
+  one retired; `ARCHITECTURE.md` citing charter text `thin-the-loop` deleted; dated retirement facts
+  duplicated into `ROADMAP.md` against its own no-lifecycle-status rule; and Requirements sections
+  that list the `codex` CLI as required while omitting the `fireworks` venv and `FIREWORKS_API_KEY`.
+- **Correct today, but unguarded — worth knowing before trusting them.** Nothing anywhere greps for
+  a `Status: merged` story header, so the declared-vs-observed doctrine holds only because no one has
+  broken it — and `/close` writes that file, so one skill edit could reintroduce it estate-wide with
+  the gate green. `workflow-protocol.md`'s "Global (installed once…)" list matches ARTIFACTS exactly
+  but is hand-maintained and derives from nothing. The CI↔`testCommand` pin matches the **first**
+  `run:` line starting `bash tests/`, so reordering CI would silently compare the wrong string. The
+  guard-hook docs are accurate line-by-line but their *wording* is unguarded.
+- **The obvious follow-on question, not answered here.** Several of these are cases where a doc
+  restates something a machine could derive (the artifact lists, the Global list, the schema
+  enumerations in `AGENTS.md`). That is OPS-17's disease, and OPS-20's **computed-extents** rule —
+  shipped by the same story that filed this — is the doctrine that would apply. Whether any of it is
+  worth mechanizing, versus simply corrected once by hand, is the decision this item exists to put to
+  Thomas.
+
+(Logged 2026-08-05. An **eleventh** `OPS-` item. **Interacts with:** OPS-17 — nearly every finding
+here is a restatement that drifted from its source, which is that item's thesis with a fresh
+evidence set; and OPS-21, since two findings are in `AGENTS.md`, the file that is both this repo's
+contract and every other repo's template.)
+
 _(OPS-10 shipped — see [Done](#done).)_
 
 ---

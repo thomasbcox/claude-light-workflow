@@ -138,8 +138,8 @@ with a structured-output JSON schema — no copy/paste; it never commits, and Cl
 structured findings into the trail. It is **agentic**: it explores the repo itself, so the skill
 hands it flags and a prompt and it *pulls* what it needs. It is wired at every altitude.
 
-**`fireworks`** runs open-weight models through the Fireworks API and is wired at the **approach and
-correctness altitudes**. It is **non-agentic** — it cannot run `git diff` or read the repo — so the context must
+**`fireworks`** runs open-weight models through the Fireworks API and is likewise wired at **every
+altitude**. It is **non-agentic** — it cannot run `git diff` or read the repo — so the context must
 be *pushed*. That single difference is why it is not a `codex exec` drop-in and why it changed the
 shape of this layer: since something has to assemble context anyway, that something is a real
 module, [`fireworks_runner.py`](.claude/skills/review/fireworks_runner.py), which also owns the
@@ -213,9 +213,11 @@ The cooperative hook is now backed by an authoritative server-side gate. Two wor
 Branch protection on `main` requires that check, requires a PR to merge, and sets `enforce_admins=true`
 so the operator's own token can't bypass it — closing the local-hook gaps (non-standard base,
 destination-refspec push, `env`-wrapped git) server-side. Approval stays in the loop, not GitHub
-(`required_approving_review_count=0`). `/close` **establishes** this protection as part of the merge
-flow — it reads the CI check's actual context name, applies the protection via `gh api`, then merges.
-Consequently `/close` merges via **auto-merge** (`allow_auto_merge=true`): its preflight resolves to
+(`required_approving_review_count=0`). This protection is **configured once as repo setup** (via
+`gh api`, using the CI check's observed context name) — `/close` does **not** establish it. Its
+preflight only *reads* `…/protection/required_status_checks` to choose a merge strategy, and treats
+any failure as zero required checks. Given the protection is in place, `/close` merges via
+**auto-merge** (`allow_auto_merge=true`): its preflight resolves to
 `MODE=auto`, and GitHub performs the merge once the required check is green (the OPS-4/5 auto-merge
 path, now the normal route). Supply-chain posture:
 external actions are pinned to full commit SHAs and the gitleaks binary is checksum-verified; workflows

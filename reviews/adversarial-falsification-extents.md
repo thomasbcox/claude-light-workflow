@@ -132,11 +132,28 @@ both ship everywhere"), so this is one story, not two.
    often the AC4 coverage check found gaps) and the decision it feeds (keep / amend / cut back to
    demonstrate-red only). The item records that enforcement in software was **considered and
    declined**, and names the accepted cost — nothing mechanically forces the lookback to happen.
-10. Scope containment: the diff touches only `.claude/skills/frame/SKILL.md`,
+11. **Doc corrections (added at implementation, 2026-08-05 — Thomas approved the scope expansion
+    after a drift audit; see Design decisions).** Four factually wrong claims are corrected:
+    (a) `AGENTS.md`'s Output section describes `design-review-schema.json` as a `verdict` plus a
+    `findings` array — incomplete **as of this branch**, which adds a required `regressions` array.
+    Since `AGENTS.md` is pushed verbatim to the reviewer on every `fireworks` review, this is a
+    defect **this story introduced**, not inherited drift. (b) `README.md` and `ARCHITECTURE.md`
+    state `fireworks` is wired only at the approach and correctness altitudes; it is wired at all
+    four (`fireworks-models.json`, `review/SKILL.md`, and this repo's own `workflow.json`), and the
+    README's example config embodied the same error. (c) `README.md` and `ARCHITECTURE.md` state
+    `/close` **establishes** branch protection; `close/SKILL.md` only ever *reads* it — protection is
+    one-time repo setup (`reviews/ci-setup.md`), and `enforce_admins` has never appeared in that
+    skill. (d) `AGENTS.md` tells the reviewer the backend is "codex today"; both backends are wired,
+    and this repo runs `fireworks` at every pass.
+12. **`BACKLOG.md` files the audit's remainder** as an `OPS-` item — the nine MEDIUM, five LOW, and
+    seven correct-but-unguarded findings AC11 did **not** fix, plus why `docs_test.sh` caught none of
+    them. Filing is not a commitment to build; **when** that work happens stays Thomas's call.
+13. Scope containment: the diff touches only `.claude/skills/frame/SKILL.md`,
     `.claude/skills/review/design-review-schema.json`, `.claude/skills/review/fireworks_runner.py`,
-    `tests/reviewer_test.sh`, `tests/fireworks_runner_test.py`, and `BACKLOG.md` — plus this story's
-    own review-trail artifacts under `reviews/adversarial-falsification-extents.*`, categorically
-    exempt per `workflow-protocol.md` → *Per-repo artifacts* and never enumerated.
+    `tests/reviewer_test.sh`, `tests/fireworks_runner_test.py`, `BACKLOG.md`, `AGENTS.md`,
+    `README.md`, and `ARCHITECTURE.md` — plus this story's own review-trail artifacts under
+    `reviews/adversarial-falsification-extents.*`, categorically exempt per `workflow-protocol.md` →
+    *Per-repo artifacts* and never enumerated.
 
     *(Amended at implementation, 2026-08-05 — `tests/fireworks_runner_test.py` added. **A spec-time
     blind spot, logged for veto, not a silent widening.** AC2 makes `regressions` a required field on
@@ -191,7 +208,19 @@ Per-AC: how it's checked, and the regression that must drive each `gate` oracle 
   oracle is proposed: a pin on backlog prose would assert nothing this story's other pins don't, and
   the item's *value* is whether it gets read later — which no check in this repo can establish. That
   is the accepted cost of the filed-not-enforced option, recorded rather than papered over.
-- **AC10** — oracle: `manual` — `git diff --name-only origin/main...HEAD -- . ':(exclude)reviews/'`,
+- **AC11** — oracle: **`reviewer`**, stated plainly rather than dressed up. `docs_test.sh` verifies
+  that every deployed skill is named as a `/command` and that no doc names an undeployed one; it
+  cannot check whether a *sentence is true*, and no check in this repo can. Each correction was
+  instead verified by hand against its ground truth before being written — (a) the schema file,
+  (b) `fireworks-models.json` + `review/SKILL.md` + `workflow.json`, (c) `close/SKILL.md`'s three
+  `gh api` calls (all reads) plus `git log -S "enforce_admins"` on that file returning nothing,
+  (d) `workflow.json`. A grep confirmed no residue of any of the four claims survives. There is
+  **nothing to demonstrate red** here, and inventing a phrase pin would assert only that words I
+  just typed are still present — a check that cannot fail in the way that matters.
+- **AC12** — oracle: `manual` — the `OPS-` item exists and carries the audit's remainder. Same
+  honest limit as AC9: a pin on backlog prose would assert nothing, and the item's value is whether
+  it gets read later, which nothing here can establish.
+- **AC13** — oracle: `manual` — `git diff --name-only origin/main...HEAD -- . ':(exclude)reviews/'`,
   verify no file appears beyond the enumerated set.
 
 **On the "renders nothing" requirement:** every AC above asserting presence (a prompt sentence, a
@@ -416,3 +445,21 @@ any correction he approves lands as its own scoped work rather than being folded
 - **Open question 1 (OPS-18's disposition) → fold into the lookback.** OPS-18 stays open and
   unchanged in substance; AC9's item names it so both are judged on the same evidence at the same
   time, rather than committing to a second unproven ceremony now.
+
+### Scope expansion — doc corrections (2026-08-05, at implementation)
+
+Thomas commissioned a doc-drift audit alongside implementation, then asked: *"any reason not to fix
+AGENTS.md, H1, H2, and H3 all right now?"* → **"go."** AC11 and the widened AC12 record it.
+
+The one candidate objection was checked and dissolved: H2 could have meant *correct the docs* **or**
+*build the missing capability*, and choosing the first would silently close a gap worth leaving
+open. `reviews/ci-setup.md` lists branch protection as a **one-time setup action of that story**, and
+`enforce_admins` has never appeared in `close/SKILL.md` — and protection is repo setup, not something
+any story would want re-applied on every merge. So the docs are simply wrong and the fix is
+unambiguous. Stated costs, accepted: AC10→AC12 widened the diff from 6 files to 9; none of the four
+corrections has a mechanical oracle (AC11's Test note says so rather than inventing one); and the
+reviewer now sees two themes in one diff — mitigated for three of the four, which are the *same*
+defect this story's own change exhibited (docs describing a one-backend world).
+
+The remaining audit findings — nine MEDIUM, five LOW, plus seven correct-but-unguarded claims —
+stay **out of scope** and are being filed as their own story.
