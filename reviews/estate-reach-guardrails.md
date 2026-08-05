@@ -264,3 +264,16 @@ Backend `fireworks`, model `deepseek-v4-pro`. **No findings.**
 > The diff consists entirely of prose additions […] There are no executable code changes, no
 > exception handling, no assertions, and no logic that could silently degrade on error. No
 > hidden-failure concerns are present.
+
+## Decisions (2026-08-05)
+
+Thomas, on the round-1 findings: *"fix the nit, then push and open the PR."*
+
+- **Correctness · NIT — `CLAUDE.md` hard-codes "the four skills"** → **FIX.** The count is gone, and
+  the line now names the *kinds* of artifact while pointing at `install.sh`'s ARTIFACTS array as the
+  authoritative list — with that stated explicitly, so the next editor does not reintroduce a count.
+  Taken despite being a NIT because the finding was the artifact contradicting the principle it
+  exists to state: the same design-review IMPORTANT (and Q2) that removed the *repo* count from this
+  file had left a *skill* count two lines below it.
+- **Approach** → clean (empty findings), nothing to decide.
+- **Hidden-failure** → no findings, nothing to decide.

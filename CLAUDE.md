@@ -4,7 +4,8 @@
 
 The product here is **tooling that runs inside other repos**. Every path listed in `install.sh`'s
 `ARTIFACTS` array is deployed verbatim to `~/.claude/` and read by every project on this machine —
-the four skills, the guard hook, `workflow-protocol.md`, and the reviewer-contract template.
+the skills, the guard hook, `workflow-protocol.md`, and the reviewer-contract template. That array
+is the authoritative list; this sentence names the kinds, never a count.
 
 Those consumer repos span many languages, stacks, and conventions. **None of them are visible from
 inside this one** — not on the filesystem you are reading, not in the diff, not in the gate output.
