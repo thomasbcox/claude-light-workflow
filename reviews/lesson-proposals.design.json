@@ -1,0 +1,189 @@
+{
+  "verdict": "Round 2 confirms the redesign absorbed round 1's three findings in substance: \u00a74/AC12 now bind re-presentation to the durable assessment artifact and forbid memory reconstruction; AC16's static half is a genuine negative assertion that can go red (the tautological fixture is gone); OQ4's lookback now samples both directions, including non-firings. The shape remains the right one: one instruction block in /close, one PASSES entry plus one ALTITUDES line (the runner's documented extension path), one new schema (repurposing design-review-schema would make the check ceremonial, and load_schema forecloses a permissive fallback), no new store, no new approval track, deployment reach respected (register not deployed, contract byte-identical). Nothing reinvents a dependency or a declarative construct. Oracle critique: the instruction-lint gates for ACs 1\u20135, 7, 8, 10\u201314, 17 are derived from the implementation surface (deployed instruction text), not from behavior \u2014 the test notes name this limit honestly, so it is accepted, and the regressions below lean on exactly that gap. AC6's PASSES/load_schema assertions are mechanism-shaped but the criterion is itself mechanism-shaped and can fail. AC9's git-derived check can genuinely fail. AC18's every-deployed-path count is the right shape \u2014 and its own rationale (relocation defeats a named-files-only count) is the argument for finding 2, which applies identical logic to AC15's one-file lint. AC5's reviewer oracle for substance is the honest assignment. Three residuals, none fatal: (1) the redesign points re-presentation at an artifact whose required content is never specified \u2014 if the assessment artifact does not embed the proposal verbatim, AC12's honest path has no implementation; (2) AC15's gate lints only /close text while the criterion's hazard surface is every deployed file; (3) AC16's observational half is deferred with nothing scheduling it \u2014 the same reliance-on-noticing this story exists to fix. Minor doc slip: Open question 5 cites 'the ceiling number in AC17', but the ceiling is AC18 \u2014 worth correcting when the number is settled so the ceiling isn't recorded against the wrong criterion. The self-identified one-way doors (prefix OQ2, ceiling number OQ5, hook record OQ1) remain correctly reserved for Thomas.",
+  "findings": [
+    {
+      "severity": "IMPORTANT",
+      "reversibility": "two-way",
+      "standing": "standard",
+      "title": "AC12's re-presentation rule depends on an artifact whose required content is never specified",
+      "locus": "Lifecycle \u00a74 (re-presentation rule); Scope \u00a73; Design sketch \u2014 'The review call'",
+      "claim": "Round 1's re-presentation fix moved the durability requirement onto 'the durable assessment artifact' \u2014 but nothing in the story says that artifact must contain the proposal. Every other review pass's artifact is the reviewer's JSON output; the proposal is the pass's input. If the lesson artifact is only the assessment (a paraphrase and a verdict), then after an interrupted session the honest path AC12 names \u2014 re-present only from the artifact \u2014 cannot be executed: the proposal itself would have to be reconstituted from the assessment's summary plus session memory, which is the confabulation channel the redesign explicitly set out to close. The lifecycle rule and the artifact's content invariant are in different sections and never meet.",
+      "alternative": "State the invariant where the artifact is defined: the lesson pass's durable artifact embeds the proposal verbatim (an echo field in lesson-review-schema.json, or a paired proposal file written atomically with the assessment under reviews/). One line in \u00a73 or the sketch; the schema is new and nothing depends on it yet, so this is free now.",
+      "win": "Eliminates the last post-hoc reconstruction path the redesign reintroduced via the artifact channel, and gives AC12 a gate-able property \u2014 'the artifact contains the full proposal' \u2014 that a test can actually assert, instead of a rule whose honest implementation is impossible under one reading of the spec."
+    },
+    {
+      "severity": "IMPORTANT",
+      "reversibility": "two-way",
+      "standing": "standard",
+      "title": "AC15's gate lints one file while the criterion's hazard surface is every deployed instruction file",
+      "locus": "Test notes \u2014 AC15 row; AC15",
+      "claim": "The criterion is register-wide: 'No skill loads it, nothing auto-reads it, and no instruction directs Claude to it at any other point.' The named gate asserts this only over the /close text. The plausible leak is not in /close \u2014 it is a pointer grown later in the review skill, workflow-protocol.md, or a skill description ('past rejections: reviews/lessons-rejected.md'), which puts the register into routine context while the gate stays green. The story already accepts this exact logic for AC18: 'a ceiling counted only on named files is met by relocating text to an unnamed one.' Containment of the register's single-read-moment rule is defeated by precisely the same relocation, and the gate as named cannot see it.",
+      "alternative": "Extend the AC15 negative assertion across every deployed text path \u2014 the same enumeration AC18's ceiling test already requires \u2014 asserting no deployed file references lessons-rejected.md outside the single /close step. One loop in tests/reviewer_test.sh over a list the AC18 test must also maintain.",
+      "win": "Converts AC15 from a one-file lint into the containment check the criterion actually names, at near-zero marginal cost, using an enumeration the story is already committed to building for AC18 \u2014 two load-bearing gates sharing one deployed-path list instead of one of them being relocation-blind."
+    },
+    {
+      "severity": "IMPORTANT",
+      "reversibility": "two-way",
+      "standing": "standard",
+      "title": "AC16's observational half is deferred with nothing scheduling it \u2014 the reliance-on-noticing failure this story exists to fix",
+      "locus": "Test notes \u2014 AC16 row",
+      "claim": "The observational half (install.sh --check plus the restricted git diff on a branch where a lesson actually ran) is 'deferred to the first story that is not the implementing one.' The deferral itself is sound \u2014 on this branch the restricted diff is non-empty by construction. But nothing files it: no BACKLOG.md item, no pending test case, no tracked follow-up. The story's founding example is exactly this failure \u2014 thin-the-loop's measurement happened 'because Thomas noticed. Nothing scheduled it.' If nobody notices, AC16's load-bearing containment property ('no runtime lesson handling ever touches a deployed artifact or workflow.json') rests permanently on the instruction lint alone, and the observational check quietly never exists. A story whose thesis is that unscheduled intentions fail should not ship one.",
+      "alternative": "File the observational check as an ordinary BACKLOG.md item as part of this story's own diff (dogfooding the mechanism: it is a task, not a lesson), or land the test now as a skipped/pending case whose skip message names its precondition \u2014 a branch on which a lesson was actually proposed or approved.",
+      "win": "Removes one more unscheduled reliance-on-noticing from a story whose entire premise is that pattern's failure, and guarantees the containment property the story calls load-bearing gets a check that will actually run \u2014 at the cost of one backlog line or one pending test."
+    }
+  ],
+  "regressions": [
+    {
+      "criterion": "AC1 \u2014 /close runs the re-derivable check (1a) once per story at a named step",
+      "regression": "The named step exists and runs install.sh --check, but the instruction never connects its output to the bounded question: drift is reported as routine gate output and dropped, so the check ran (letter) without ever functioning as an activation source (intent). Equivalently, the step is placed after the merge consult, so a drift finding cannot inform any proposal."
+    },
+    {
+      "criterion": "AC1 \u2014 evaluates the session-observed class (1b) from what it can see in-session",
+      "regression": "The 1b evaluation is implemented as a scan of durable artifacts only \u2014 which by construction do not exist for hook denials and runner refusals \u2014 so it returns 'no activation' on every story. The letter (it evaluated what it could see) holds while the intent (scan the session itself for denials and refusals) is never attempted, and because AC4 forbids any record of the empty result, the always-silent evaluation is invisible."
+    },
+    {
+      "criterion": "AC2 \u2014 the single bounded question (1c) is applied before proposing; nothing proposed when the answer is no",
+      "regression": "The question is named in the instruction but framed with the default inverted \u2014 'unless this is obviously already known, propose' \u2014 so the question is asked and answered (letter) while the default-no discipline that keeps volume down (intent) is reversed and every activation qualifies."
+    },
+    {
+      "criterion": "AC2",
+      "regression": "The question is sequenced after proposal assembly: /close drafts the proposal, then applies 1c as a review of the draft. Applied in the presence of sunk work, it rationalizes rather than gates \u2014 the letter (question applied before anything is proposed to Thomas) is satisfied while the intent (a cheap default-no filter applied before evidence assembly) is defeated."
+    },
+    {
+      "criterion": "AC3 \u2014 a proposal cites the repository evidence checked for prior knowledge, or states a search found none (1d)",
+      "regression": "The proposal carries a plausible boilerplate citation block ('checked BACKLOG.md, workflow-protocol.md \u2014 no match') as a formatting requirement; an instruction lint sees citations present (letter) while the underlying searches never ran (intent: cited, not remembered) \u2014 the exact confabulation 1d exists to prevent, laundered through compliance with the citation format."
+    },
+    {
+      "criterion": "AC3",
+      "regression": "Citations are at whole-file granularity \u2014 'BACKLOG.md', 'workflow-protocol.md' \u2014 with no section, item, or story trail named. Something is cited (letter) but nothing specific enough to verify or to dedup a future proposal against (intent)."
+    },
+    {
+      "criterion": "AC4 \u2014 no activation or answer no: nothing proposed and nothing written, including no check-completed line",
+      "regression": "Nothing is written to any file, but /close adds a standing 'lessons: none' line to the merge consult output on every story. The letter (nothing written) holds while the forbidden attestation reappears in consult text (intent) \u2014 a line a run that skipped the step writes just as easily, which is why the design banned it."
+    },
+    {
+      "criterion": "AC4",
+      "regression": "When 1c answers no, the question and its justification are recorded in the story file 'for the trail' \u2014 a written record of a non-proposal, created in the name of auditability, violating 'writes nothing about lessons'."
+    },
+    {
+      "criterion": "AC5 \u2014 a presented proposal carries every element required by scope item 2",
+      "regression": "Every required element appears as a heading with content that is present but hollow: 'competing explanation: none found' with the why omitted; 'future evidence that would weaken it: unclear'; and 'excluded evidence: none' achieved by consulting only supporting evidence so there is nothing to exclude. All elements carried (letter); the elements that exist to discipline the diagnosis (intent) are functionally empty."
+    },
+    {
+      "criterion": "AC5",
+      "regression": "The workflow-or-product element is answered 'workflow' for what is actually a product-specific defect (e.g., a parser bug in this repo's own runner), routing an ordinary backlog item through the lesson machinery. The element is present and answered (letter); the classification it exists to force is dishonest (intent)."
+    },
+    {
+      "criterion": "AC6 \u2014 the proposal reaches the independent reviewer via its own pass and its own schema; no existing schema repurposed; contract unchanged",
+      "regression": "The new schema is created by copying design-review-schema and renaming fields, so the pass has its own schema file (letter) while forcing the assessor into the design-review concepts \u2014 reversibility, standing, regressions \u2014 that the story itself says make the check ceremonial (intent)."
+    },
+    {
+      "criterion": "AC6",
+      "regression": "workflow-AGENTS.md stays byte-identical (letter) but the new pass's prompt silently redefines standing reviewer behavior \u2014 instructing the reviewer to approve, or to treat Claude's citations as already verified \u2014 so the effective contract drifts while the file does not (intent: no drift in what the reviewer is asked to be)."
+    },
+    {
+      "criterion": "AC7 \u2014 a failed lesson pass never blocks the merge; the failure is named and the proposal marked un-reviewed",
+      "regression": "The failure is named in a form that erases the information: 'lesson review unavailable' with no failure class, and the un-reviewed marking rendered as a footnote while the proposal is presented with the same prominence as a reviewed one. The failure was named (letter); Thomas deciding with that fact genuinely in front of him (intent) is undermined."
+    },
+    {
+      "criterion": "AC7",
+      "regression": "On failure /close retries the pass until some schema-valid output emerges, then presents the proposal as reviewed. The merge was never blocked (letter) while a degraded assessment \u2014 possibly produced under a truncated or abnormal completion \u2014 is laundered into a reviewed one (intent: fail-closed artifact, honestly marked)."
+    },
+    {
+      "criterion": "AC8 \u2014 nothing enters BACKLOG.md before disposition",
+      "regression": "The pre-disposition proposal is staged in BACKLOG.md as an HTML comment, a 'pending' entry, or a struck-through line \u2014 arguably not an 'item' (letter) while the unreviewed claim is carried into the high-traffic file read every session (intent: nothing enters it before disposition)."
+    },
+    {
+      "criterion": "AC8",
+      "regression": "The proposal is written before disposition into a different routinely read file \u2014 ROADMAP.md, or the story file's header \u2014 so BACKLOG.md is technically untouched (letter) while the unreviewed diagnosis still lands in routine context (intent)."
+    },
+    {
+      "criterion": "AC9 \u2014 on approval the proposal becomes an ordinary BACKLOG.md item on the feature branch, arriving with the merge commit",
+      "regression": "The item is committed only after the merge \u2014 /close merges, then appends the BACKLOG item on main or in a follow-up commit \u2014 so it sits near the merge in history (loose letter) while the merge commit itself does not carry the release record (intent: arrives with the merge, as all release records here do)."
+    },
+    {
+      "criterion": "AC9",
+      "regression": "The item is added verbatim in diagnosis form \u2014 'Claude believes the hook is mis-sized because\u2026' \u2014 rather than as an ordinary actionable backlog entry. An item exists on the branch (letter) but it is the preserved proposal, not an ordinary item (intent), smuggling the single-head framing into the backlog."
+    },
+    {
+      "criterion": "AC10 \u2014 rejection preserved in full with Thomas's stated reason; a reason-less rejection is not a valid disposition; deferral preserved in the story file",
+      "regression": "The rejection is recorded with a reason Claude writes on Thomas's behalf, inferred from a one-word answer ('rejected: not a workflow issue'). A reason string exists (letter) but it is not Thomas's stated reason (intent), and the fabricated rationale becomes the thing future novelty checks dedup against."
+    },
+    {
+      "criterion": "AC10",
+      "regression": "'In full' is satisfied for the claim but not the proposal: the register keeps the candidate-lesson line and drops the evidence, exclusions, and disconfirmation. A record with a reason exists (letter) while a future 1d check has nothing substantive to compare a re-phrased re-proposal against (intent)."
+    },
+    {
+      "criterion": "AC10",
+      "regression": "Deferral: the proposal is preserved in the story file, but the story file is later pruned per repo housekeeping, or the 'deferred' marker is dropped in a later edit \u2014 technically preserved at the moment of deferral (letter), gone by the time it matters (intent)."
+    },
+    {
+      "criterion": "AC11 \u2014 a rejected or deferred lesson never blocks a merge Thomas would otherwise approve",
+      "regression": "The consult presents one combined question \u2014 'approve merge + lesson? y/n' \u2014 so declining or deferring the lesson mechanically withholds merge approval. The instruction text states the decisions are separate (letter as linted) while the interaction couples them (intent)."
+    },
+    {
+      "criterion": "AC11",
+      "regression": "Deferral leaves the story file carrying an unresolved marker that a later step treats as incompleteness, so a deferred lesson delays closure of the current or a future story \u2014 never a formal block (letter), a practical one (intent)."
+    },
+    {
+      "criterion": "AC12 \u2014 re-running /close creates no duplicate; re-presentation only from the durable artifact; otherwise gone, never reconstructed from memory",
+      "regression": "Dedup compares the candidate-lesson text; a re-run re-derives the same lesson with different wording and files a second BACKLOG item. No exact duplicate exists (letter); a semantic duplicate does (intent)."
+    },
+    {
+      "criterion": "AC12",
+      "regression": "Re-presentation reads the durable artifact but 'refreshes' it before the consult \u2014 re-citing sources, filling gaps from session memory \u2014 so the artifact was consulted (letter) while the re-presented proposal is partly reconstructed (intent: only from the artifact)."
+    },
+    {
+      "criterion": "AC12",
+      "regression": "Where no artifact exists, /close treats the interrupted proposal as never having existed and re-derives the same 1b lesson fresh from the new session's view of scrollback \u2014 not 'reconstruction of the proposal' in name (letter) while being exactly that in substance (intent)."
+    },
+    {
+      "criterion": "AC13 \u2014 at most one proposal per /close; other qualifying lessons are not named",
+      "regression": "One proposal is presented, but the consult narration adds 'also observed, not proposed: possible issues with X and Y.' One proposal was made (letter); the unreviewed diagnoses were planted anyway (intent: others are not named, precisely because they have had no evidence assembly or review)."
+    },
+    {
+      "criterion": "AC13",
+      "regression": "Two aspects of one systematic failure are split so the highest-leverage one is proposed and the other rides along as an 'evidence' bullet inside the proposal \u2014 a second, unreviewed lesson embedded in the first (letter: one proposal; intent: one lesson, reviewed)."
+    },
+    {
+      "criterion": "AC14 \u2014 no proposal for a lesson already in BACKLOG.md or already in the rejected register",
+      "regression": "The novelty search matches on surface wording: a claim rejected last month returns with different phrasing and passes. Both files were searched and the search cited (letter) while the same-mechanism re-proposal the register exists to prevent sails through (intent)."
+    },
+    {
+      "criterion": "AC14",
+      "regression": "The reverse: the check matches too broadly, suppressing any genuinely new lesson that shares a keyword with a rejected one as 'already known.' The dedup ran (letter) while the silence-direction failure the design must not cause becomes systematic and, per AC4, invisible (intent)."
+    },
+    {
+      "criterion": "AC15 \u2014 the register is read at exactly one moment; no skill loads it; no instruction directs Claude to it elsewhere",
+      "regression": "The /close text is clean, but a different deployed file \u2014 the review skill, workflow-protocol.md, a skill description \u2014 grows a pointer ('past rejections: reviews/lessons-rejected.md'), putting the register into routine context through a file the gate never lints. /close contains no such instruction (letter); the register is read at many moments (intent)."
+    },
+    {
+      "criterion": "AC15",
+      "regression": "The novelty-check instruction is written as a general rule \u2014 'before proposing anything, check BACKLOG.md and the rejected register' \u2014 that also fires during /frame or ad-hoc backlog grooming, so the register is read at several named moments (letter: each read is part of a check; intent: exactly one named moment)."
+    },
+    {
+      "criterion": "AC16 \u2014 at runtime, proposing or approving a lesson modifies no ARTIFACTS file and no .claude/workflow.json",
+      "regression": "The instruction never says 'write to a deployed path,' but a step's side effect does: recording the disposition routes through a helper that updates .claude/workflow.json state, or approval triggers an immediate 'capture the lesson' edit to the close skill framed as part of the approval flow. The negative lint passes (letter) while runtime lesson handling modifies a deployed artifact (intent)."
+    },
+    {
+      "criterion": "AC16",
+      "regression": "The observational half of the check is deferred and never scheduled, so the only standing check is the instruction lint. AC16 as-tested is satisfied (letter) while the runtime-behavior containment the criterion names is verified zero times, ever (intent)."
+    },
+    {
+      "criterion": "AC17 \u2014 a change arising from an approved lesson runs the normal loop, adds no approval step, restates no existing rule, removes what it supersedes",
+      "regression": "The follow-on change runs the normal loop with no added approval step (letter) but its implementation 'reminds' the reader by restating the existing rule inline \u2014 'as rule X says, \u2026' \u2014 instead of pointing at it (intent). The AC17 instruction lint cannot catch this because the restatement lands in a different, future story's diff."
+    },
+    {
+      "criterion": "AC17",
+      "regression": "'Removes any instruction it supersedes' is satisfied by deleting more than the superseded text \u2014 a neighboring rule caught in the deletion \u2014 or the old instruction is left in place alongside the new one on the grounds it was 'not exactly superseded.' The diff shows a removal or an addition (letter) while the rule set drifts into contradiction or loss (intent)."
+    },
+    {
+      "criterion": "AC18 \u2014 instruction text within a stated ceiling; the story names the exact files and net lines added",
+      "regression": "The ceiling is counted as net lines: the step adds forty lines of instruction and deletes forty lines of unrelated existing text in the same file, netting under the ceiling (letter) while total instruction weight grows by the full amount (intent: bounded instruction text in deployed artifacts)."
+    },
+    {
+      "criterion": "AC18",
+      "regression": "The line-count test counts only the files the story names \u2014 despite the test-notes warning \u2014 so instruction text relocated into an unnamed deployed file escapes the ceiling entirely; every named file is within budget (letter) while deployed instruction weight is not (intent). Or: the ceiling number is never settled, the test asserts a placeholder, and Open question 5's pointer to 'AC17' records the number against the wrong criterion."
+    }
+  ]
+}
