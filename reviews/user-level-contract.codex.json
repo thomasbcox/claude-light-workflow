@@ -1,0 +1,13 @@
+{
+  "summary": "The implementation faithfully follows the spec across nearly all acceptance criteria \u2014 the rename, the required shared-contract source, the optional contract_local with stated-absence, the central assemble_context fix, the difflib similarity guard, the preflight in both skills, the inline codex interpolation, the docs, the backlog, and the behavioural tests with proper isolation. One drift from an approved decision: the fireworks runner's CORRECTNESS pass prompt still says 'defined in AGENTS.md' \u2014 the approach review found all four prompts referencing AGENTS.md as the contract, Thomas approved the fix, and the decisions record claims all five references were updated, but this one was not.",
+  "findings": [
+    {
+      "severity": "IMPORTANT",
+      "title": "Correctness pass prompt still says 'defined in AGENTS.md' \u2014 the dangling reference the story exists to remove",
+      "file": ".claude/skills/review/fireworks_runner.py",
+      "line": 420,
+      "claim": "The approach review (finding 1, IMPORTANT) found all four fireworks prompts referenced 'AGENTS.md' as the contract. Thomas approved the fix, and the decisions record states: 'All five references in the four pass prompts now point at the contract the reviewer was handed, naming no file at all.' The design, approach, and hidden-failure prompts were updated (e.g., 'per AGENTS.md' \u2192 'per the shared reviewer contract above'). But the CORRECTNESS pass prompt was not \u2014 it still reads 'You are the independent reviewer defined in AGENTS.md. Review ONLY this branch's changes versus the base.' Under the new arrangement, AGENTS.md means local add-ons (or nothing at all, the normal case), so the fireworks correctness reviewer is told it is 'defined in' a file that either doesn't exist or carries unrelated local notes \u2014 the exact dangling-reference defect this story set out to remove, surviving in one of the four prompts.",
+      "suggestion": "Change 'You are the independent reviewer defined in AGENTS.md' to 'You are the independent reviewer defined by the shared reviewer contract above' (or equivalent role-based phrasing), matching the other three prompts' fix."
+    }
+  ]
+}

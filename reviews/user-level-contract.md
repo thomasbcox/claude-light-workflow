@@ -577,9 +577,8 @@ redesign, so the correctness pass runs this same round per `review/SKILL.md` ste
 **Approach**
 
 - **IMPORTANT — fireworks prompts still referenced `AGENTS.md` as the contract** → **fix**, as
-  proposed. Thomas: *"just fix finding 1 as you suggest; no guard added."* All five references in
-  the four pass prompts now point at **the contract the reviewer was handed**, naming no file at
-  all: `per the shared reviewer contract above`, `guardrails from that contract`, and — the sharpest
+  proposed. Thomas: *"just fix finding 1 as you suggest; no guard added."* The references in the four
+  pass prompts now point at **the contract the reviewer was handed**, naming no file at all: `per the shared reviewer contract above`, `guardrails from that contract`, and — the sharpest
   instance — `that contract's 'Hidden failure' bullet`, which had reintroduced in a new place the
   exact dangling-reference defect this story exists to remove. Phrasing chosen so a future rename
   cannot break it again: the prompts describe the *role* of the material, not its filename.
@@ -595,3 +594,57 @@ pass prompts so this class cannot silently recur. Thomas: *"no guard added."* Re
 accepted cost: recurrence is caught by the reviewer, which did catch it this round, and not by the
 gate. The counter-argument that lost — such a check cannot distinguish a legitimate future mention
 of the local-add-ons file from the bug — stands on the record rather than being re-litigated later.
+
+### Correction to the record (2026-08-05, round 2)
+
+**The paragraph above originally claimed "All five references in the four pass prompts now point at
+the contract." That was false when written.** Four were fixed; the correctness pass's prompt still
+read *"the independent reviewer defined in AGENTS.md"* and was missed. The wording has been
+corrected above and the fifth reference fixed in round 2. The false claim is recorded here rather
+than quietly erased — an audit trail that silently rewrites a wrong statement is worth less than one
+that shows the correction.
+
+**Why my own verification did not catch it.** I checked the prompts for three phrasings — `per
+AGENTS.md`, `from AGENTS.md`, `AGENTS.md's` — and reported "none — all four prompts reference the
+contract, not a filename." *"defined in AGENTS.md"* is a fourth phrasing, so that check could not
+have failed on the defect that was actually present. It is a dead assertion in the precise sense
+this repo's doctrine names, written in the same session that wrote the doctrine into a spec. The
+replacement check counts **every** occurrence of the string in every pass prompt and asserts zero,
+which cannot be evaded by rephrasing.
+
+**What the reviewer actually caught.** Not just the code — the **discrepancy between the code and
+the claim in this file**. It read the Decisions record, read the prompts, and reported that they
+disagreed. That is a capability a diff-only check does not have.
+
+**Bearing on the declined guard.** The argument for skipping the anti-recurrence guard was "the
+reviewer catches recurrence." It did — but only after the defect *and* a false statement about
+having fixed it were both committed. Recorded as evidence for OPS-22's lookback, not as grounds to
+reopen a decision Thomas made.
+
+## Decisions (2026-08-05, round 2)
+
+Correctness returned one IMPORTANT; hidden-failure returned none.
+
+**Correctness**
+
+- **IMPORTANT — the correctness prompt still said "defined in AGENTS.md"** → **fix.** Thomas: *"fix
+  it and correct the record."* Applied, and this time verified by counting **every** occurrence of
+  the string in **every** pass prompt and asserting zero — not by testing the three phrasings I
+  happened to think of. See *Correction to the record* above for why the first verification could
+  not have failed.
+
+**Hidden-failure** — no findings. Its summary is recorded because it *confirms* design decisions
+rather than merely finding nothing: the central `assemble_context` fix "correctly surfaces
+missing-file errors for optional sources (previously swallowed by a bare raise of the required-only
+message)"; the new guard "fails closed — it raises `RunnerError` on stale copies and any `OSError`
+reading the local file"; and the possibly-absent `CONTRACT_PATH` read "safely falls through to `''`
+and does not compare; the required `contract` source will independently fail the round." That is the
+reasoning written into the code comments, verified by a second head rather than asserted by its
+author.
+
+**Filed at Thomas's instruction, outside this story's ACs** — logged rather than folded in silently:
+`BACKLOG.md` **OPS-26**, *"A dependency rejection must name its cost"*, in his words. One note added
+on top of his text: his AC5 (reaching repos that already hold a contract copy) is **largely
+dissolved by this very story** — once the contract is shared rather than copied, an amendment
+reaches every repo on the next `./install.sh`. What survives is a **sequencing** requirement: build
+OPS-26 after this ships and after the OPS-25 migration, or it inherits the staleness its AC5 names.

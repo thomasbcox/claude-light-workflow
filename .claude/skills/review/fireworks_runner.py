@@ -418,7 +418,8 @@ PASSES = {
         "artifact": "reviews/{slug}.codex.json",
         "context": ["contract", "contract_local", "story", "diff", "log"],
         "prompt": (
-            "You are the independent reviewer defined in AGENTS.md. Review ONLY this "
+            "You are the independent reviewer defined by the shared reviewer contract "
+            "above. Review ONLY this "
             "branch's changes versus the base. The diff, the commit log, the reviewer "
             "contract, and the story file (with its spec) are all provided below — you "
             "cannot run commands, so judge from what you are given. Judge the change "
