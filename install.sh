@@ -25,7 +25,7 @@ ARTIFACTS=(
   ".claude/skills/dev-audit::skills/dev-audit"
   ".claude/hooks/block-main-writes.sh::hooks/block-main-writes.sh"
   ".claude/workflow-protocol.md::workflow-protocol.md"
-  "AGENTS.md::workflow-AGENTS-template.md"
+  "workflow-AGENTS.md::workflow-AGENTS.md"
 )
 
 src_commit() { git -C "$SRC" rev-parse HEAD 2>/dev/null || echo "unknown"; }

@@ -64,7 +64,7 @@ drift from reality because it never holds the merge fact — the same discipline
 - `reviews/<slug>.codex.json` — review-time correctness output per round (`finding-schema`). The name predates the second backend and is now a misnomer — `fireworks` writes it too, so the loop keeps one read path.
 - `reviews/<slug>.hidden-failure.json` — the parallel hidden-failure critic's output per round (`hidden-failure-schema`).
 - `.claude/workflow.json` — config: `baseBranch`, `branchPrefix`, `testCommand`, `reviewer`, `codexModel`.
-- `AGENTS.md` — the (tool-neutral) reviewer contract (tunable per repo).
+- `AGENTS.md` — **optional**, and repo-specific **additions only** — never a copy of the shared contract. Most repos have none. A file here that is really a stale contract copy is refused by the preflight in `/frame` and `/review`, because two rulebooks reaching one reviewer have no reconciliation rule.
 
 > **The review trail is never the change's product.** Everything under `reviews/<slug>.*` is
 > workflow bookkeeping the loop writes about itself — `.design.json` lands at *frame* time, before
@@ -79,4 +79,4 @@ drift from reality because it never holds the merge fact — the same discipline
 - `~/.claude/skills/{frame,review,close,dev-audit}/` — the loop's three skills plus the pre-loop recon skill, with `review/` carrying its schemas (`finding-schema.json`, `design-review-schema.json`, `hidden-failure-schema.json`) and the `fireworks` backend's runtime (`fireworks_runner.py`, `fireworks-models.json`, `requirements.txt`).
 - `~/.claude/hooks/block-main-writes.sh` — the guard hook, wired in `~/.claude/settings.json`.
 - `~/.claude/workflow-protocol.md` — this document.
-- `~/.claude/workflow-AGENTS-template.md` — the contract template `/frame` copies into new repos.
+- `~/.claude/workflow-AGENTS.md` — **the** reviewer contract, shared by every repo. Not a template and never copied: the `fireworks` runner pushes it as a declared context input and the `codex` prompts interpolate it inline, so there is one copy and it cannot drift.

@@ -19,8 +19,13 @@ Step 1 of the lightweight Claude↔Codex review loop. Doctrine: `~/.claude/workf
    - Base branch: `git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null | sed 's@^origin/@@'` → else `main` if it exists, else `master`.
    - Ask Thomas for the **test command** (the gate).
    - Write `.claude/workflow.json`: `{ "baseBranch": "...", "branchPrefix": "claude/", "testCommand": "...", "reviewer": "codex", "codexModel": "" }`. (`reviewer` selects the independent-reviewer backend. Seed it as the bare string `codex`: that backend needs no setup, whereas `fireworks` requires a one-time runtime bootstrap. It can be widened to a per-pass map later — see `review/SKILL.md` → **Reviewer backend**.)
-   - If `AGENTS.md` is absent, copy it from `~/.claude/workflow-AGENTS-template.md`.
+   - **Do not create an `AGENTS.md`.** The reviewer contract is shared and lives once, at `~/.claude/workflow-AGENTS.md`; every repo reads that same file, so a repo with no `AGENTS.md` is the normal, fully-supported case. A repo only gets one if it has guidance of its **own** — repo-specific additions, never a copy of the shared contract.
    - Ensure `reviews/` exists.
+   - **Contract preflight — run it before any reviewer call, on either backend:**
+     ```bash
+     python3 "$HOME/.claude/skills/review/fireworks_runner.py" --check-local-contract || exit 1
+     ```
+     If this repo's `AGENTS.md` is really a stale copy of the shared contract rather than local additions, this **STOPS** and names the migration. Without it the reviewer receives two rulebooks — the current one and an old one — with no rule for reconciling them, and silently picks its way through. It lives **in the skill**, not only in the runner, because `codex` auto-reads `AGENTS.md` itself with no runner involved: a check living only in the runner cannot see the codex path at all. It runs under plain `python3` (stdlib only — no venv, so a codex-only repo can run it), and it calls the *same* code the runner uses, so the two can never disagree about what counts as stale.
 2. **Understand.** Read the relevant repo files. Restate the need in one paragraph and confirm you have it right.
 3. **Slug.** Derive `<slug>`: lowercase, hyphenated, 2–4 words.
 4. **Branch.** From an up-to-date base: `git checkout -b <branchPrefix><slug> <baseBranch>` (use `origin/<baseBranch>` if a remote exists). If already on the right feature branch, stay.
@@ -43,13 +48,20 @@ Step 1 of the lightweight Claude↔Codex review loop. Doctrine: `~/.claude/workf
    ```
    It writes `reviews/<slug>.design.json`, the same artifact the codex path writes, so step 7 reads it identically. Non-zero exit stops the round — do not proceed to the consult on a design review that did not complete. Skip the codex block below.
 
-   **If `codex`** — run; it reads `AGENTS.md` automatically and runs read-only:
+   **If `codex`** — run read-only. The shared contract is **pushed into the prompt**, not fetched: asking the model to go read a path depends on both the sandbox permitting the read *and* the model bothering to do it, and a review that ran with no contract is indistinguishable from a good one. Interpolation removes both failure modes. (`"$CONTRACT"` is safe despite the contract's backticks — parameter expansion is not re-scanned for command substitution.) Codex still auto-reads the repo's own `AGENTS.md`, which under this arrangement carries **local additions only**:
    ```bash
+   CONTRACT="$(cat "$HOME/.claude/workflow-AGENTS.md")" || { echo "ABORT: shared reviewer contract missing — run ./install.sh"; exit 1; }
    codex exec -s read-only \
      --output-schema "$HOME/.claude/skills/review/design-review-schema.json" \
      -o reviews/<slug>.design.json \
      ${codexModel:+-m "$codexModel"} \
-     "You are the independent reviewer doing a DESIGN review per AGENTS.md — judge the SHAPE, not lines (no code exists yet). Read reviews/<slug>.md (the spec + the '## Design sketch — HOW'), then read the surrounding code and the dependency manifest. Ask: is this a sound, MODERN way to satisfy the acceptance criteria? Does it reinvent what a dependency already does, or hand-roll what one declarative construct would cover? Apply the best-practice lens and the three guardrails from AGENTS.md (concrete win not novelty; weigh internal consistency; repo conventions are the local standard). Then, for EVERY acceptance criterion, propose at least one plausible regression — a way an implementation could satisfy that criterion's letter while violating its intent — derived from the criterion itself, since no test or implementation exists yet to anchor on. Return them in the regressions array and leave no criterion uncovered; the author will write tests against YOUR list, not their own, so a criterion you skip is one nothing will challenge. Separately, critique the oracle mode and mechanism the author DID assign each criterion: flag any check derived from an implementation shape (a selector, assertion, or file token) rather than from the criterion, and any criterion whose named oracle cannot fail. Tag each finding with reversibility (one-way/two-way) and standing. Return strictly per the provided JSON schema; empty findings array if the sketch is sound." \
+     "Your reviewer contract is reproduced IN FULL below and is authoritative. It is the shared contract for every repository on this machine. If this repository also has an AGENTS.md, that file carries repo-specific ADDITIONS ONLY — never a replacement contract; read it as an addendum to what follows.
+
+=== BEGIN SHARED REVIEWER CONTRACT ===
+$CONTRACT
+=== END SHARED REVIEWER CONTRACT ===
+
+You are the independent reviewer doing a DESIGN review per that contract — judge the SHAPE, not lines (no code exists yet). Read reviews/<slug>.md (the spec + the '## Design sketch — HOW'), then read the surrounding code and the dependency manifest. Ask: is this a sound, MODERN way to satisfy the acceptance criteria? Does it reinvent what a dependency already does, or hand-roll what one declarative construct would cover? Apply the best-practice lens and the three guardrails from that contract (concrete win not novelty; weigh internal consistency; repo conventions are the local standard). Then, for EVERY acceptance criterion, propose at least one plausible regression — a way an implementation could satisfy that criterion's letter while violating its intent — derived from the criterion itself, since no test or implementation exists yet to anchor on. Return them in the regressions array and leave no criterion uncovered; the author will write tests against YOUR list, not their own, so a criterion you skip is one nothing will challenge. Separately, critique the oracle mode and mechanism the author DID assign each criterion: flag any check derived from an implementation shape (a selector, assertion, or file token) rather than from the criterion, and any criterion whose named oracle cannot fail. Tag each finding with reversibility (one-way/two-way) and standing. Return strictly per the provided JSON schema; empty findings array if the sketch is sound." \
      </dev/null
    ```
    **Keep the `</dev/null`** (else `codex exec` blocks reading stdin in non-interactive runs). `--output-schema` is **absolute** (skill-local, installed under `$HOME`); `-o` is **repo-relative** (the artifact lands in this project) — the same split as `review/SKILL.md`; don't normalise them.

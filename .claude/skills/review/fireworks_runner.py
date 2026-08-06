@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import argparse
 import concurrent.futures
+import difflib
 import json
 import os
 import subprocess
@@ -39,6 +40,38 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 ROUTES_FILE = HERE / "fireworks-models.json"
 BASE_URL = "https://api.fireworks.ai/inference/v1"
+
+# The SHARED reviewer contract has exactly one home, deployed by install.sh. It is NOT
+# copied into each repo — copies were the defect this path exists to remove (a survey of
+# ~/Projects found five of six repos carrying a stale copy, three generations deep).
+# A module-level constant, not an inline Path.home(), so the suite can point it at a temp
+# directory: a test that silently reads the developer's real ~/.claude passes for the wrong
+# reason and would keep passing on a machine where the file does not exist.
+CONTRACT_PATH = Path.home() / ".claude" / "workflow-AGENTS.md"
+
+# A repo's own AGENTS.md is LOCAL ADD-ONS ONLY. One that is really a stale copy of the
+# shared contract must not be pushed alongside the real one — two rulebooks, possibly
+# contradicting, silently reconciled by the model.
+#
+# Similarity, not a sentinel phrase: a phrase drifts the moment the contract is edited and
+# then fails silent, and a phrase from the current header is absent from the oldest copies —
+# exactly the population a guard exists to catch.
+#
+# SCOPED TO SUBSTANTIALLY-COMPLETE COPIES (Thomas, 2026-08-05). Measured against every
+# AGENTS.md on this machine, scored against the current contract:
+#     1.00  an exact copy
+#     0.82  one generation stale, whole file is contract
+#     0.23  many generations stale, whole file is contract (a short, early form)
+#     0.14  stale header + substantial local rules (~70% of the file is the repo's own)
+#     0.03  a purely local notes file — what must always pass
+# 0.60 sits in open space above every file carrying real local content and below every
+# whole-file copy of a recent generation. STATED LIMIT, not an oversight: a very old and
+# very short copy (the 0.23 specimen) scores below this and is NOT caught. Catching it
+# would mean a threshold under 0.14, which is close enough to legitimate local content to
+# fire on real work — and a guard that flags your own writing is one you learn to ignore.
+# The uncaught case is a manual-migration case; this guard covers the damaging one, where
+# a whole competing rulebook reaches the reviewer.
+CONTRACT_SIMILARITY_LIMIT = 0.60
 
 # Output budget reserved for the model's reply, and the fraction of a model's
 # context we are willing to fill. Both feed the pre-flight size guard so an
@@ -89,10 +122,71 @@ def _git(args: list[str], root: Path) -> str:
     return proc.stdout
 
 
+def _contract_local(ctx: dict) -> str:
+    """The repo's own AGENTS.md — LOCAL ADD-ONS ONLY, and absent in most repos.
+
+    Returns "" when the file does not exist, rather than raising: absence here is the
+    normal case, and `assemble_context` turns an empty optional source into a stated
+    absence in the payload.
+
+    Refuses a file that is really a stale copy of the shared contract. Pushing it would
+    hand the reviewer two rulebooks — the current one and an old one — with no rule for
+    reconciling them; the model would just pick its way through, and nothing would
+    surface that it had. Fail closed and name the migration instead.
+    """
+    path = ctx["root"] / "AGENTS.md"
+    if not path.is_file():
+        return ""
+    body = path.read_text()
+    # Read the shared contract here rather than relying on the "contract" source having
+    # run first: assemble_context walks a declared list, and a comparison that depends on
+    # declaration ORDER would silently stop comparing the day someone reorders it. If the
+    # shared contract is unreadable, skip the comparison — the required "contract" source
+    # is about to fail the round with a clearer message than this one could give.
+    shared = CONTRACT_PATH.read_text() if CONTRACT_PATH.is_file() else ""
+    if shared and body.strip():
+        ratio = difflib.SequenceMatcher(None, shared, body).ratio()
+        if ratio >= CONTRACT_SIMILARITY_LIMIT:
+            raise RunnerError(
+                f"{path} looks like a stale copy of the shared reviewer contract "
+                f"(similarity {ratio:.2f} ≥ {CONTRACT_SIMILARITY_LIMIT}), not local "
+                "add-ons. The shared contract now lives once, at "
+                f"{CONTRACT_PATH}. Migrate this repo: keep only this repository's own "
+                "additions in AGENTS.md, or delete the file if it has none."
+            )
+    return body
+
+
+def check_local_contract(root: Path) -> int:
+    """Preflight for BOTH backends: refuse a repo AGENTS.md that is a stale contract copy.
+
+    Deliberately calls the same `_contract_local` the runner uses rather than
+    reimplementing the test, so the skill-level preflight and the runner can never
+    disagree about what counts as stale — a rule stated twice is a rule that drifts.
+
+    Exists as a CLI entry point because the `codex` backend auto-reads AGENTS.md itself,
+    with no runner in the path; a guard living only inside context assembly would cover
+    one of two wired backends and give no signal about the other.
+    """
+    try:
+        _contract_local({"root": root})
+    except RunnerError as exc:
+        print(f"STOP: {exc}", file=sys.stderr)
+        return 1
+    return 0
+
+
 CONTEXT_SOURCES = {
     "contract": {
-        "title": "AGENTS.md — the reviewer contract",
-        "get": lambda ctx: (ctx["root"] / "AGENTS.md").read_text(),
+        "title": "The shared reviewer contract (applies to every repository)",
+        "get": lambda ctx: CONTRACT_PATH.read_text(),
+    },
+    # Optional by declaration: most repos have no local add-ons, and absence is stated in
+    # the payload rather than silently omitted, so the reviewer knows nothing was withheld.
+    "contract_local": {
+        "title": "Repo-specific additions to the contract (this repository only)",
+        "optional": True,
+        "get": _contract_local,
     },
     "story": {
         "title": "The story file — spec, acceptance criteria, falsification plan",
@@ -261,7 +355,7 @@ PASSES = {
         "purpose": "design",
         "schema": "design-review-schema.json",
         "artifact": "reviews/{slug}.design.json",
-        "context": ["contract", "story"],
+        "context": ["contract", "contract_local", "story"],
         "prompt": (
             "You are the independent reviewer doing a DESIGN review per AGENTS.md — "
             "judge the SKETCH, before any code exists. The story file below carries "
@@ -298,7 +392,7 @@ PASSES = {
         "purpose": "approach",
         "schema": "design-review-schema.json",
         "artifact": "reviews/{slug}.approach.json",
-        "context": ["contract", "story", "diff", "log", "changed_files", "manifest"],
+        "context": ["contract", "contract_local", "story", "diff", "log", "changed_files", "manifest"],
         "prompt": (
             "You are the independent reviewer doing an APPROACH review per AGENTS.md — judge "
             "the SHAPE, not lines. Read the story file's spec FIRST and sketch how YOU would "
@@ -320,7 +414,7 @@ PASSES = {
         "purpose": "correctness",
         "schema": "finding-schema.json",
         "artifact": "reviews/{slug}.codex.json",
-        "context": ["contract", "story", "diff", "log"],
+        "context": ["contract", "contract_local", "story", "diff", "log"],
         "prompt": (
             "You are the independent reviewer defined in AGENTS.md. Review ONLY this "
             "branch's changes versus the base. The diff, the commit log, the reviewer "
@@ -335,7 +429,7 @@ PASSES = {
         "purpose": "hidden-failure",
         "schema": "hidden-failure-schema.json",
         "artifact": "reviews/{slug}.hidden-failure.json",
-        "context": ["contract", "story", "diff", "log"],
+        "context": ["contract", "contract_local", "story", "diff", "log"],
         "prompt": (
             "You are the independent reviewer per AGENTS.md doing a CORRECTNESS review "
             "SCOPED TO ONE LENS: hidden failure / weak error handling (AGENTS.md's "
@@ -425,9 +519,17 @@ def assemble_context(inputs: list[str], ctx: dict) -> str:
         try:
             body = source["get"](ctx)
         except FileNotFoundError as exc:
-            raise RunnerError(f"required context input '{name}' is missing: {exc}")
+            # An OPTIONAL source whose file simply does not exist is the normal case, not a
+            # failure — fall through to the stated-absence branch below. Handling it here,
+            # once, is what keeps every future optional getter from separately rediscovering
+            # that `optional` alone did not cover a missing file.
+            if not source.get("optional"):
+                raise RunnerError(f"required context input '{name}' is missing: {exc}")
+            body = ""
         except OSError as exc:
-            raise RunnerError(f"required context input '{name}' is unreadable: {exc}")
+            # Unreadable is NOT absent, even for an optional source: something is there and
+            # we cannot see it. Never let that look like "none present".
+            raise RunnerError(f"context input '{name}' is unreadable: {exc}")
         if not body or not body.strip():
             # An input declared optional may legitimately be absent; say so in the
             # payload so the reviewer knows it was not withheld. A REQUIRED input
@@ -795,9 +897,21 @@ def main() -> int:
         action="store_true",
         help="verify every routed model is live and its stored context length matches",
     )
+    parser.add_argument(
+        "--check-local-contract",
+        action="store_true",
+        help="preflight: refuse a repo AGENTS.md that is a stale copy of the shared contract",
+    )
     args = parser.parse_args()
 
     try:
+        # Handled FIRST, before routes or the API key: both skills call this as a
+        # preflight on either backend, and a codex-only repo has neither a model route
+        # nor a Fireworks key. Requiring them here would make the guard unrunnable in
+        # exactly the repos whose backend the guard exists to cover.
+        if args.check_local_contract:
+            return check_local_contract(Path.cwd())
+
         routes = load_routes()
 
         api_key = os.environ.get("FIREWORKS_API_KEY")
