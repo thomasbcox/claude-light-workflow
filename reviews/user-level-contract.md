@@ -497,3 +497,26 @@ honest fix was not to swap in new strings — that is the reshape-to-pass this l
 **derive the expectation from each pass's declared inputs**. The rewritten checks are strictly
 stronger: they now cover every declared source including `contract_local`, and both of them caught
 the AC3 regression above, which the hand-typed version could not have seen.
+
+## Build note (2026-08-05)
+
+AC → file map:
+
+| AC | Files |
+|---|---|
+| 1 — one source, deployed once | `AGENTS.md` → `workflow-AGENTS.md` (git rename, history preserved); `install.sh` ARTIFACTS |
+| 2 — shared contract required, from the user-level path | `fireworks_runner.py` (`CONTRACT_PATH` module constant + the `contract` source) |
+| 3 — repo file optional, absence stated; central fix | `fireworks_runner.py` (`_contract_local`, and `assemble_context`'s optional/FileNotFoundError branch) |
+| 4 — both inputs on every pass | `fireworks_runner.py` (four `"context"` declarations) |
+| 5 — migration guard, both backends | `fireworks_runner.py` (similarity limit, `check_local_contract`, `--check-local-contract`); `frame/SKILL.md` step 1; `review/SKILL.md` step 1 |
+| 6 — contract pushed inline to codex | `frame/SKILL.md` (design prompt); `review/SKILL.md` (approach, correctness, hidden-failure prompts) |
+| 7 — no contract bootstrap | `frame/SKILL.md` step 1 |
+| 8 — docs follow | `.claude/workflow-protocol.md`, `README.md`, `ARCHITECTURE.md`, `install.sh` (closing hint) |
+| 9 — backlog | `BACKLOG.md` (OPS-21 closed, OPS-25 filed) |
+| 10 — behavioural coverage | `tests/fireworks_runner_test.py` (+22 checks, 113→135), `tests/reviewer_test.sh`, `tests/check_contract_wiring.py` |
+| 11 — scope containment | no files — verified by `git diff --name-only` |
+
+Also in this diff, from Thomas's codex-reference sweep: two write-back headings in `review/SKILL.md`
+de-hardcoded to `## <Backend> …` (the sibling of a fix `/frame` received last story), and `README.md`'s
+role prose neutralised per the 2026-06-27 decision to keep the headline brand and neutralise only
+role prose.
