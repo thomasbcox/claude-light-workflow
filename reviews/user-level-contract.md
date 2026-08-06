@@ -621,6 +621,30 @@ reviewer catches recurrence." It did — but only after the defect *and* a false
 having fixed it were both committed. Recorded as evidence for OPS-22's lookback, not as grounds to
 reopen a decision Thomas made.
 
+## Fireworks correctness review (2026-08-05, base main, HEAD 6cf99c9)
+
+*Appended late — see the note at the end of this section.*
+
+**Summary:** "The implementation faithfully follows the spec across nearly all acceptance criteria — the rename, the required shared-contract source, the optional contract_local with stated-absence, the central assemble_context fix, the difflib similarity guard, the preflight in both skills, the inline codex interpolation, the docs, the backlog, and the behavioural tests with proper isolation. One drift from an approved decision: the fireworks runner's CORRECTNESS pass prompt still says 'defined in AGENTS.md' — the approach review found all four prompts referencing AGENTS.md as the contract, Thomas approved the fix, and the decisions record claims all five references were updated, but this one was not."
+
+### IMPORTANT
+
+- **Correctness pass prompt still says 'defined in AGENTS.md' — the dangling reference the story exists to remove** · `.claude/skills/review/fireworks_runner.py:420`
+  The approach review (finding 1, IMPORTANT) found all four fireworks prompts referenced 'AGENTS.md' as the contract. Thomas approved the fix, and the decisions record states: 'All five references in the four pass prompts now point at the contract the reviewer was handed, naming no file at all.' The design, approach, and hidden-failure prompts were updated (e.g., 'per AGENTS.md' → 'per the shared reviewer contract above'). But the CORRECTNESS pass prompt was not — it still reads 'You are the independent reviewer defined in AGENTS.md. Review ONLY this branch's changes versus the base.' Under the new arrangement, AGENTS.md means local add-ons (or nothing at all, the normal case), so the fireworks correctness reviewer is told it is 'defined in' a file that either doesn't exist or carries unrelated local notes — the exact dangling-reference defect this story set out to remove, surviving in one of the four prompts.
+  **Suggestion:** Change 'You are the independent reviewer defined in AGENTS.md' to 'You are the independent reviewer defined by the shared reviewer contract above' (or equivalent role-based phrasing), matching the other three prompts' fix.
+
+## Hidden-failure review (2026-08-05, base main, HEAD 6cf99c9)
+
+**Summary:** "The diff removes the per-repo contract copy and instead reads a single shared file, with no new silent-degradation paths. The runner’s optional-input handling now correctly surfaces missing-file errors for optional sources (previously swallowed by a bare raise of the required-only message), and the new `contract_local` guard fails closed — it raises `RunnerError` on stale copies and any `OSError` reading the local file. The only new read of a possibly-absent file (`CONTRACT_PATH` in the guard) safely falls through to `''` and does not compare; the required `contract` source will independently fail the round. No existing assertions or safety checks were removed, and no bare except/catch blocks were introduced. The change makes error handling more audible, not less."
+
+**Findings:** none.
+
+*Bookkeeping note: both sections above were appended during `/close`, not when the pass ran. The
+artifacts were produced and committed at the time, and the findings were presented and dispositioned
+in round 2 — but `review/SKILL.md` step 8 also requires the readable digest in this file, and that
+step was skipped. Recorded as a miss rather than back-dated: the HEAD each pass actually ran against
+is stated above, which is 6cf99c9, not the HEAD at which these words were written.*
+
 ## Decisions (2026-08-05, round 2)
 
 Correctness returned one IMPORTANT; hidden-failure returned none.
