@@ -107,7 +107,16 @@ a document rather than a test.
 11. Scope containment: the diff touches only `AGENTS.md`, `workflow-AGENTS.md`, `install.sh`,
     `.claude/skills/review/fireworks_runner.py`, `.claude/skills/frame/SKILL.md`,
     `.claude/skills/review/SKILL.md`, `.claude/workflow-protocol.md`, `README.md`,
-    `ARCHITECTURE.md`, `tests/reviewer_test.sh`, `tests/fireworks_runner_test.py`, and `BACKLOG.md`.
+    `ARCHITECTURE.md`, `tests/reviewer_test.sh`, `tests/fireworks_runner_test.py`,
+    `tests/check_contract_wiring.py`, and `BACKLOG.md`.
+
+    *(Amended at implementation, 2026-08-05 — `tests/check_contract_wiring.py` added; logged for
+    veto, not a silent widening.* AC1's check must read `install.sh`'s `ARTIFACTS` **and** import the
+    runner to compare against `CONTRACT_PATH`, so it is Python. `tests/reviewer_test.sh` is shell and
+    already uses inline `python3 - <<'PY'` heredocs; nesting a second one inside the first breaks the
+    outer heredoc — I hit exactly that and had to revert a corrupted file. Extracting the check to
+    its own script is the working alternative, and it also makes the comparison independently
+    runnable. Two-way and trivially revertible.)*
 
 ## Test notes
 
@@ -461,3 +470,30 @@ walkthrough is the approved shape, and this story is bound to it.
 **Regression list: accepted in full, no amendments.** 24 reviewer-authored regressions across all 11
 criteria, no coverage gaps. This is the first story to run under the mechanism OPS-20 shipped, so it
 is **loop 1 of the 5-loop OPS-22 lookback**; the evidence for that lookback starts here.
+
+### Demonstrate-red record (2026-08-05, at implementation)
+
+Each `gate`-oracle regression from the ratified list was applied to the real code, the gate run, the
+named check observed failing, and the change reverted.
+
+| Ratified regression (reviewer's wording, abbreviated) | AC | Mutation applied | Result |
+|---|---|---|---|
+| "never check 'empty' for a required source… an empty contract could assemble a review against nothing" | AC2 | mark `contract` `"optional": True` | **10 checks red** ✓ |
+| "let the guard exist only in the fireworks runner" / exact-match detection | AC5 | raise the similarity limit to 99.0 (guard can never fire) | **4 checks red** ✓ |
+| "declare both inputs on every pass… while one pass never interpolates contract_local" | AC4 | drop `contract_local` from the design pass | **1 check red** ✓ |
+| "emit the stated-absence line correctly… but wire the present-branch to a wrong path" | AC3 | delete the stated-absence branch so an optional source is silently omitted | **3 checks red** ✓ |
+| "leave install.sh deploying… assert the template entry is gone from ARTIFACTS" | AC1 | point ARTIFACTS back at a destination named `AGENTS.md` | **1 check red** ✓ |
+
+**One mutation produced no failures, and the reason matters.** Making `_contract_local` *raise*
+`FileNotFoundError` on an absent file changed nothing — because AC3's central fix has
+`assemble_context` absorb exactly that into stated absence for any `optional` source. It is an
+**equivalent mutation**, not a dead assertion: the two code paths are behaviourally identical by
+design, which is what the central fix was for. The real regression for that criterion is removing
+the stated-absence branch itself, applied above, and it goes red.
+
+**A check strengthened rather than reshaped.** Two existing assertions compared the payload against a
+hand-typed token list (`"AGENTS.md"`, `"story file"`, …) and broke on the renamed context titles. The
+honest fix was not to swap in new strings — that is the reshape-to-pass this loop forbids — but to
+**derive the expectation from each pass's declared inputs**. The rewritten checks are strictly
+stronger: they now cover every declared source including `contract_local`, and both of them caught
+the AC3 regression above, which the hand-typed version could not have seen.

@@ -193,7 +193,8 @@ do_install() {
   echo
   echo "✓ Installed to $DEST (backup: settings.json.bak)."
   echo "  Verify any time with: ./install.sh --check"
-  echo "  In each app: run /frame once — it bootstraps .claude/workflow.json + AGENTS.md for that repo."
+  echo "  In each app: run /frame once — it bootstraps .claude/workflow.json for that repo."
+  echo "  The reviewer contract is SHARED (workflow-AGENTS.md above) — repos do not get a copy."
 }
 
 case "${1:-}" in

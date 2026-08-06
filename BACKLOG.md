@@ -610,7 +610,14 @@ retired falsification plan. **Estate note:** any Tier 1 change ships to every re
 `install.sh`, so its instruction weight is paid on every invocation everywhere — the standing
 tension the ROADMAP names as *reach* vs. the *lightweight* identity.)
 
-OPS-21 — **`AGENTS.md` is both this repo's reviewer contract and the template every other repo
+OPS-21 — **CLOSED 2026-08-05 by `user-level-contract` — its premise no longer exists.** The one file
+serving two jobs is gone: the shared contract was renamed to `workflow-AGENTS.md` and deploys to
+`~/.claude/workflow-AGENTS.md`, so `AGENTS.md` in *every* repo — including this one — now means
+repo-specific additions and nothing else. Both options this item weighed (B: decouple the template;
+B′: an `AGENTS.local.md` addendum) were superseded: neither is needed once the shared contract is
+never copied. Retained below as the design record.
+
+**`AGENTS.md` is both this repo's reviewer contract and the template every other repo
 starts from; give this repo a way to say something repo-specific.** Filed 2026-08-05 from
 `estate-reach-guardrails`'s design review (Thomas: *"backlog B and B-prime for future
 consideration"*). Evaluate-and-decide; **not** committed work.
@@ -790,6 +797,41 @@ one signal telling you a re-install is unsafe.
 (Logged 2026-08-05. A **twelfth** `OPS-` item, filed here rather than as `AUDIT-` — that prefix means
 *findings graduated from a `/dev-audit` run*, and this came from a review round, not a recon pass.
 **Interacts with:** OPS-20's computed-extents rule, which candidate (a) is a direct application of.)
+
+OPS-25 — **Migrate the remaining repos to the shared reviewer contract.** Filed 2026-08-05 by
+`user-level-contract`, which shipped the mechanism. **Manual work in other repositories, deliberately
+outside that story's diff** — a scope-containment AC governs only this repo.
+
+- **Do this only after `./install.sh` has run**, or the deployed reviewer still expects a per-repo
+  `AGENTS.md` and reviews will fail closed in any repo already migrated.
+- **Verified 2026-08-05 in-session**, by classifying every line of each file against the union of all
+  six historical generations of the contract (from this repo's git history) rather than by eyeballing
+  similarity. Emphasis markers normalised, since one repo runs Prettier over Markdown and rewrites
+  `*shape*` as `_shape_`.
+
+| Repo | Lines | Genuinely local | Action |
+|---|---|---|---|
+| `ruleset-sim` | 99 | **68** (one block) | **Trim** — keep lines 25–93 (`## Project rules to enforce` → end of that section); delete 1–24 and 94–99 |
+| `txl-assessment-collector` | 120 | **84** (one block) | **Trim** — keep lines 27–120 (`## Project testing convention (the gate)` → EOF); delete 1–26 |
+| `sudoku-hints` | 85 | 0 | **DONE** — file deleted 2026-08-05 (uncommitted) |
+| `zoom-meeting-cost` | 25 | 0 | **DONE** — file deleted 2026-08-05 (uncommitted) |
+
+- **Both trims are a single contiguous block** and both boundaries land on a `##` heading, so each is
+  a top-and-tail, not surgery. Line numbers are against each repo's committed `AGENTS.md` at filing.
+- **The two deletions are uncommitted** and sit on those repos' working trees; `sudoku-hints` was
+  mid-story on a feature branch when it was done, so committing it needs care not to fold a contract
+  deletion into an unrelated story's diff.
+- **Out of scope:** `hw-biz-model` runs the heavier v3 protocol with its own contract lineage, and
+  `convo2article` names a different reviewer tool (`fireworks-reviewer`) — Thomas excluded it
+  explicitly.
+- **A caution on provenance.** A delegated survey that informed the first cut of this work was wrong
+  twice: it named a repo that does not exist (`fathom2article`), and it mis-reasoned about
+  `sudoku-hints`. Its *conclusions* held for the four real repos; its *specifics* did not. Re-verify
+  against the files before acting on any table, including this one.
+
+(Logged 2026-08-05. A **thirteenth** `OPS-` item. **Interacts with:** OPS-21, closed by the same
+story; and OPS-24, since `install.sh --check` will keep reporting a false HAND-EDITED while the
+deployed runner carries bytecode.)
 
 _(OPS-10 shipped — see [Done](#done).)_
 
