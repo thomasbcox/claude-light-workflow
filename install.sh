@@ -25,7 +25,7 @@ ARTIFACTS=(
   ".claude/skills/dev-audit::skills/dev-audit"
   ".claude/hooks/block-main-writes.sh::hooks/block-main-writes.sh"
   ".claude/workflow-protocol.md::workflow-protocol.md"
-  "AGENTS.md::workflow-AGENTS-template.md"
+  "workflow-AGENTS.md::workflow-AGENTS.md"
 )
 
 src_commit() { git -C "$SRC" rev-parse HEAD 2>/dev/null || echo "unknown"; }
@@ -193,7 +193,8 @@ do_install() {
   echo
   echo "✓ Installed to $DEST (backup: settings.json.bak)."
   echo "  Verify any time with: ./install.sh --check"
-  echo "  In each app: run /frame once — it bootstraps .claude/workflow.json + AGENTS.md for that repo."
+  echo "  In each app: run /frame once — it bootstraps .claude/workflow.json for that repo."
+  echo "  The reviewer contract is SHARED (workflow-AGENTS.md above) — repos do not get a copy."
 }
 
 case "${1:-}" in

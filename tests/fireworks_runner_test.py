@@ -104,9 +104,26 @@ def stub(replies, calls=None, barrier=None, raise_on=None):
 
 
 @contextlib.contextmanager
-def repo(slug="demo", story="# demo\n\nspec body\n", contract="# contract\n", change=True):
-    """A throwaway git repo with a base branch and one commit of change on top."""
+def repo(slug="demo", story="# demo\n\nspec body\n", contract="# contract\n", change=True,
+         local_contract=None):
+    """A throwaway git repo, plus a throwaway SHARED contract the runner is pointed at.
+
+    The shared contract lives OUTSIDE the repo now, so the fixture redirects the module
+    constant `runner.CONTRACT_PATH` at a temp file for the duration. It is restored on exit.
+
+    Isolation is not incidental here — a suite that silently read the developer's real
+    ~/.claude/workflow-AGENTS.md would pass for the wrong reason and would keep passing on a
+    machine where that file does not exist. Every test therefore asserts against a contract
+    whose text this fixture chose.
+
+    `local_contract` writes the repo's OWN AGENTS.md — repo-specific add-ons. Default None
+    means no such file, which is the normal case for most repositories.
+    """
     tmp = Path(tempfile.mkdtemp())
+    shared = tmp / "_shared_contract.md"
+    shared.write_text(contract)
+    saved_contract_path = runner.CONTRACT_PATH
+    runner.CONTRACT_PATH = shared
     try:
         run = lambda *a: subprocess.run(
             a, cwd=tmp, check=True, capture_output=True, text=True
@@ -114,7 +131,8 @@ def repo(slug="demo", story="# demo\n\nspec body\n", contract="# contract\n", ch
         run("git", "init", "-q", "-b", "main")
         run("git", "config", "user.email", "t@example.com")
         run("git", "config", "user.name", "T")
-        (tmp / "AGENTS.md").write_text(contract)
+        if local_contract is not None:
+            (tmp / "AGENTS.md").write_text(local_contract)
         (tmp / "reviews").mkdir()
         (tmp / "reviews" / f"{slug}.md").write_text(story)
         (tmp / "seed.txt").write_text("seed\n")
@@ -127,6 +145,7 @@ def repo(slug="demo", story="# demo\n\nspec body\n", contract="# contract\n", ch
             run("git", "commit", "-qm", "change")
         yield tmp
     finally:
+        runner.CONTRACT_PATH = saved_contract_path
         shutil.rmtree(tmp, ignore_errors=True)
 
 
@@ -530,7 +549,7 @@ with repo() as root:
 print("== AC-6: pushed context is complete or the round stops ==")
 
 for missing, remove in (
-    ("contract", lambda r: (r / "AGENTS.md").unlink()),
+    ("contract", lambda r: runner.CONTRACT_PATH.unlink()),
     ("story", lambda r: (r / "reviews" / "demo.md").unlink()),
 ):
     with repo() as root:
@@ -570,8 +589,14 @@ with repo() as root:
     contexts = [c["messages"][1]["content"] for c in calls]
     check("both passes receive byte-identical context",
           len(contexts) == 2 and contexts[0] == contexts[1])
+    # Derived from the pass's DECLARED inputs, not a hand-typed token list: a hand-typed
+    # list silently stops covering what it names the moment a source is added, which is
+    # exactly how `contract_local` could have been declared and never actually assembled.
+    declared = runner.PASSES["correctness"]["context"]
+    titles = [runner.CONTEXT_SOURCES[n]["title"] for n in declared]
     check("  ↳ context carries every declared input",
-          all(tok in contexts[0] for tok in ("AGENTS.md", "story file", "git diff", "git log")))
+          all(t in contexts[0] for t in titles),
+          f"missing: {[t for t in titles if t not in contexts[0]]}")
     check("  ↳ passes differ only in the question asked",
           calls[0]["messages"][0]["content"] != calls[1]["messages"][0]["content"])
 
@@ -718,8 +743,10 @@ with repo() as root:
     check("design altitude runs with no base", rc == 0, err[:140])
     check("  ↳ writes the design artifact", "demo.design.json" in artifacts(root))
     body = calls[0]["messages"][1]["content"]
+    design_titles = [runner.CONTEXT_SOURCES[n]["title"] for n in runner.PASSES["design"]["context"]]
     check("  ↳ pushes the contract and the story",
-          "AGENTS.md" in body and "story file" in body)
+          all(t in body for t in design_titles),
+          f"missing: {[t for t in design_titles if t not in body]}")
     # The whole point of the altitude: it judges intent. Handing it a diff would
     # invite findings about an implementation that does not exist yet.
     check("  ↳ pushes NO diff and NO commit log",
@@ -744,6 +771,89 @@ with repo() as root:
     written = (root / "reviews" / "demo.design.json").read_text()
     check("promoted artifacts end with a trailing newline", written.endswith("}\n"),
           repr(written[-12:]))
+
+
+
+
+# ── Shared contract + repo-local add-ons (user-level-contract) ────────────────
+
+print("== shared contract is required; repo AGENTS.md is optional add-ons ==")
+
+# AC-2: the SHARED contract is required. Missing and empty are DIFFERENT failures and
+# both must stop the round — "empty" is the one an optional-flag refactor could silently
+# start tolerating, so it is asserted directly rather than assumed.
+with repo() as root:
+    runner.CONTRACT_PATH.unlink()
+    rc, calls, err = invoke(root)
+    check("missing shared contract stops the round", rc != 0, f"rc={rc}")
+    check("  ↳ no artifact written", artifacts(root) == [], str(artifacts(root)))
+    check("  ↳ no request was made", calls == [], f"{len(calls)} call(s)")
+
+with repo() as root:
+    runner.CONTRACT_PATH.write_text("   \n\n")
+    rc, calls, err = invoke(root)
+    check("EMPTY shared contract stops the round too", rc != 0, f"rc={rc}")
+    check("  ↳ no artifact written", artifacts(root) == [], str(artifacts(root)))
+
+# Isolation: the payload must carry the contract THIS fixture wrote. If the constant were
+# captured at import time the suite would read the real ~/.claude and pass for the wrong
+# reason — and would keep passing on a machine where that file does not exist.
+with repo(contract="# SENTINEL-CONTRACT-9317\n\nonly this fixture wrote this\n") as root:
+    calls = []
+    invoke(root, calls=calls)
+    body = calls[0]["messages"][1]["content"]
+    check("the pushed contract is the fixture's, not the real ~/.claude",
+          "SENTINEL-CONTRACT-9317" in body)
+
+# AC-3: absent local add-ons are STATED, not silently omitted — the renders-nothing case,
+# which is the whole point of an optional input in a pushed-context backend.
+with repo() as root:
+    calls = []
+    rc, _, err = invoke(root, calls=calls)
+    body = calls[0]["messages"][1]["content"]
+    check("no repo AGENTS.md still succeeds", rc == 0, err[:140])
+    check("  ↳ its absence is stated in the payload", "(none present in this repository)" in body)
+
+with repo(local_contract="# Local\n\n- Solver code stays pure; no I/O.\n") as root:
+    calls = []
+    rc, _, err = invoke(root, calls=calls)
+    body = calls[0]["messages"][1]["content"]
+    check("present repo AGENTS.md succeeds", rc == 0, err[:140])
+    check("  ↳ its CONTENT reaches the reviewer", "Solver code stays pure" in body)
+
+# AC-5: a repo AGENTS.md that is really a stale copy of the shared contract is refused —
+# both directions, since a guard that never fires and one that always fires are both wrong.
+STALE = (Path(ROOT) / "workflow-AGENTS.md").read_text()
+with repo(contract=STALE, local_contract=STALE) as root:
+    rc, calls, err = invoke(root)
+    check("a stale full copy in AGENTS.md stops the round", rc != 0, f"rc={rc}")
+    check("  ↳ no artifact written", artifacts(root) == [], str(artifacts(root)))
+    check("  ↳ what surfaces names the migration", "stale copy" in err and "AGENTS.md" in err,
+          err[:160])
+
+with repo(contract=STALE, local_contract="# Local rules\n\n- Prefer table-driven tests.\n") as root:
+    rc, _, err = invoke(root)
+    check("genuine local add-ons are NOT mistaken for a stale copy", rc == 0, err[:140])
+
+# The preflight both skills call must agree with the runner — it calls the same code, so
+# this asserts the CLI entry point actually reaches it rather than reimplementing it.
+with repo(contract=STALE, local_contract=STALE) as root:
+    check("--check-local-contract rejects a stale copy", runner.check_local_contract(root) == 1)
+with repo(contract=STALE, local_contract="# Local\n\n- Keep the solver pure.\n") as root:
+    check("--check-local-contract passes genuine add-ons", runner.check_local_contract(root) == 0)
+with repo(contract=STALE) as root:
+    check("--check-local-contract passes a repo with no AGENTS.md", runner.check_local_contract(root) == 0)
+
+# AC-4: every pass declares BOTH contract inputs. Anchored to the skill invocations, not to
+# PASSES alone — a check drawn only from the runner's own table cannot fail for a pass wired
+# somewhere else, which is internal consistency rather than the criterion.
+SKILL_ALTITUDES = ("design", "approach", "correctness")   # what frame/SKILL.md + review/SKILL.md invoke
+invoked = {p for a in SKILL_ALTITUDES for p in runner.ALTITUDES[a]}
+check("every pass the skills can invoke exists in PASSES", invoked <= set(runner.PASSES))
+for name in sorted(invoked):
+    ctx = runner.PASSES[name]["context"]
+    check(f"  ↳ {name} declares both contract inputs",
+          "contract" in ctx and "contract_local" in ctx, str(ctx))
 
 
 print()

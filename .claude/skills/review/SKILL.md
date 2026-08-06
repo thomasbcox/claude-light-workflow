@@ -31,11 +31,11 @@ The independent reviewer is **selectable**. This section is the canonical resolu
 
 **As of 2026-08-04 there is no unwired pair** — `codex` and `fireworks` are both wired at all four passes. The rule above is therefore currently unreachable, and it stays anyway: it is the fail-closed guard every *future* backend inherits the moment its name is added to the value set, and deleting it would mean the first partially-wired backend silently falls back instead of stopping. Do not "simplify" it away because nothing trips it today.
 
-The reviewer **role contract** is `AGENTS.md` — tool-neutral and read automatically by whichever backend runs.
+The reviewer **role contract** is shared and lives once, at `~/.claude/workflow-AGENTS.md` — tool-neutral, and delivered to whichever backend runs: the `fireworks` runner pushes it as a declared context input, and the `codex` prompts interpolate it inline. A repo's own `AGENTS.md` is **optional** and carries repo-specific **additions only**; most repos have none, and that is the normal case.
 
 ## Steps
 0. **Defer to native workflow.** If `docs/ai-protocol.md` exists at the repo root (resolve via `git rev-parse --show-toplevel`), STOP immediately — this repo runs its own heavier workflow. Tell the user to use its native review skill (e.g. `/prepare-codex-review`) instead of this one, and do nothing else.
-1. **Load config** from `.claude/workflow.json`; identify `<slug>`, branch, `baseBranch`, `testCommand`, `codexModel`, and `reviewer` (see **Reviewer backend** below — resolve it once here and use it at every invocation in this skill).
+1. **Contract preflight, then load config.** First run `python3 "$HOME/.claude/skills/review/fireworks_runner.py" --check-local-contract || exit 1` — it STOPS if this repo's `AGENTS.md` is a stale copy of the shared contract rather than local additions, which would hand the reviewer two rulebooks. It runs here, in the skill, because `codex` auto-reads `AGENTS.md` with no runner involved, so a check living only in the runner would cover one of two wired backends. Then load config from `.claude/workflow.json`; identify `<slug>`, branch, `baseBranch`, `testCommand`, `codexModel`, and `reviewer` (see **Reviewer backend** below — resolve it once here and use it at every invocation in this skill).
 2. **Build note.** Append to `reviews/<slug>.md` a `## Build note (<date>)` section: the AC→file map only. Do not include a gate result (proven implicitly by the review existing) or a `git diff --stat` block (derivable from git; causes self-referential staleness).
 3. **Gate.** Run `testCommand`. If it fails, fix until green (mechanical self-fixes are allowed to reach green) and record the result. A red gate stops the loop.
 4. **PR (only if a remote + `gh` exist).** Ensure a PR targets `baseBranch` and its checks are `SUCCESS` on the current HEAD. Local-only repos skip this entirely.
@@ -56,16 +56,23 @@ The reviewer **role contract** is `AGENTS.md` — tool-neutral and read automati
    ```
    It writes `reviews/<slug>.approach.json`, the same artifact the codex path writes, so step 7 reads it identically. Non-zero exit stops the round. Skip the codex block below.
 
-   **If `codex`** — run, reads `AGENTS.md` automatically, read-only:
+   **If `codex`** — run read-only. The shared contract is **pushed into the prompt**, not fetched — a review that ran with no contract is indistinguishable from a good one, and neither the sandbox's reach nor the model's obedience is verifiable. Codex still auto-reads the repo's own `AGENTS.md`, which carries **local additions only**:
    ```bash
+   CONTRACT="$(cat "$HOME/.claude/workflow-AGENTS.md")" || { echo "ABORT: shared reviewer contract missing — run ./install.sh"; exit 1; }
    codex exec -s read-only \
      --output-schema "$HOME/.claude/skills/review/design-review-schema.json" \
      -o reviews/<slug>.approach.json \
      ${codexModel:+-m "$codexModel"} \
-     "You are the independent reviewer doing an APPROACH review per AGENTS.md — judge the SHAPE, not lines. Read reviews/<slug>.md (the spec) FIRST and sketch how YOU would satisfy the ACs. THEN read the FULL changed files (use \`git diff <base>...HEAD\` and \`git log --oneline <base>..HEAD\` for orientation, but read whole files) and the dependency manifest — not just the diff. Ask: does this reinvent what a dependency already does, or hand-roll what one declarative construct would cover? Is it larger/more complex than the problem? Could it be deleted and handed to the framework? You are licensed to cite simpler designs and CODE THAT SHOULD NOT EXIST. Apply the best-practice lens + three guardrails from AGENTS.md. Tag each finding with reversibility (one-way/two-way) and standing. Return at most the 3 HIGHEST-LEVERAGE concerns strictly per the provided JSON schema, each with alternative + win; empty findings array if the shape is sound." \
+     "Your reviewer contract is reproduced IN FULL below and is authoritative. It is the shared contract for every repository on this machine. If this repository also has an AGENTS.md, that file carries repo-specific ADDITIONS ONLY — never a replacement contract; read it as an addendum.
+
+=== BEGIN SHARED REVIEWER CONTRACT ===
+$CONTRACT
+=== END SHARED REVIEWER CONTRACT ===
+
+You are the independent reviewer doing an APPROACH review per that contract — judge the SHAPE, not lines. Read reviews/<slug>.md (the spec) FIRST and sketch how YOU would satisfy the ACs. THEN read the FULL changed files (use \`git diff <base>...HEAD\` and \`git log --oneline <base>..HEAD\` for orientation, but read whole files) and the dependency manifest — not just the diff. Ask: does this reinvent what a dependency already does, or hand-roll what one declarative construct would cover? Is it larger/more complex than the problem? Could it be deleted and handed to the framework? You are licensed to cite simpler designs and CODE THAT SHOULD NOT EXIST. Apply the best-practice lens + three guardrails from that contract. Tag each finding with reversibility (one-way/two-way) and standing. Return at most the 3 HIGHEST-LEVERAGE concerns strictly per the provided JSON schema, each with alternative + win; empty findings array if the shape is sound." \
      </dev/null
    ```
-   (Same `</dev/null` guard and absolute-schema / repo-relative-`-o` split as step 8 — see the notes there.) Read `reviews/<slug>.approach.json`; append a `## Codex approach review (<date>, base <base>, HEAD <sha>)` section: the `verdict`, then findings grouped by severity with their reversibility × standing tags, `alternative`, and `win`. Commit the story file + the `.approach.json`.
+   (Same `</dev/null` guard and absolute-schema / repo-relative-`-o` split as step 8 — see the notes there.) Read `reviews/<slug>.approach.json`; append a `## <Backend> approach review (<date>, base <base>, HEAD <sha>)` section — **name the backend that actually ran**, not a fixed one: the `verdict`, then findings grouped by severity with their reversibility × standing tags, `alternative`, and `win`. Commit the story file + the `.approach.json`.
 7. **Approach menu + gate (the short-circuit).** Present the approach findings **before** the correctness pass, each with a recommended disposition derived from its tags (**present per the consult-presentation rule** — `workflow-protocol.md` → *Consult model* → *How a consult is presented*: every option carries its cost and risk; a recommendation is earned, not reflexive):
    - **one-way door OR a major best-practice violation → block:** recommend *fix* (a redesign).
    - **minor two-way kludge → advisory:** recommend *accept* (Claude may tidy it) or *defer*; it never forces a redesign.
@@ -93,6 +100,7 @@ The reviewer **role contract** is `AGENTS.md` — tool-neutral and read automati
    # catch a partial artifact mid-write — the very stale/partial path this fail-closed join exists to
    # kill. Arm the cleanup trap BEFORE the first mktemp so an interrupt between the two allocations
    # can't leak the first temp; `rm -f` on the still-empty vars is a harmless no-op.
+   CONTRACT="$(cat "$HOME/.claude/workflow-AGENTS.md")" || { echo "ABORT: shared reviewer contract missing — run ./install.sh"; exit 1; }
    tmp_c=""; tmp_h=""
    trap 'rm -f "$tmp_c" "$tmp_h"' EXIT
    tmp_c="$(mktemp reviews/.<slug>.codex.XXXXXX)"
@@ -102,14 +110,26 @@ The reviewer **role contract** is `AGENTS.md` — tool-neutral and read automati
    codex exec -s read-only \
      --output-schema "$HOME/.claude/skills/review/finding-schema.json" \
      -o "$tmp_c" ${codexModel:+-m "$codexModel"} \
-     "You are the independent reviewer defined in AGENTS.md. Review ONLY this branch's changes versus <base>: run \`git diff <base>...HEAD\` and \`git log --oneline <base>..HEAD\`, and read reviews/<slug>.md for the spec. Judge the change against that spec. Return your result strictly per the provided JSON schema (severities BLOCKER / IMPORTANT / QUESTION / NIT; ground every finding in the actual diff; return an empty findings array if there are no issues)." \
+     "Your reviewer contract is reproduced IN FULL below and is authoritative. It is the shared contract for every repository on this machine. If this repository also has an AGENTS.md, that file carries repo-specific ADDITIONS ONLY — never a replacement contract; read it as an addendum.
+
+=== BEGIN SHARED REVIEWER CONTRACT ===
+$CONTRACT
+=== END SHARED REVIEWER CONTRACT ===
+
+You are the independent reviewer defined by that contract. Review ONLY this branch's changes versus <base>: run \`git diff <base>...HEAD\` and \`git log --oneline <base>..HEAD\`, and read reviews/<slug>.md for the spec. Judge the change against that spec. Return your result strictly per the provided JSON schema (severities BLOCKER / IMPORTANT / QUESTION / NIT; ground every finding in the actual diff; return an empty findings array if there are no issues)." \
      </dev/null & pid_c=$!
 
    # hidden-failure critic — its OWN schema; scoped to the hidden-failure lens ONLY
    codex exec -s read-only \
      --output-schema "$HOME/.claude/skills/review/hidden-failure-schema.json" \
      -o "$tmp_h" ${codexModel:+-m "$codexModel"} \
-     "You are the independent reviewer per AGENTS.md doing a CORRECTNESS review SCOPED TO ONE LENS: hidden failure / weak error handling (AGENTS.md's 'Hidden failure' bullet) ONLY — the parallel correctness critic covers everything else, do NOT duplicate it. Run \`git diff <base>...HEAD\` and read reviews/<slug>.md for the spec. Report ONLY findings where the diff swallows, absorbs, or silently degrades on error: bare/blind except|catch, catch-log-continue where propagating is correct, silent fallbacks, deleted assertions/safety checks — anything that lets code continue in a degraded state nothing surfaces. Ground every finding in the diff; empty findings array if none. Return strictly per the provided JSON schema." \
+     "Your reviewer contract is reproduced IN FULL below and is authoritative. It is the shared contract for every repository on this machine. If this repository also has an AGENTS.md, that file carries repo-specific ADDITIONS ONLY — never a replacement contract; read it as an addendum.
+
+=== BEGIN SHARED REVIEWER CONTRACT ===
+$CONTRACT
+=== END SHARED REVIEWER CONTRACT ===
+
+You are the independent reviewer per that contract doing a CORRECTNESS review SCOPED TO ONE LENS: hidden failure / weak error handling (the contract's 'Hidden failure' bullet) ONLY — the parallel correctness critic covers everything else, do NOT duplicate it. Run \`git diff <base>...HEAD\` and read reviews/<slug>.md for the spec. Report ONLY findings where the diff swallows, absorbs, or silently degrades on error: bare/blind except|catch, catch-log-continue where propagating is correct, silent fallbacks, deleted assertions/safety checks — anything that lets code continue in a degraded state nothing surfaces. Ground every finding in the diff; empty findings array if none. Return strictly per the provided JSON schema." \
      </dev/null & pid_h=$!
 
    wait "$pid_c"; rc_c=$?
@@ -123,5 +143,5 @@ The reviewer **role contract** is `AGENTS.md` — tool-neutral and read automati
    **Keep each `</dev/null`:** without it `codex exec` reads stdin ("Reading additional input from stdin…") and blocks forever when stdin isn't a TTY (background / non-interactive runs), hanging the review. The redirect binds per `codex exec`, so backgrounding with `&` is safe (and appending `2>&1 | tail` to a foreground run stays correct: `codex … </dev/null 2>&1 | tail`).
    **Why each `--output-schema` is absolute but `-o` promotes to a repo-relative path:** each schema is a *skill-local* file installed at the user level (`install.sh` deploys it to `$HOME/.claude/skills/review/`), so it must be addressed there — a repo-relative path resolves against the project being reviewed, which doesn't carry the skill, and `codex` aborts ("Failed to read output schema file … No such file or directory"). The promoted outputs (`reviews/<slug>.codex.json`, `reviews/<slug>.hidden-failure.json`), by contrast, land *in the reviewed project*, so they stay repo-relative. Don't "normalise" the two to the same form. (Every Codex schema shares this rule — `design-review-schema.json` and `hidden-failure-schema.json` too are addressed absolutely.)
    **Do NOT use the `codex exec review` subcommand here:** its `--base` flag conflicts with a custom prompt, and its `-o` output ignores `--output-schema` (it writes prose, not JSON). Also note every schema marks all properties `required` with the optional keys nullable — the strict structured-output backend rejects schemas with truly optional keys.
-   Read both artifacts; append a `## Codex review (<date>, base <base>, HEAD <sha>)` section (its `summary`, then correctness findings grouped by severity) **and** a `## Hidden-failure review (<date>, base <base>, HEAD <sha>)` section (its `summary`, then hidden-failure findings grouped by severity). Commit the story file + both artifacts (`.codex.json` and `.hidden-failure.json`).
+   Read both artifacts; append a `## <Backend> correctness review (<date>, base <base>, HEAD <sha>)` section — **name the backend that actually ran** (its `summary`, then correctness findings grouped by severity) **and** a `## Hidden-failure review (<date>, base <base>, HEAD <sha>)` section (its `summary`, then hidden-failure findings grouped by severity). Commit the story file + both artifacts (`.codex.json` and `.hidden-failure.json`).
 9. **Decision menu + record & route.** Present the findings in **two labelled groups** — **Correctness** (from `.codex.json`) and **Hidden-failure** (from `.hidden-failure.json`) — each finding grouped by severity, each with a recommended disposition (**fix / defer / reject / answer**). The groups are presented side by side, **not** merged or consensus-voted (divided parallelism → reconciliation is grouping); drop only an obvious same-`file:line`+claim duplicate that appears in both. **Present per the consult-presentation rule** (`workflow-protocol.md` → *Consult model* → *How a consult is presented*): every option carries its cost and risk. **Ground each recommendation in what the finding carries** — both critics emit the same fields (no tags, unlike the approach pass), so derive from `severity` + the finding's `claim`: **BLOCKER / IMPORTANT → recommend *fix*; QUESTION → *answer*; NIT → *accept or defer*** — then let the `claim` adjust anything severity alone doesn't settle. A recommendation is earned this way, never reflexive. Ask Thomas to decide per finding. **Never re-raise** anything he deferred or rejected in an earlier round — tracked **per group**, so a deferred hidden-failure finding stays deferred on re-review just as a correctness one does. Append a `## Decisions (<date>)` section quoting Thomas's call per finding (every critic's decisions this round — approach if it ran, correctness, and hidden-failure); commit it. **Deciding fix/defer/reject is not a merge decision** — the merge gate is separate and lives in `/close`, which **stops at its re-review/merge fork** before any merge (the fork is conditional — a redesign re-reviews rather than offering merge). Then run `/close` to apply the approved fixes and reach the merge fork — routing to `/close` does NOT authorize a merge; `/close` still requires a distinct merge instruction.

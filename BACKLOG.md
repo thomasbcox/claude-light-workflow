@@ -610,7 +610,15 @@ retired falsification plan. **Estate note:** any Tier 1 change ships to every re
 `install.sh`, so its instruction weight is paid on every invocation everywhere — the standing
 tension the ROADMAP names as *reach* vs. the *lightweight* identity.)
 
-OPS-21 — **`AGENTS.md` is both this repo's reviewer contract and the template every other repo
+OPS-21 — **SHIPPED** via PR #52 / `merge: user-level-contract` (see [Done](#done)) — **its premise
+no longer exists**; the analysis below is retained as the design record. The one file
+serving two jobs is gone: the shared contract was renamed to `workflow-AGENTS.md` and deploys to
+`~/.claude/workflow-AGENTS.md`, so `AGENTS.md` in *every* repo — including this one — now means
+repo-specific additions and nothing else. Both options this item weighed (B: decouple the template;
+B′: an `AGENTS.local.md` addendum) were superseded: neither is needed once the shared contract is
+never copied. Retained below as the design record.
+
+**`AGENTS.md` is both this repo's reviewer contract and the template every other repo
 starts from; give this repo a way to say something repo-specific.** Filed 2026-08-05 from
 `estate-reach-guardrails`'s design review (Thomas: *"backlog B and B-prime for future
 consideration"*). Evaluate-and-decide; **not** committed work.
@@ -791,6 +799,95 @@ one signal telling you a re-install is unsafe.
 *findings graduated from a `/dev-audit` run*, and this came from a review round, not a recon pass.
 **Interacts with:** OPS-20's computed-extents rule, which candidate (a) is a direct application of.)
 
+OPS-25 — **Migrate the remaining repos to the shared reviewer contract.** Filed 2026-08-05 by
+`user-level-contract`, which shipped the mechanism. **Manual work in other repositories, deliberately
+outside that story's diff** — a scope-containment AC governs only this repo.
+
+- **Do this only after `./install.sh` has run**, or the deployed reviewer still expects a per-repo
+  `AGENTS.md` and reviews will fail closed in any repo already migrated.
+- **Verified 2026-08-05 in-session**, by classifying every line of each file against the union of all
+  six historical generations of the contract (from this repo's git history) rather than by eyeballing
+  similarity. Emphasis markers normalised, since one repo runs Prettier over Markdown and rewrites
+  `*shape*` as `_shape_`.
+
+| Repo | Lines | Genuinely local | Action |
+|---|---|---|---|
+| `ruleset-sim` | 99 | **68** (one block) | **Trim** — keep lines 25–93 (`## Project rules to enforce` → end of that section); delete 1–24 and 94–99 |
+| `txl-assessment-collector` | 120 | **84** (one block) | **Trim** — keep lines 27–120 (`## Project testing convention (the gate)` → EOF); delete 1–26 |
+| `sudoku-hints` | 85 | 0 | **DONE** — file deleted 2026-08-05 (uncommitted) |
+| `zoom-meeting-cost` | 25 | 0 | **DONE** — file deleted 2026-08-05 (uncommitted) |
+
+- **Both trims are a single contiguous block** and both boundaries land on a `##` heading, so each is
+  a top-and-tail, not surgery. Line numbers are against each repo's committed `AGENTS.md` at filing.
+- **The two deletions are uncommitted** and sit on those repos' working trees; `sudoku-hints` was
+  mid-story on a feature branch when it was done, so committing it needs care not to fold a contract
+  deletion into an unrelated story's diff.
+- **Out of scope:** `hw-biz-model` runs the heavier v3 protocol with its own contract lineage, and
+  `convo2article` names a different reviewer tool (`fireworks-reviewer`) — Thomas excluded it
+  explicitly.
+- **A caution on provenance.** A delegated survey that informed the first cut of this work was wrong
+  twice: it named a repo that does not exist (`fathom2article`), and it mis-reasoned about
+  `sudoku-hints`. Its *conclusions* held for the four real repos; its *specifics* did not. Re-verify
+  against the files before acting on any table, including this one.
+
+(Logged 2026-08-05. A **thirteenth** `OPS-` item. **Interacts with:** OPS-21, closed by the same
+story; and OPS-24, since `install.sh --check` will keep reporting a false HAND-EDITED while the
+deployed runner carries bytecode.)
+
+OPS-26 — **A dependency rejection must name its cost.** Filed 2026-08-05 by Thomas, in his own
+words below.
+
+**Story.** *As the product owner reading a review, I want any reviewer who rejects an available
+library in favour of hand-rolled code to name what that library would specifically cost, so that I
+can weigh reinvention against dependency on stated evidence instead of treating "it would be a
+dependency" as self-evidently decisive.*
+
+**Why now.** In `txl-assessment-collector`, a hand-rolled URL-state module was blessed because
+*"adding one for two small consumers would lose the concrete dependency-free win."* It shipped a
+user-visible bug — **multi-word filter terms cannot be typed** — that **passed all four of that
+story's review passes** and was caught two stories later by a different pass. `nuqs` covers roughly
+70% of that module declaratively. The reasoning was a proxy ("fewer dependencies") standing in for
+costs nobody named.
+
+**Acceptance criteria.**
+
+1. A review that rejects an available dependency states a **specific cost** — upgrade coupling,
+   surface area, maintenance posture, or licence. A rejection resting only on dependency *count* is
+   incomplete, and reads as incomplete to the person deciding.
+2. *"No installed dependency does this"* is **not** a sufficient answer to *"does this reinvent
+   something."* The reviewer weighs dependencies that **could be added**, not only those already
+   present.
+3. Where a candidate library exists, the reviewer **names it**, so the decision is a trade between
+   two concrete options rather than an abstraction.
+4. *"Too small to justify a dependency"* is not accepted on its own, because it is true at every
+   increment — the reviewer says **what would change the answer** (e.g. a third consumer).
+5. The change lands in the workflow's reviewer-contract template and **reaches repos that already
+   hold a copy** — historically `/frame` seeded the template only when `AGENTS.md` was absent, so
+   existing repos needed an explicit path.
+
+**AC5 note — Thomas flagged it as the one most likely to be missed, and `user-level-contract`
+largely dissolves it.** Once that story merges the contract is **shared, not copied**: it lives at
+`~/.claude/workflow-AGENTS.md` and every repo reads that same file, so an amendment reaches every
+repo on the next `./install.sh` with no per-repo path needed. What remains of AC5 is a **sequencing**
+requirement, not a distribution one: this item should be built **after** `user-level-contract` ships
+and the OPS-25 migration is done, or it inherits the very staleness problem AC5 names. If it is
+built first, AC5 stands as originally written.
+
+**Where the rule belongs.** The three guardrails on the best-practice lens (*concrete win not
+novelty; weigh internal consistency; repo conventions are the local standard*) live in the shared
+contract and are quoted by every pass prompt. This item adds a fourth constraint to the same lens —
+the natural home is beside them, so every altitude inherits it without a per-prompt edit.
+
+**Bearing on the loop's own evidence.** The cited failure is a defect that **survived four review
+passes** and was caught only by a later, differently-framed one. That is the same class OPS-20
+addresses — a check that cannot fail in the way that matters — arriving from the *dependency*
+direction rather than the *test* direction, and it is worth weighing in OPS-22's lookback.
+
+(Logged 2026-08-05. A **fourteenth** `OPS-` item, and the first sourced from a defect observed in a
+consumer repo rather than in this one. **Interacts with:** `user-level-contract` and OPS-25, which
+together resolve AC5's distribution half; OPS-22, whose lookback should weigh the four-passes-missed
+evidence; and OPS-23, since the contract is edited there too.)
+
 _(OPS-10 shipped — see [Done](#done).)_
 
 ---
@@ -799,6 +896,7 @@ _(OPS-10 shipped — see [Done](#done).)_
 
 | id | Summary | Shipped |
 |---|---|---|
+| OPS-21 | `AGENTS.md` served two jobs at once — this repo's reviewer contract *and* the template every other repo copied — so this repo structurally could not give its reviewer repo-specific guidance. Resolved by removing the premise rather than either option it weighed: the shared contract was renamed to `workflow-AGENTS.md` and deploys once to `~/.claude/`, so `AGENTS.md` in every repo now means repo-specific additions only. Options B (decouple the template) and B′ (an `AGENTS.local.md` addendum) are both moot — neither is needed once the contract is never copied. | PR #52 / `merge: user-level-contract` |
 | OPS-4 | `/close`'s merge step raced GitHub's async mergeability computation (5×5s `mergeStateStatus` poll loop). Fixed: replaced with `gh pr merge --auto`, delegating merge timing to GitHub; added `allow_auto_merge` pre-flight and MERGED-state poll. | PR #6 / `499d6b6` |
 | OPS-5 | `/close`'s auto-merge pre-flight aborted whenever `allow_auto_merge` was `false`, even with no required checks. Fixed: three-way merge strategy — auto-merge path when enabled, direct `gh pr merge` when disabled with no required checks, abort only when disabled *and* ≥1 required status check (detected via classic branch protection, degrading to zero on 403/404; rulesets out of scope). | PR #8 / `0406185` |
 | OPS-5-fix | Follow-up to OPS-5: the new pre-flight's required-check detection didn't degrade to zero on a 403/404 — an inline `\|\| echo 0` appended to gh's error body, yielding a non-integer that broke the `-gt` test. Fixed: capture on gh success only via a separate-statement fallback, then sanitise to an integer. Surfaced by dogfooding the PR #8 merge. | PR #9 / `1278814` |

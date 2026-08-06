@@ -228,6 +228,18 @@ echo "== pin: computed extents (OPS-20 option 4) =="
 has "computed-extents rule" "$FRAME" "derive that extent from the source"
 has "vacuous-extent caveat" "$FRAME" "passes vacuously"
 
+echo "== pin: the shared contract has ONE home and is never copied into a repo =="
+# Silent failure: a repo-level AGENTS.md becomes the contract again and drift returns — the
+# defect this arrangement exists to remove. Structural, and derived from BOTH authoritative
+# sources: install.sh's ARTIFACTS for what deploys, and the runner's own CONTRACT_PATH for
+# what is read. Comparing the two is the point — a destination that no longer matches what
+# the runner reads means the file installed is not the file used.
+contract_wiring() {
+  /usr/bin/env python3 "$ROOT/tests/check_contract_wiring.py" "$ROOT" 2>/dev/null || echo ERR
+}
+eq "install deploys exactly the contract the runner reads, and no AGENTS.md" \
+  "deployed no-agents-md repo-file-absent" "$(contract_wiring)"
+
 echo "== TIER 2 (decision guards): the retired falsification machinery has not crept back =="
 # THE CLOSED TIER-2 BLOCK — see the header. Not behavior guards, and they do not claim to be.
 # Each construct below was deleted on stated evidence by an approved story (thin-the-loop,

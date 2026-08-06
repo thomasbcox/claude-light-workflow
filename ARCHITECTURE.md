@@ -131,7 +131,12 @@ therefore accepts a bare string (that backend everywhere — the original form, 
 purpose→backend map. The canonical rule and per-backend dispatch live in
 [`review/SKILL.md`](.claude/skills/review/SKILL.md) (→ *Reviewer backend*); `/frame` and
 `/close`-time re-review use the config (no override surface). The role contract,
-[`AGENTS.md`](AGENTS.md), is tool-neutral and read automatically by whichever backend runs.
+[`workflow-AGENTS.md`](workflow-AGENTS.md), is tool-neutral and **shared by every repository** —
+deployed once to `~/.claude/workflow-AGENTS.md` and delivered to whichever backend runs: the
+`fireworks` runner pushes it as a declared context input, the `codex` prompts interpolate it inline.
+It is never copied into a repo, so there is one copy and it cannot drift. A repo's own `AGENTS.md`
+is **optional** and holds repo-specific **additions only**; a file there that is really a stale
+contract copy is refused by the preflight in `/frame` and `/review`.
 
 **`codex`** is called directly through the `codex` CLI as a read-only `codex exec -s read-only` run
 with a structured-output JSON schema — no copy/paste; it never commits, and Claude captures its
@@ -238,7 +243,8 @@ project-local under `.claude/` so they can be exercised here with a real `/frame
 them — its `ARTIFACTS` set is the single source of truth for the deployed files — to `~/.claude/` and
 wires the hook into `~/.claude/settings.json` (idempotent, backs up first); `./install.sh --check`
 reports drift.
-In each app, the first `/frame` bootstraps that repo's `.claude/workflow.json` + `AGENTS.md`.
+In each app, the first `/frame` bootstraps that repo's `.claude/workflow.json`. It does **not**
+create an `AGENTS.md`: the contract is shared, so a repo without one is the normal case.
 
 ### 3.7 Requirements (tooling)
 

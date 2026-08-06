@@ -1,0 +1,4 @@
+{
+  "summary": "The diff is limited to a prompt-string correction in `fireworks_runner.py`, a new backlog item, and story-file updates. No new error-handling paths are introduced: no bare except/catch blocks, no catch-log-continue, no silent fallbacks, and no deleted assertions or safety checks. The change does not degrade the failure-reporting surface.",
+  "findings": []
+}

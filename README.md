@@ -1,6 +1,6 @@
 # claude-light-workflow
 
-A lightweight, human-controlled development loop where **Claude builds, Codex critiques, and the
+A lightweight, human-controlled development loop where **Claude builds, an independent reviewer critiques, and the
 human decides** — with a small per-branch audit trail. A trimmed-down port of the heavier "AI
 Protocol v3" (kept as a historical reference in
 [`ai-dev-workflow-architecture.md`](ai-dev-workflow-architecture.md)), keeping only what's needed for
@@ -82,22 +82,24 @@ user-local venv from [`requirements.txt`](.claude/skills/review/requirements.txt
 
 Running two different models over one branch is the point, not a side effect — cross-model critics
 are a defense against a single model's blind spots. The resolution rule and dispatch live in
-[`review/SKILL.md`](.claude/skills/review/SKILL.md) → *Reviewer backend*; the role contract is the
-tool-neutral [`AGENTS.md`](AGENTS.md), read automatically by whichever backend runs.
+[`review/SKILL.md`](.claude/skills/review/SKILL.md) → *Reviewer backend*; the role contract is the tool-neutral
+[`workflow-AGENTS.md`](workflow-AGENTS.md) — **shared by every repo**, deployed once to
+`~/.claude/workflow-AGENTS.md`, and delivered to whichever backend runs (the runner pushes it; the
+codex prompts interpolate it inline).
 
-Codex is called directly via the `codex` CLI — a read-only `codex exec -s read-only` run with a
+The `codex` backend is called directly via the `codex` CLI — a read-only `codex exec -s read-only` run with a
 structured-output schema (the canonical command lives in [`review/SKILL.md`](.claude/skills/review/SKILL.md)),
 no copy/paste. It runs read-only and never commits; Claude captures its structured findings and commits the trail.
 
 ## Artifacts (the audit trail)
 - [`BACKLOG.md`](BACKLOG.md) — staging area in front of the loop: bugs (`BUG-`), tooling improvements (`OPS-`), and recon findings (`AUDIT-`, from `/dev-audit`), each graduating to a `reviews/<slug>.md` story.
 - `reviews/audit-<YYYY-MM-DD>.md` — a `/dev-audit` recon report (standalone; not a loop story).
-- `reviews/<slug>.md` — spec + design sketch → Codex findings → decisions, appended across rounds.
-- `reviews/<slug>.design.json` — frame-time Codex design-sketch review.
+- `reviews/<slug>.md` — spec + design sketch → reviewer findings → decisions, appended across rounds.
+- `reviews/<slug>.design.json` — frame-time design-sketch review, plus the reviewer's per-criterion regression list.
 - `reviews/<slug>.approach.json` — review-time approach-pass output.
 - `reviews/<slug>.codex.json` — review-time correctness output per round.
 - `.claude/workflow.json` — per-repo config: `baseBranch`, `branchPrefix`, `testCommand`, `reviewer`, `codexModel`.
-- `AGENTS.md` — the (tool-neutral) reviewer contract.
+- `AGENTS.md` — **optional**, and repo-specific **additions only** — never a copy of the shared contract. Most repos have none; that is the normal case. The shared contract is global, not per-repo (below).
 
 The story header records only declared state (`proposed → approved`). Whether it shipped is owned by git — the `merge: <slug>` commit / PR-`MERGED` state — and read back by deriving (`git log <base> --grep "^merge: <slug>"`), never stored in the header.
 
@@ -147,7 +149,9 @@ Repos without the marker are governed by the light workflow as normal.
 1. **Test** in this repo (skills/hook are project-local under `.claude/`). Run a real `/frame → /review → /close`.
 2. **Deploy** to every Claude Code app on this machine: `./install.sh` copies the skills + hook to
    `~/.claude/` and wires the hook into `~/.claude/settings.json` (idempotent, backs up first).
-3. In each app, run `/frame` once — it bootstraps that repo's `.claude/workflow.json` + `AGENTS.md`.
+3. In each app, run `/frame` once — it bootstraps that repo's `.claude/workflow.json`. The
+   reviewer contract is **shared** (`workflow-AGENTS.md`, deployed in step 2) — repos do not get
+   a copy, and a repo with no `AGENTS.md` is the normal case.
 
 ## Requirements
 `codex` CLI (`codex exec`), `git`, `python3`, `jq`. `gh` + a remote enable PR mode; without a

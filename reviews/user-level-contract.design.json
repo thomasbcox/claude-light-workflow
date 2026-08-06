@@ -1,0 +1,133 @@
+{
+  "verdict": "The core move is right: one home beats five sync mechanisms, and renaming the source so `AGENTS.md` means exactly one thing estate-wide is the enabling simplification. The test plan's computed-extents discipline (ARTIFACTS-derived, PASSES-derived, both-directions guard fixtures) matches the repo's own doctrine. Three shape concerns, in leverage order: (1) BLOCKER \u2014 the migration guard lives only in the fireworks runner, so the codex path (wired today, its prompts edited by this very story) still auto-reads a stale repo AGENTS.md and then receives the user-level contract on top: the exact two-contradictory-contracts failure AC5 exists to prevent, on the backend the guard never runs. Hoist detection into the skill layer that invokes both backends; keep the runner check as backstop. (2) IMPORTANT \u2014 detecting stale copies by a 'distinctive phrase' is a magic string that rots the next time the contract is edited (OPS-23 is already queued) and cannot match the surveyed three-generation population; a stdlib similarity check catches all generations, survives edits, and cannot silently die. (3) IMPORTANT \u2014 open question 1 should resolve to push-by-default: interpolate the contract into codex prompts rather than naming a path and trusting a sandboxed read plus model obedience; that deletes two silent-failure modes, makes AC6's admittedly untestable obedience check unnecessary, unifies codex with the fireworks runner's existing push model, and puts the exact contract text in the prompt log, covering most of open question 2's reproducibility want for free. On the assigned oracles: AC4's PASSES-derived extent is drawn from the implementation's own table and cannot fail for a pass that lives outside PASSES \u2014 anchor the expected pass set to the skill invocations instead; AC6's pins are file-level presence tokens \u2014 make them per-site and pair them with absence-pins for the superseded instruction. AC1/2/3/5/7/10 derive from authoritative sources or behavior and can genuinely fail; AC8/9/11 are honestly manual. Smaller notes, not findings: the assemble_context trap the sketch works around (FileNotFoundError raised regardless of the optional flag) deserves the one-line central fix \u2014 let `optional` absorb it into stated absence \u2014 rather than a per-getter workaround every future source must rediscover; and on open question 3, delete this repo's AGENTS.md \u2014 an empty self-explaining stub is instruction weight with no content.",
+  "findings": [
+    {
+      "severity": "BLOCKER",
+      "reversibility": "two-way",
+      "standing": "standard",
+      "title": "Migration guard exists only on the fireworks path; codex still receives both contracts",
+      "locus": "Design sketch \u2014 'Migration guard' paragraph (runner-only placement); AC5",
+      "claim": "The stale-copy guard is implemented inside contract_local's getter in fireworks_runner.py. But codex is wired today, this story edits four codex prompts, and codex auto-reads the repo's AGENTS.md with no runner involved. In a stale repo, a codex-routed review therefore auto-reads the stale full contract and is then handed the user-level contract by the prompt \u2014 two contracts that may contradict, silently reconciled by the model, which is verbatim the failure AC5's intent statement names. A safety invariant that only engages on one of two backends, on a repo whose doctrine treats silent degradation as the cardinal sin, is the wrong shape to ship.",
+      "alternative": "Hoist stale-copy detection to the layer that invokes both backends: an explicit preflight step in review/SKILL.md and frame/SKILL.md (check the repo AGENTS.md for contract-likeness; on detection, halt naming the migration) executed before codex or the runner is invoked. Keep the runner-side RunnerError as a backstop for direct runner invocation.",
+      "win": "One cheap preflight (a grep plus a halt instruction) covers every reviewer pass on every backend \u2014 eliminating the contradictory-contract push on the codex path, which no amount of runner-side rigor can reach \u2014 instead of a guard that protects half the wired surface and gives no signal about the other half."
+    },
+    {
+      "severity": "IMPORTANT",
+      "reversibility": "one-way",
+      "standing": "standard",
+      "title": "Resolve open question 1 to push-by-default: interpolate the contract into codex prompts",
+      "locus": "Open question 1 / Design sketch \u2014 'Codex' paragraph; AC6",
+      "claim": "The sketch makes prompt shape contingent on an empirical probe of whether codex's read-only sandbox can read outside the workspace. But pull-from-path has two independent silent failure modes, not one: sandbox scoping (the probe) and the model simply not performing the read \u2014 which AC6 already concedes has no CI-safe oracle ('a pin proves the instruction is present, never that codex obeys it'). Even if the probe succeeds, every codex review still depends on unobedient-proof instruction-following for its most important input, and a contract-free review surfaces nothing. Whichever pattern is chosen will be copied by all four prompt sites and future prompts, so this is Thomas's call \u2014 but it should be decided on failure-mode grounds, not sandbox-probe grounds.",
+      "alternative": "Interpolate the contract into each codex prompt via a double-quoted substitution \u2014 \"$(cat \"$HOME/.claude/workflow-AGENTS.md\")\" \u2014 the same push the fireworks runner already performs, keeping a one-line path mention for provenance. The prompt is already a shell string; quoting makes contract content safe; ~100 lines of prompt weight is negligible.",
+      "win": "Deletes both silent failure modes by construction (nothing to sandbox, nothing to obey), retires AC6's untestable manual obedience check, unifies codex and fireworks on one delivery pattern, and bakes the exact contract text into the logged prompt \u2014 which covers most of open question 2's reproducibility concern with zero new machinery."
+    },
+    {
+      "severity": "IMPORTANT",
+      "reversibility": "two-way",
+      "standing": "kludgy",
+      "title": "Stale-copy detection by 'distinctive phrase' rots silently and misses the surveyed generations",
+      "locus": "Design sketch \u2014 'Migration guard' paragraph",
+      "claim": "The guard's detector is a magic string from the current contract embedded in the runner. The contract is a living document (the hidden-failure bullet entered 2026-07-15; OPS-23 will edit it again), so the phrase will drift \u2014 and when it does the guard fails silent, the failure mode this repo ranks worst. It also cannot match the population the survey actually measured: three stale generations, some hand-edited. A phrase chosen from the current header (e.g., the selectable-backends line) is absent from the two oldest copies, which open with 'You are Codex' \u2014 so the guard waves through precisely the stalest repos during the migration window it exists for.",
+      "alternative": "Replace the phrase test with a similarity test using stdlib difflib: SequenceMatcher ratio of the repo AGENTS.md against the deployed user-level contract, threshold tuned against the survey's five specimens (stale copies of any generation score high; the two hand-authored local-doctrine files score low). Optionally union with the known-generation opening lines for determinism.",
+      "win": "No sentinel string to maintain in lockstep with a living contract; catches all three surveyed generations and lightly edited copies instead of a fixture of today's file; and the guard cannot silently die the next time OPS-23 or any edit touches the contract \u2014 zero new dependencies (difflib is stdlib)."
+    }
+  ],
+  "regressions": [
+    {
+      "criterion": "AC1",
+      "regression": "Satisfy the ARTIFACTS check (a destination workflow-AGENTS.md, none named AGENTS.md) while leaving this repo's own AGENTS.md in place still containing the full contract text, relabeled as 'local guidance' \u2014 the letter (nothing named AGENTS.md is deployed) passes and the intent (exactly one source of the contract, in-tree included) is violated. The ARTIFACTS-derived check cannot see this; also assert the repo file is gone or content-disjoint from the contract, not merely undeployed."
+    },
+    {
+      "criterion": "AC1",
+      "regression": "Let the install destination and the runner's read path be derived independently: the check matches the basename 'workflow-AGENTS.md' in ARTIFACTS while the runner's module-level constant points at a different parent directory, so the file installed is never the file read. Derive the expected destination from the same constant the runner actually uses."
+    },
+    {
+      "criterion": "AC2",
+      "regression": "Handle 'missing' via FileNotFoundError but never check 'empty' for a required source \u2014 the sketch itself notes the optional flag is what governs empty bodies, so an empty contract file could assemble a review against nothing while 'missing or empty stops the round' is only half-implemented. Make the empty case a primary assertion, not an assumed side-effect."
+    },
+    {
+      "criterion": "AC2",
+      "regression": "Let run_altitude raise on the absent contract but have an outer handler catch-log-continue and still write the round artifact \u2014 'fails closed' verified by observing an error while the degraded round completes and produces output. Assert no artifact exists, not merely that an error was raised or logged."
+    },
+    {
+      "criterion": "AC2",
+      "regression": "Inject the temp path via a monkeypatched module constant that was already captured at import time (from-import copy or default-argument binding), so the tests silently read the developer's real ~/.claude/workflow-AGENTS.md and pass because it exists \u2014 isolation's letter (tests point at temp) met, its intent (never depend on real user state) violated. Prove isolation by asserting the temp file's distinctive content is what reached the payload."
+    },
+    {
+      "criterion": "AC3",
+      "regression": "Emit the stated-absence line correctly when no local file exists, but wire the present-branch to a wrong path or root, so a repo with genuine local guidance has it silently dropped from the payload while the absent-case test stays green. The AC's intent is the optional-input contract in both directions; assert the present case carries the file's actual content."
+    },
+    {
+      "criterion": "AC3",
+      "regression": "Cross-wire the two getters so an absent local file states absence (letter passes) but a present one injects the shared user-level contract a second time as contract_local \u2014 two contracts in one payload, the very failure AC5 exists to prevent, arriving through the AC3 code path."
+    },
+    {
+      "criterion": "AC4",
+      "regression": "Declare both inputs on every pass in PASSES while one pass's prompt template never interpolates contract_local \u2014 the derived-extent check iterates declarations and passes while that altitude reviews without the local layer another altitude saw. Assert on each pass's assembled payload, not on its declaration."
+    },
+    {
+      "criterion": "AC4",
+      "regression": "Add a fifth pass outside the PASSES table (wired directly in a skill or another code path): the PASSES-derived oracle cannot fail for a pass it cannot see, so it proves internal consistency of the table rather than the criterion's 'every reviewer pass'. Anchor the expected pass set to something outside the runner, such as the skill invocations."
+    },
+    {
+      "criterion": "AC5",
+      "regression": "Implement the guard as exact-match or hash-equality against the current contract text: the 'current copy stops / local text proceeds' fixture pair passes, while the three older stale generations the survey actually found (two predating selectable backends) are waved through as local guidance. Fixtures must span the surveyed generations, not just the current file."
+    },
+    {
+      "criterion": "AC5",
+      "regression": "Key detection to a phrase introduced in a recent contract generation (e.g., the 2026-07-15 hidden-failure bullet): the oldest stale copies lack it and proceed, while a healthy repo whose local guidance legitimately quotes one contract line is stopped \u2014 both wrong directions the AC names, reachable while a two-fixture test drawn only from the current file stays green."
+    },
+    {
+      "criterion": "AC5",
+      "regression": "Let the guard exist only in the fireworks runner so 'the runner stops with a message naming the migration' is literally satisfied, while a codex-routed review in the same stale repo auto-reads the stale AGENTS.md and is also handed the user-level contract by the prompt \u2014 two contradictory contracts, silently reconciled, on the backend the guard never touches."
+    },
+    {
+      "criterion": "AC6",
+      "regression": "Update one prompt site per file while other sites in the same SKILL.md keep the old 'your contract is the repo's AGENTS.md'-era instruction: a file-level presence pin matches the path string once and passes with old and new instructions coexisting and contradicting. Pin per prompt site, and absence-pin the superseded instruction."
+    },
+    {
+      "criterion": "AC6",
+      "regression": "Ship prompts that correctly name the user-level path while codex's read-only sandbox cannot read outside the workspace (open question 1): every pin passes and every review silently runs with no contract at all \u2014 letter fully satisfied, intent fully violated, and no CI oracle can see it. Only removing the read (interpolating the contract into the prompt) closes this."
+    },
+    {
+      "criterion": "AC7",
+      "regression": "Delete the copy-the-template instruction from step 1 while a later frame step or the review flow still assumes a repo AGENTS.md exists (an unconditional read, a 'record the convention in AGENTS.md' instruction), so the newly 'fully supported' no-AGENTS.md repo breaks mid-flow. The absent-pin on step 1 cannot see downstream assumptions; sweep the whole flow, not the one step."
+    },
+    {
+      "criterion": "AC7",
+      "regression": "Remove the skill instruction but leave install.sh deploying workflow-AGENTS-template.md \u2014 AC1's 'no destination named AGENTS.md' check does not match the \u2026-template.md name, so the bootstrap artifact survives for old skill versions and habits to keep copying from. Assert the template entry is gone from ARTIFACTS, not just that the prose is."
+    },
+    {
+      "criterion": "AC8",
+      "regression": "Add a 'the contract is global now' passage to each of the three docs while leaving old-arrangement procedures elsewhere in the same files (bootstrap step lists, install instructions naming the template path), so every document self-contradicts. With no mechanical oracle, review by grepping the whole documents for stale tokens (template name, 'copy', 'bootstrap', 'If AGENTS.md is absent'), not by reading only the edited hunks."
+    },
+    {
+      "criterion": "AC8",
+      "regression": "Describe the intended layout in ARCHITECTURE.md/README while install.sh deploys something slightly different \u2014 prose artifact lists drifting from ARTIFACTS. Cross-check the documented lists against the parsed ARTIFACTS block (the pattern docs_test.sh already follows) rather than trusting the prose to match."
+    },
+    {
+      "criterion": "AC9",
+      "regression": "Close OPS-21 with a bare 'done' and add a migration item reading 'migrate the stale repos' carrying none of the survey's cargo \u2014 which repos, which generation each carries \u2014 so the entries exist (letter) but the closure rationale is lost and the work is no more actionable than before (intent). Check the entries against the survey's per-repo table, not for line presence."
+    },
+    {
+      "criterion": "AC9",
+      "regression": "Write the migration item as a blanket 'overwrite all five with the new arrangement', destroying the two hand-maintained local files (~70 and ~95 lines, one edited three days before the survey) the survey flagged \u2014 repeating in manual form the silent destruction the story's problem statement measured."
+    },
+    {
+      "criterion": "AC10",
+      "regression": "Write the AC5 'behavioral' test as an assertion on RunnerError's message text, or as a direct call into the getter \u2014 a wording pin wearing the behavioral suite's name: renaming the message fails it with behavior intact, and any unrelated RunnerError passes it with the guard never firing. Assert the observable behavior: the round stops, no artifact is written, and what surfaces names the migration."
+    },
+    {
+      "criterion": "AC10",
+      "regression": "Leave isolation incomplete \u2014 the user-level path captured at import time, or a fixture reaching the developer's real ~/.claude \u2014 so the full gate passes on the author's machine because the real contract file exists, and fails (or worse, passes by luck) on a clean machine. Green must be demonstrated not to depend on real user state."
+    },
+    {
+      "criterion": "AC11",
+      "regression": "Respect the enumerated file list while smuggling a behavior-relevant change into reviews/ \u2014 the AC's own ':(exclude)reviews/' carves a hole in its check, so the letter (nothing beyond the list outside reviews/) passes while workflow behavior changes inside the blind spot. The manual check must eyeball reviews/ as well."
+    },
+    {
+      "criterion": "AC11",
+      "regression": "Create workflow-AGENTS.md fresh and delete AGENTS.md instead of renaming: the touched-path list still matches AC11 exactly, but the intent \u2014 a maintained document moving house, history preserved, the diff reviewable as a move plus edits \u2014 is lost. Verify the diff shows a rename, not an add-delete pair."
+    }
+  ]
+}

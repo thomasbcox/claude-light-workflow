@@ -1,0 +1,4 @@
+{
+  "summary": "The diff is a round-2/round-3 follow-up that applies the one approved correctness fix, files OPS-26 at Thomas's instruction, and appends the missing review sections plus an honest correction to the story record. The code change \u2014 replacing 'defined in AGENTS.md' with 'defined by the shared reviewer contract above' in the CORRECTNESS pass prompt \u2014 is exactly the fix Thomas approved, uses role-based phrasing matching the other three prompts, and correctly refers to the contract pushed as context above the prompt. No new exception handling, no swallowed errors, no removed safety checks. Scope is contained to the enumerated files plus reviews/. No correctness issues found.",
+  "findings": []
+}
