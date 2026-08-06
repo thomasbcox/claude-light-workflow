@@ -520,3 +520,51 @@ Also in this diff, from Thomas's codex-reference sweep: two write-back headings 
 de-hardcoded to `## <Backend> …` (the sibling of a fix `/frame` received last story), and `README.md`'s
 role prose neutralised per the 2026-06-27 decision to keep the headline brand and neutralise only
 role prose.
+
+## Fireworks approach review (2026-08-05, base main, HEAD b7301cc)
+
+*Process note: this branch removes the per-repo `AGENTS.md` the **deployed** runner still requires,
+so the deployed reviewer cannot review it. Rather than `./install.sh` unreviewed skills estate-wide,
+this round ran the **branch's own** runner and deployed only the shared contract **data** file
+(additive; no deployed skill was overwritten). The new mechanism reviewing itself is the honest test,
+and it is recorded here rather than presented as an ordinary round.*
+
+**Verdict:** "The shape is sound. The core move — one home for the contract, no copies — is the right
+answer to the measured problem, and the implementation follows through with minimal machinery…
+Nothing reinvents a dependency or over-engineers the problem. Three findings, all the same root
+cause: the rename freed `AGENTS.md` to mean 'local add-ons only,' but several references to
+`AGENTS.md` *as the contract* were not updated when that meaning changed. The codex prompts were
+updated; the fireworks prompts, the README's deploy instructions, and the contract file's own header
+were not."
+
+### IMPORTANT
+
+- **Fireworks runner prompts still reference 'AGENTS.md' as the contract** · two-way × nonstandard ·
+  *locus: `fireworks_runner.py` PASSES table, all four prompts*
+  All four still say "per AGENTS.md" and "guardrails from AGENTS.md". After this story that file is
+  the **local add-ons**, not the contract. The codex prompts were updated; these were not, so the two
+  backends frame the same material differently. In a repo with no `AGENTS.md` — the normal case —
+  the fireworks reviewer is told to apply guardrails from a file that does not exist. Sharpest
+  instance: the hidden-failure prompt scopes the critic to "AGENTS.md's 'Hidden failure' bullet",
+  which now lives in the shared contract, not the file it names.
+  **Alternative:** say "the shared reviewer contract" throughout the four prompts, matching the
+  context titles the runner already uses.
+  **Win:** both backends tell the reviewer to work per the contract it actually receives.
+
+- **README's deploy section still says `/frame` bootstraps `AGENTS.md`** · two-way × dated ·
+  *locus: `README.md` → "Test here, then deploy everywhere" step 3; AC8*
+  The earlier README sections were updated; this one was not. `install.sh`'s parallel hint **was**
+  fixed, so the two now disagree. **This is verbatim the regression the design pass predicted for
+  AC8**: *"add a 'the contract is global now' passage to each of the three docs while leaving
+  old-arrangement procedures elsewhere in the same files."*
+  **Alternative:** match `install.sh`'s updated wording.
+  **Win:** the file stops contradicting itself, and the instructions a new user follows match the tool.
+
+### NIT
+
+- **`workflow-AGENTS.md`'s own H1 still reads "# AGENTS.md — independent reviewer contract"** ·
+  two-way × dated · *locus: line 1*
+  The rename is the enabling move of the story; the title inside the file still announces the old
+  name — in a story whose entire point is that `AGENTS.md` no longer means this file.
+  **Alternative:** "# The shared reviewer contract", matching the title the runner pushes.
+  **Win:** the file's title agrees with its name and with the label the reviewer receives.

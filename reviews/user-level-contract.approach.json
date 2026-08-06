@@ -1,0 +1,36 @@
+{
+  "verdict": "The shape is sound. The core move \u2014 one home for the contract, no copies \u2014 is the right answer to the measured problem, and the implementation follows through with minimal machinery: a rename, one ARTIFACTS line, a module-level constant, one optional context source, a one-line central fix to assemble_context, a stdlib similarity guard, and shell interpolation for the codex path. Nothing reinvents a dependency or over-engineers the problem. Three findings, all the same root cause: the rename freed `AGENTS.md` to mean 'local add-ons only,' but several references to `AGENTS.md` *as the contract* were not updated when that meaning changed. The codex prompts were updated; the fireworks prompts, the README's deploy instructions, and the contract file's own header were not.",
+  "findings": [
+    {
+      "severity": "IMPORTANT",
+      "reversibility": "two-way",
+      "standing": "nonstandard",
+      "title": "Fireworks runner prompts still reference 'AGENTS.md' as the contract \u2014 but AGENTS.md now means local add-ons",
+      "locus": "fireworks_runner.py PASSES table (all four pass prompts); AC6 consistency",
+      "claim": "All four pass prompts in the PASSES table tell the reviewer to work 'per AGENTS.md' and reference 'AGENTS.md's Hidden failure bullet.' But after this story, AGENTS.md is the local add-ons file, not the contract \u2014 the shared contract is pushed as context titled 'The shared reviewer contract (applies to every repository).' The codex prompts were updated to say 'per that contract,' but the fireworks prompts were not, so the two backends give the reviewer different framing of the same material. In a repo with no AGENTS.md (the normal case), the fireworks reviewer is told to apply guardrails 'from AGENTS.md' \u2014 a file that does not exist \u2014 while the actual guardrails are in the shared contract it was handed. The hidden-failure prompt is the sharpest instance: it scopes the critic to 'AGENTS.md's Hidden failure bullet,' but that bullet lives in the shared contract, not in the local add-ons file the prompt names.",
+      "alternative": "Replace 'AGENTS.md' with 'the shared reviewer contract' (or 'that contract') throughout the four PASSES prompts, matching the codex prompts' updated framing. The context titles already label the two sources correctly; the system prompts should agree with them.",
+      "win": "Eliminates a semantic confusion between the two backends' prompts and aligns the fireworks prompts with the new naming the whole story establishes \u2014 the reviewer is told to work per the contract it actually receives, not per a file name that now means something else."
+    },
+    {
+      "severity": "IMPORTANT",
+      "reversibility": "two-way",
+      "standing": "dated",
+      "title": "README 'Test here' section still says /frame bootstraps AGENTS.md \u2014 self-contradiction in the same file that describes the new arrangement",
+      "locus": "README.md \u2192 'Test here, then deploy everywhere' step 3; AC8",
+      "claim": "The README was edited in its earlier sections to describe the shared contract as global and AGENTS.md as optional local add-ons. But the 'Test here, then deploy everywhere' section near the bottom still reads: 'In each app, run /frame once \u2014 it bootstraps that repo's .claude/workflow.json + AGENTS.md.' This is exactly the self-contradiction AC8's regression #1 warned about: a 'the contract is global now' passage alongside an old-arrangement procedure in the same file. install.sh's closing hint was updated to remove '+ AGENTS.md'; the README's parallel instruction was not. A new user following the README would expect /frame to create an AGENTS.md it does not create.",
+      "alternative": "Update step 3 to match install.sh's updated hint: 'In each app, run /frame once \u2014 it bootstraps that repo's .claude/workflow.json. The reviewer contract is shared (workflow-AGENTS.md above) \u2014 repos do not get a copy.'",
+      "win": "One file stops contradicting itself; the deploy instructions a new user follows match what the tool actually does."
+    },
+    {
+      "severity": "NIT",
+      "reversibility": "two-way",
+      "standing": "dated",
+      "title": "workflow-AGENTS.md internal header still says '# AGENTS.md \u2014 independent reviewer contract'",
+      "locus": "workflow-AGENTS.md line 1",
+      "claim": "The file was renamed from AGENTS.md to workflow-AGENTS.md (git rename, history preserved), but its first line \u2014 the Markdown H1 that a reader or model sees first \u2014 still reads '# AGENTS.md \u2014 independent reviewer contract.' The rename is the enabling move of the whole story; the header inside the file should reflect the new name, or drop the filename reference and say '# The shared reviewer contract' to match the context title the runner uses.",
+      "alternative": "Update the H1 to '# workflow-AGENTS.md \u2014 the shared reviewer contract' or simply '# The shared reviewer contract,' matching the title the fireworks runner pushes and the codex prompts describe.",
+      "win": "The file's own title agrees with its name and with the label the reviewer receives, removing one small source of 'what is AGENTS.md?' confusion in a story whose entire point is that AGENTS.md no longer means this file."
+    }
+  ],
+  "regressions": []
+}
