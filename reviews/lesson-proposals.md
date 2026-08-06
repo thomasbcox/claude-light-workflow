@@ -263,6 +263,26 @@ author's own tests fail the same way together.
 > it can reward cramped prose. **AC17's prune rule is what actually controls growth** and it stays:
 > a change must not restate an existing rule, it points at it, and it deletes what it supersedes.
 
+### Demonstrate-red results (2026-08-06)
+
+Each gate criterion's ratified regression was applied, the gate run, the named check observed
+failing, and the change reverted. No dead assertions.
+
+| Criterion | Regression applied | Result |
+|---|---|---|
+| 15 | A pointer to `.aar/rejected-lessons.md` added to `review/SKILL.md` | **red** — `deployed file references the rejected register outside /close` |
+| 16 | The lesson step given an instruction naming `workflow-protocol.md` | **red** — `lesson step references a deployed/config path` |
+| 6 | `reversibility` added to `lesson-review-schema.json` (the structural-clone regression) | **red** — `no vestigial design-review field: reversibility` |
+| 6 | The lesson pass re-pointed at `design-review-schema.json` | **red** — `the lesson pass does not reuse an existing schema` |
+
+**Criterion 9** (an approved lesson lands on the feature branch before the merge commit) has no
+regression to apply yet: no lesson has been approved, so there is nothing on a branch to observe.
+It is exercised the first time `/close` approves one — the same branch `OPS-28` names.
+
+**A method note worth keeping.** The first demonstrate-red attempt reverted with
+`git checkout -- <file>` while the implementation was still **uncommitted**, which discarded the
+work instead of the regression. Commit first, then demonstrate red.
+
 Scope containment for this story's own diff: `git diff --name-only main...HEAD -- . ':(exclude)reviews/'`
 should show only the files named in the design sketch.
 
