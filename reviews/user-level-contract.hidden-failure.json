@@ -1,4 +1,4 @@
 {
-  "summary": "The diff removes the per-repo contract copy and instead reads a single shared file, with no new silent-degradation paths. The runner\u2019s optional-input handling now correctly surfaces missing-file errors for optional sources (previously swallowed by a bare raise of the required-only message), and the new `contract_local` guard fails closed \u2014 it raises `RunnerError` on stale copies and any `OSError` reading the local file. The only new read of a possibly-absent file (`CONTRACT_PATH` in the guard) safely falls through to `''` and does not compare; the required `contract` source will independently fail the round. No existing assertions or safety checks were removed, and no bare except/catch blocks were introduced. The change makes error handling more audible, not less.",
+  "summary": "The diff is limited to a prompt-string correction in `fireworks_runner.py`, a new backlog item, and story-file updates. No new error-handling paths are introduced: no bare except/catch blocks, no catch-log-continue, no silent fallbacks, and no deleted assertions or safety checks. The change does not degrade the failure-reporting surface.",
   "findings": []
 }

@@ -676,3 +676,34 @@ OPS-26 after this ships and after the OPS-25 migration, or it inherits the stale
 *Round 3 (2026-08-05):* AC→file map unchanged — round 2 touched one prompt string in
 `fireworks_runner.py`, plus `BACKLOG.md` (OPS-26) and this story file. Recorded as a line rather
 than a duplicated Build note section: a second near-identical copy is the drift OPS-17 documents.
+
+## Fireworks correctness review (2026-08-05, base 6cf99c9, HEAD fb73407)
+
+**Summary:** "The diff is a round-2/round-3 follow-up that applies the one approved correctness fix,
+files OPS-26 at Thomas's instruction, and appends the missing review sections plus an honest
+correction to the story record. The code change — replacing 'defined in AGENTS.md' with 'defined by
+the shared reviewer contract above' in the CORRECTNESS pass prompt — is exactly the fix Thomas
+approved, uses role-based phrasing matching the other three prompts, and correctly refers to the
+contract pushed as context above the prompt. No new exception handling, no swallowed errors, no
+removed safety checks. Scope is contained to the enumerated files plus `reviews/`. No correctness
+issues found."
+
+**Findings:** none — the round-2 fix is verified closed.
+
+## Hidden-failure review (2026-08-05, base 6cf99c9, HEAD fb73407)
+
+**Summary:** "The diff is limited to a prompt-string correction in `fireworks_runner.py`, a new
+backlog item, and story-file updates. No new error-handling paths are introduced: no bare
+except/catch blocks, no catch-log-continue, no silent fallbacks, and no deleted assertions or safety
+checks. The change does not degrade the failure-reporting surface."
+
+**Findings:** none.
+
+## Decisions (2026-08-05, round 3)
+
+Re-review verifying the round-2 fix — correctness-only per the round-keyed default (the approved fix
+was a prompt string, not a redesign). **Both critics returned empty. No findings to decide.**
+
+The independent reviewer confirms three things this round: the approved fix is the one that was
+approved and matches the other three prompts; the scope containment holds; and the record
+correction reads as an honest correction rather than a rewrite. Nothing carried forward.
