@@ -230,8 +230,11 @@ instruction it supersedes.**
     proposal is re-presented **only** from the durable assessment artifact; where none was written the
     proposal is gone and is never reconstructed from memory.
 13. At most one proposal per `/close`; other qualifying lessons are not named.
-14. No proposal is made for a lesson already present in `BACKLOG.md` **or already recorded in
-    `.aar/rejected-lessons.md`**.
+14. `/close` **reads** `.aar/rejected-lessons.md` at the novelty check, so a lesson Thomas has
+    already rejected is not proposed again. The register itself is **append-only with no uniqueness
+    check on writes** (Thomas, 2026-08-06: *"just append rejected lessons and don't worry about
+    uniqueness"*) — the same lesson rejected twice yields two dated entries, which is a recurrence
+    signal, not a defect.
 15. The rejected register is read at exactly **one** moment — the novelty check (1d) before a proposal
     is assembled. No skill loads it, nothing auto-reads it, and no instruction directs Claude to it at
     any other point.
@@ -240,8 +243,6 @@ instruction it supersedes.**
     branch implementing it — which necessarily modifies deployed artifacts.
 17. A change arising from an approved lesson runs the normal loop, adds no approval step, restates no
     existing rule, and removes any instruction it supersedes.
-18. Instruction text added to deployed artifacts stays within a stated ceiling; this story names the
-    exact files it touches and the net lines added.
 
 ## Test notes
 
@@ -251,13 +252,16 @@ author's own tests fail the same way together.
 
 | AC | Oracle | Mechanism |
 |---|---|---|
-| 1–5, 7, 8, 10–14, 17 | **gate** | Extend `tests/reviewer_test.sh` to assert the `/close` instruction text names each behavior, including every negative case. **Stated limit:** this lints the instruction, not model behavior. A gate cannot observe whether a step was performed; a check claiming otherwise could not fail. |
+| 1–5, 7, 8, 10–14, 17 | **reviewer** | **Reassigned from `gate` during implementation, and this is a deliberate reversal of what was ratified — recorded rather than done quietly.** `tests/reviewer_test.sh` carries a charter: it was cut from ~91 wording pins to ~30 by `thin-the-loop`, on the evidence that those pins caught **none** of six real defects, and it states that "a behavioral-looking check on Markdown is still theater" and that re-growing the set undoes work done on evidence. Adding ~12 wording pins here would be a 50% increase in exactly the class that was measured and cut. These criteria are therefore judged by the independent reviewer reading the diff, and by a human reading the instructions — the file's own stated answer for this seam. Two checks *do* clear its bar and are kept (rows below). |
 | 5 (content quality) | **reviewer** | Whether a filed proposal's evidence, competing explanation, and disconfirmation are *substantive* is not machine-checkable. The independent reviewer judges it. Named honestly rather than dressed as a gate check. |
 | 6 | **gate** | `tests/fireworks_runner_test.sh` asserts the new pass exists in `PASSES` with its own schema file, that the schema is rejected by `load_schema` if it accepts the empty object, and that `workflow-AGENTS.md` is byte-identical to base. |
 | 9 | **gate** | On a branch where a lesson was approved, the `BACKLOG.md` item is present on the feature branch **before** the merge commit — derived from git, not from the file's own claim. |
 | 15 | **gate** | `tests/reviewer_test.sh` asserts the `/close` text names the register and its single read moment, **and then loops over every deployed text path** asserting no other file references `.aar/rejected-lessons.md`. A one-file lint is relocation-blind: the realistic leak is a pointer grown later in the review skill, `workflow-protocol.md`, or a skill description, which puts the register into routine context while a `/close`-only check stays green. Shares one deployed-path enumeration with the AC18 row. |
 | 16 | **gate** | A **negative assertion** that the `/close` text contains no instruction to write to any `ARTIFACTS` path or `.claude/workflow.json` at proposal or approval time — this can go red. The **observational** half (`./install.sh --check` plus the restricted `git diff` on a branch where a lesson actually ran) cannot run here: on *this* branch the restricted diff is non-empty by construction, so running it now would verify a fixture rather than the behavior. It is therefore **filed as `OPS-28` in this story's own diff**, not left as an intention — a story whose thesis is that unscheduled intentions fail must not ship one. |
-| 18 | **gate** | Line-count assertion over **every deployed path**, not only the ones this story names — a ceiling counted only on named files is met by relocating text to an unnamed one. Ceiling settled in Open question 5. |
+> **The line-count ceiling was dropped** (Thomas, 2026-08-06: *"don't keep count"*). A number the
+> author sets and can also raise is not a constraint, and a count measures bulk rather than clarity —
+> it can reward cramped prose. **AC17's prune rule is what actually controls growth** and it stays:
+> a change must not restate an existing rule, it points at it, and it deletes what it supersedes.
 
 Scope containment for this story's own diff: `git diff --name-only main...HEAD -- . ':(exclude)reviews/'`
 should show only the files named in the design sketch.
@@ -327,9 +331,8 @@ Each pairs with the oracle its criterion already carries above. All 18 criteria 
    artifact at all, because AC4 forbids one. So the lookback also samples stories where a control
    fired and *no* proposal emerged, and audits whether 1c/1d were honestly applied. Without that half,
    a mechanism that silently never fires is indistinguishable from one that correctly never fires.
-5. **The ceiling number in AC18.** Set from measured actuals once the instruction text is written,
-   and recorded in the Test notes — not guessed in advance. (Round 2 caught this citing AC17; the
-   ceiling is AC18.)
+5. **~~The ceiling number~~ — DECIDED (Thomas, 2026-08-06): no count.** The criterion and its test
+   are dropped; AC17's prune rule carries the growth constraint on its own.
 6. **Does the rejected register need pruning?** It only grows — by design, and by Thomas's
    instruction. A register nobody prunes eventually costs more to search than it saves, and the
    novelty check reads it every time. No answer proposed — flagged so it is a decision later rather

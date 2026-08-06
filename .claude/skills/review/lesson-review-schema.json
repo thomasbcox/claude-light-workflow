@@ -1,0 +1,84 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "description": "Schema for the LESSON pass — the independent check on a workflow-lesson proposal that /close assembles after a safeguard activation. Deliberately NOT design-review-schema.json: a lesson assessment has no reversibility or standing axis and proposes no regressions, so reusing that schema would mean filling fields that mean nothing here, which is how an independent check becomes ceremonial. The proposal itself is NOT echoed into this artifact — the runner writes it verbatim to its own file, because a model asked to reproduce a long proposal paraphrases or truncates it, silently defeating the durability rule that requirement exists to serve.",
+  "properties": {
+    "verdict": {
+      "type": "string",
+      "description": "Required, even when there are no findings. Should Thomas treat this proposal as a candidate lesson at all? Say plainly if the honest answer is that the control simply worked."
+    },
+    "trigger_qualified": {
+      "type": "string",
+      "enum": ["yes", "no", "unclear"],
+      "description": "Did a trigger truly fire, and did it reveal a WEAKNESS (a control absent, bypassed, misleading, or mis-sized) rather than a control catching the ordinary problem it was built to catch? 'no' means the proposal should not have been made."
+    },
+    "evidence_supports_lesson": {
+      "type": "string",
+      "enum": ["yes", "partly", "no"],
+      "description": "Does the cited evidence actually support the candidate lesson, or does the lesson reach past it?"
+    },
+    "contrary_evidence_omitted": {
+      "type": "string",
+      "description": "Material evidence the proposal should have weighed and did not — including anything in this round's own review artifacts that cuts against it. Write 'none identified' only after looking."
+    },
+    "symptom_or_cause": {
+      "type": "string",
+      "enum": ["cause", "symptom", "unclear"],
+      "description": "Does the diagnosis name a cause, or restate the symptom as though it were one?"
+    },
+    "stronger_explanation": {
+      "type": "string",
+      "description": "A competing explanation you find stronger than the proposal's, or 'none — the proposal's explanation is the best available'. The proposal is required to offer one; your job is to say whether it picked the right one."
+    },
+    "scope": {
+      "type": "string",
+      "enum": ["workflow", "product", "unclear"],
+      "description": "Does this apply to future work across repositories (a workflow lesson), or only to this product, branch, or technical problem (an ordinary backlog item that does not belong in the lesson path)?"
+    },
+    "generalization": {
+      "type": "string",
+      "enum": ["sound", "too-broad", "too-narrow"],
+      "description": "Is the claimed scope of the lesson supported by a single activation, or does it generalize past its evidence?"
+    },
+    "findings": {
+      "type": "array",
+      "description": "Empty array if the proposal is sound as written. At most the 3 highest-leverage concerns.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": ["BLOCKER", "IMPORTANT", "QUESTION", "NIT"],
+            "description": "BLOCKER — the proposal should not go to Thomas as written (the trigger did not qualify, or the evidence contradicts the lesson). IMPORTANT — a real defect in the diagnosis. QUESTION — you need something from Thomas to judge. NIT — minor."
+          },
+          "title": {
+            "type": "string",
+            "description": "One line naming the defect in the proposal."
+          },
+          "claim": {
+            "type": "string",
+            "description": "What is wrong, grounded in the proposal's own text and cited evidence — never in speculation about what happened during the story."
+          },
+          "correction": {
+            "type": "string",
+            "description": "What the proposal should say instead, or what evidence would have to exist for it to stand."
+          }
+        },
+        "required": ["severity", "title", "claim", "correction"]
+      }
+    }
+  },
+  "required": [
+    "verdict",
+    "trigger_qualified",
+    "evidence_supports_lesson",
+    "contrary_evidence_omitted",
+    "symptom_or_cause",
+    "stronger_explanation",
+    "scope",
+    "generalization",
+    "findings"
+  ]
+}

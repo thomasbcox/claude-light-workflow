@@ -240,6 +240,60 @@ contract_wiring() {
 eq "install deploys exactly the contract the runner reads, and no AGENTS.md" \
   "deployed no-agents-md repo-file-absent" "$(contract_wiring)"
 
+echo "== pin: the rejected-lessons register stays out of routine context =="
+# TIER 1, and the reason this pin exists rather than the dozen sibling wording pins that
+# were considered and left out (lesson-proposals, 2026-08-06): the register holds claims
+# Thomas REJECTED, kept only so their reasoning survives. Its whole containment story is
+# that exactly one instruction reads it — the novelty check in /close. A pointer grown
+# later in another skill, the protocol, or a skill description would silently put every
+# rejected claim back into routine context, and nothing would surface that it had. That is
+# behavior degrading unnoticed, which is this file's bar.
+#
+# Enumerated over EVERY deployed text path, not just /close. A one-file check is
+# relocation-blind: the leak is precisely the pointer that appears somewhere else.
+REGISTER=".aar/rejected-lessons.md"
+CLOSE="$ROOT/.claude/skills/close/SKILL.md"
+if grep -qF -- "$REGISTER" "$CLOSE"; then
+  ok "the /close lesson check names the register"
+else
+  bad "/close no longer names $REGISTER — the novelty check cannot read what it is not told"
+fi
+# Deployed text paths, derived from install.sh's ARTIFACTS rather than retyped: a hand-typed
+# list stops covering what it names the moment the artifact set grows.
+leak=0
+while IFS= read -r rel; do
+  [ -e "$ROOT/$rel" ] || continue
+  while IFS= read -r f; do
+    case "$f" in "$CLOSE") continue ;; esac
+    if grep -qF -- "$REGISTER" "$f"; then
+      bad "deployed file references the rejected register outside /close: ${f#"$ROOT"/}"
+      leak=1
+    fi
+  done <<EOF
+$(find "$ROOT/$rel" -type f \( -name '*.md' -o -name '*.sh' -o -name '*.py' -o -name '*.json' \) 2>/dev/null)
+EOF
+done <<EOF
+$(sed -n 's/^  "\([^:]*\)::.*/\1/p' "$ROOT/install.sh")
+EOF
+[ "$leak" = "0" ] && ok "no other deployed file points at the rejected register"
+
+echo "== pin: handling a lesson never writes to a deployed artifact =="
+# TIER 1. The containment property lesson-proposals calls load-bearing: at runtime, proposing
+# or approving a lesson touches no file install.sh deploys and not .claude/workflow.json. The
+# observational half needs a branch where a lesson actually ran and is filed as OPS-28; this
+# static half can fail today. Silent failure: /close grows an instruction to edit a deployed
+# path during lesson handling, and the loop starts rewriting its own rules estate-wide.
+lesson_block="$(sed -n '/^3b\. \*\*Lesson check/,/^4\. \*\*Re-review fork/p' "$CLOSE")"
+if [ -z "$lesson_block" ]; then
+  bad "cannot locate the /close lesson-check step — the containment check has nothing to read"
+else
+  writes=0
+  for p in "workflow-protocol.md" "workflow-AGENTS.md" ".claude/workflow.json" "hooks/block-main-writes.sh"; do
+    printf '%s' "$lesson_block" | grep -qF -- "$p" && { bad "lesson step references a deployed/config path: $p"; writes=1; }
+  done
+  [ "$writes" = "0" ] && ok "the lesson step names no deployed artifact or workflow config"
+fi
+
 echo "== TIER 2 (decision guards): the retired falsification machinery has not crept back =="
 # THE CLOSED TIER-2 BLOCK — see the header. Not behavior guards, and they do not claim to be.
 # Each construct below was deleted on stated evidence by an approved story (thin-the-loop,

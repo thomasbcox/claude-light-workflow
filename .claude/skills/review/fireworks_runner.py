@@ -105,6 +105,12 @@ class RunnerError(Exception):
 #   1. Read at HEAD, never the working tree. The diff is computed against HEAD;
 #      mixing in working-tree state splices two snapshots into one payload and
 #      lets uncommitted work reach a review of committed work.
+#      ONE STATED EXCEPTION — `lesson_proposal`. Its subject is not the branch's
+#      code but a diagnosis written during the run being reviewed, so it has no
+#      commit to be read at. The rule's hazard does not apply: nothing about a
+#      committed change is being judged, so there are no two snapshots to splice.
+#      Named here because a rule stated absolutely, three lines above code that
+#      breaks it, is how the next reader learns to distrust the whole comment.
 #   2. Anything you cannot include, NAME. Never `continue` past a file silently.
 #      A pushed reviewer cannot go look, so an omission it is not told about is
 #      indistinguishable from absence — it will read a degraded context as a
@@ -191,6 +197,17 @@ CONTEXT_SOURCES = {
     "story": {
         "title": "The story file — spec, acceptance criteria, falsification plan",
         "get": lambda ctx: (ctx["root"] / "reviews" / f"{ctx['slug']}.md").read_text(),
+    },
+    # The ONE source read from the working tree rather than HEAD, and the exception is
+    # deliberate: a lesson proposal is written by /close during the run being reviewed, so
+    # it has no commit to be read at. It is still read from a FILE, never passed inline —
+    # that file is what makes an interrupted round re-presentable from evidence instead of
+    # from memory, which is the whole point of requiring it to exist before the call.
+    "lesson_proposal": {
+        "title": "The proposed workflow lesson under review (written by /close, not yet dispositioned)",
+        "get": lambda ctx: (
+            ctx["root"] / ".aar" / "proposals" / f"{ctx['slug']}.md"
+        ).read_text(),
     },
     # `needs_base` is declared, not inferred: main() derives whether --base is a
     # required argument from the passes actually being run. The design altitude
@@ -448,6 +465,41 @@ PASSES = {
             "Return strictly per the provided JSON schema."
         ),
     },
+    # Runs at CLOSE time, on a proposal /close assembled after a safeguard activation.
+    # Its context is the contract, the story, and the proposal — no diff: the subject is
+    # a diagnosis about the WORKFLOW, not the branch's code, and pushing a diff would
+    # invite findings about the change instead of about the reasoning.
+    "lesson": {
+        "purpose": "lesson",
+        "schema": "lesson-review-schema.json",
+        "artifact": "reviews/{slug}.lesson.json",
+        "context": ["contract", "contract_local", "story", "lesson_proposal"],
+        "prompt": (
+            "You are the independent reviewer per the shared reviewer contract above, "
+            "checking a proposed WORKFLOW LESSON before the human sees it. The proposal "
+            "was written by the same party whose briefing, context assembly, or routing "
+            "most likely produced the activation it diagnoses — you are the second head "
+            "that exists because a diagnosis authored and evidenced by the party at fault "
+            "should not reach the decider unchecked. You cannot run commands; judge from "
+            "the proposal, the story file, and the contract provided below, and if the "
+            "proposal cites evidence you were not given, say so rather than assuming it "
+            "supports the claim. Ask, in this order: (1) did a trigger truly fire, and did "
+            "it reveal a WEAKNESS — a control absent, bypassed, misleading, or mis-sized — "
+            "rather than a control catching the ordinary problem it was built to catch? A "
+            "control that worked is not a lesson, and 'no' here is the most useful answer "
+            "you can give. (2) Does the cited evidence support the lesson, or does the "
+            "lesson reach past it? (3) Was material contrary evidence omitted, including "
+            "anything in this round's own review artifacts? (4) Does the diagnosis name a "
+            "cause or restate the symptom as one? (5) Is a competing explanation stronger "
+            "than the one proposed? (6) Is this about the shared workflow, or only about "
+            "this product and branch — a product finding does not belong in the lesson "
+            "path. (7) Does the generalization outrun a single activation? Do NOT propose "
+            "workflow changes: the remedy is a separate decision the human makes later, "
+            "and proposing one here would let a remedy ride in on a lesson's approval. "
+            "Return at most the 3 HIGHEST-LEVERAGE concerns strictly per the provided JSON "
+            "schema; empty findings array if the proposal is sound as written."
+        ),
+    },
 }
 
 # Which passes run concurrently at one altitude. Parallelism policy is INHERITED
@@ -461,12 +513,13 @@ ALTITUDES = {
     # second code path.
     "approach": ["approach"],
     "design": ["design"],
+    "lesson": ["lesson"],
 }
 
 # The full review vocabulary. Every purpose is now wired to a pass above; the
 # routing table may still route ahead of use, but it may not route a purpose that
 # is not a review purpose at all, which would be a silent typo.
-KNOWN_PURPOSES = {"design", "approach", "correctness", "hidden-failure"}
+KNOWN_PURPOSES = {"design", "approach", "correctness", "hidden-failure", "lesson"}
 
 
 # ── Routing ───────────────────────────────────────────────────────────────────

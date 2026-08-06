@@ -17,6 +17,12 @@
       "contextLength": 1048576,
       "why": "Wired 2026-08-04. Judges shape, so its context profile pushes whole changed files at HEAD plus any dependency manifest -- not just the diff. 1M context absorbs that for a branch-sized change."
     },
+    "lesson": {
+      "model": "accounts/fireworks/models/deepseek-v4-pro",
+      "contextLength": 1048576,
+      "why": "Wired 2026-08-06 (lesson-proposals). Judges a DIAGNOSIS rather than code, so the work is causal reasoning under thin evidence — is this a cause or a restated symptom, is a competing explanation stronger, does the claim outrun one activation. Routed to a lineage distinct from the design pass (kimi-k3) on the same principle that split the two correctness critics: the party being checked here is Claude, and a checker sharing the design pass's training distribution is a weaker second head. Cost is near-zero per run and the pass fires rarely.",
+      "verify": "NOT yet exercised on a real proposal — no safeguard activation has occurred since wiring. Schema conformance is asserted by tests/fireworks_runner_test.sh; live behaviour is unproven until the first activation, and OPS-28 is the branch on which it will first run."
+    },
     "design": {
       "model": "accounts/fireworks/models/kimi-k3",
       "contextLength": 1048576,
