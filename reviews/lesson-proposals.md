@@ -561,3 +561,26 @@ real, and the check now closes it.
 
 Neither was shape-changing, so the approach verdict stands and correctness runs this round on the
 corrected branch.
+
+## Fireworks correctness review (2026-08-06, base main, HEAD 22ca9bf)
+
+**Summary.** The implementation is correct and faithful to the spec across all 17 acceptance criteria. The lesson pass is wired as a declarative PASSES entry with its own purpose-built schema, the /close instruction block covers detection, bounded question, cited novelty, assembly, independent check, interrupted-round rule, and disposition, and the tests are mechanism-shaped where the criterion is mechanism-shaped and behavioral where behavior can degrade. Two minor documentation inconsistencies: the Non-goals section of the story file references the rejected register as being under `reviews/` (stale from an earlier draft; §6 and the implementation correctly use `.aar/`), and the step 3b assemble paragraph omits the explicit class-identification requirement (1a/1b) that scope item 2 calls for.
+
+**Findings — NIT.**
+
+- **Non-goals section says rejected register is 'under reviews/' — stale from earlier draft**
+  - **Locus:** `reviews/lesson-proposals.md`:143
+  - **Claim:** The Non-goals section states: 'The rejected register (§6) is a new per-repo file under `reviews/`'. But §6 of the same file says `.aar/rejected-lessons.md`, and the implementation correctly creates the file at `.aar/rejected-lessons.md`. This line was not updated when the design moved the register from `reviews/` to a dot-directory (Thomas's decision: 'a directory not normally seen by Claude or other tools'). A reader of the Non-goals section alone would look for the register in the wrong directory.
+  - **Suggestion:** Change 'under `reviews/`' to 'under `.aar/`' in the Non-goals section to match §6 and the implementation.
+
+- **Step 3b assemble paragraph omits the class-identification (1a/1b) requirement from scope item 2**
+  - **Locus:** `.claude/skills/close/SKILL.md`:33
+  - **Claim:** Scope item 2 requires the proposal to carry 'the activation, which class (1a or 1b) it came from, and what it revealed that was not already known — with the citations from 1d'. The step 3b assemble paragraph says 'the activation and what it revealed' but does not explicitly ask for the class (1a or 1b). The class is implicit in the activation description (drift vs hook block vs runner refusal), but scope item 2 calls it out as a distinct element, and omitting it from the instruction means a future proposal could describe the activation without labeling its class, losing the re-derivable-vs-session-observed distinction that affects how the lesson can be verified on re-run.
+  - **Suggestion:** Add 'which class (1a or 1b) it came from' to the assemble paragraph's list, e.g. 'the activation, which class (1a or 1b) it came from, and what it revealed'.
+
+
+## Hidden-failure review (2026-08-06, base main, HEAD 22ca9bf)
+
+**Summary.** The change adds a lesson-check step to the /close skill and a corresponding lesson-review pass in the runner, alongside the rejected-lessons register and supporting infrastructure. No new error-swallowing patterns are introduced. The runner's new context source reads the proposal from a file that must exist per the /close instructions; a missing file will cause a hard failure that the runner's existing fail-closed mechanism will surface, and /close is instructed to present such failures explicitly rather than absorb them. There are no bare except blocks, catch-log-continue paths, silent fallbacks, deleted assertions, or safety checks in the diff. Existing runner conventions disallow silently skipping a missing context source, and the instruction text reinforces surfacing over swallowing.
+
+**Findings.** None — empty array returned.
