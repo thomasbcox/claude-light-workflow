@@ -175,6 +175,24 @@ lesson being proposed or approved at runtime**. Any change that follows runs the
 approval step, **restates no existing rule — it points at the rule instead — and removes any
 instruction it supersedes.**
 
+## Build note (2026-08-06)
+
+AC → file map.
+
+| AC | Where it lives |
+|---|---|
+| 1–5, 7, 8, 10–14, 17 | `.claude/skills/close/SKILL.md` — step 3b (detect, bounded question, cited novelty, assemble, independent check, interrupted-round rule) and step 4 (disposition: approve → `AAR-` item, reject → register with reason, defer → proposal file; never gates the merge) |
+| 6 | `.claude/skills/review/lesson-review-schema.json` (new); `fireworks_runner.py` — `lesson_proposal` context source, `PASSES["lesson"]`, `ALTITUDES`, `KNOWN_PURPOSES`; `fireworks-models.json` — the `lesson` route; `tests/fireworks_runner_test.py` — own-schema and no-vestigial-field assertions |
+| 9 | `.claude/skills/close/SKILL.md` step 5(b) — the `AAR-` item is written on the feature branch; `BACKLOG.md` — the `AAR-` family declaration |
+| 15 | `.claude/skills/close/SKILL.md` (the single read moment); `.aar/rejected-lessons.md` (the register); `tests/reviewer_test.sh` — the `/close`-names-it check plus the every-deployed-path leak scan |
+| 16 | `.claude/skills/close/SKILL.md` step 3b/4; `tests/reviewer_test.sh` — negative assertion over the lesson block |
+| — | `BACKLOG.md` — `OPS-27` (hook durability), `OPS-28` (the deferred runtime containment observation) |
+
+The `lesson` pass is wired but has **never run on a real proposal** — no safeguard has activated
+since it was built. Schema conformance is asserted; live behaviour is unproven. Recorded in
+`fireworks-models.json` under that route's `verify` key, and `OPS-28` is where it first runs.
+
+
 ## Non-goals
 
 - **Full detector coverage.** Class 1b is best-effort by construction. A `/close` in a fresh or
