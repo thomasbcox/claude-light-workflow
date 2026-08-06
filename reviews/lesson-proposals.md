@@ -92,12 +92,16 @@ working; does the evidence support the lesson; was material contrary evidence om
 diagnosis confuse symptom with cause; is a competing explanation stronger; is this about the shared
 workflow or the product under development; is the generalization too broad.
 
-**The assessment artifact embeds the proposal verbatim.** `lesson-review-schema.json` requires a
-field carrying the **full proposal text**, not a paraphrase, alongside the assessment. Without that
-invariant the re-presentation rule in §4 has no honest implementation: the artifact would hold only a
-critique, and rebuilding the proposal from it would mean reconstructing from memory — the channel
-1d exists to close. Stated here, where the artifact is defined, rather than left implied by the
-lifecycle rule.
+**The durable copy is the proposal file, written before the pass runs.** `/close` writes the
+proposal to `.aar/proposals/<slug>.md` **first**, and the runner reads it from there as a declared
+context input. That file — not the assessment artifact — is what §4's re-presentation rule points at.
+
+Round 2 required this invariant to be stated where the artifact is defined, and offered two ways to
+satisfy it: a verbatim echo field in the schema, or a paired file written alongside. **The paired
+file is the one built**, and the schema deliberately carries no echo field. A model asked to
+reproduce a long proposal paraphrases or truncates it, so an echo would silently degrade exactly the
+document the durability rule exists to preserve — and the proposal file is the original, never
+round-tripped through a model. `lesson-review-schema.json`'s own description records this.
 
 **If the lesson-review pass fails** — provider error, malformed output, context limit, schema
 violation, abnormal completion — the merge is **never** affected. The failure is named at the consult
@@ -115,9 +119,9 @@ independent head never saw.
   register (§6). See §6 for why erasure was rejected as a design.
 - **On deferral** the proposal is preserved in full in the story file, marked deferred. Reject and
   defer remain different acts: rejection judges the claim wrong, deferral judges it unresolved.
-- **Re-presentation after an interrupted session** is permitted **only from the durable assessment
-  artifact**. Where no artifact was written — the session ended before the lesson pass ran — the
-  proposal is **gone**, and must not be reconstructed from memory: reconstructed citations are
+- **Re-presentation after an interrupted session** is permitted **only from the durable proposal
+  file** `.aar/proposals/<slug>.md`, written before the lesson pass runs. Where that file does not
+  exist the proposal is **gone**, and must not be reconstructed from memory: reconstructed citations are
   exactly what 1d exists to prevent, and a real lesson's mechanism will fire again.
 - **The lesson decision never gates the merge.** Rejecting or deferring leaves an otherwise-approved
   branch mergeable.
@@ -245,8 +249,8 @@ since it was built. Schema conformance is asserted; live behaviour is unproven. 
     the story file, marked deferred.
 11. A rejected or deferred lesson never blocks a merge Thomas would otherwise approve.
 12. Re-running `/close` on the same story creates no duplicate `BACKLOG.md` item. An undisposed
-    proposal is re-presented **only** from the durable assessment artifact; where none was written the
-    proposal is gone and is never reconstructed from memory.
+    proposal is re-presented **only** from the durable proposal file `.aar/proposals/<slug>.md`;
+    where none was written the proposal is gone and is never reconstructed from memory.
 13. At most one proposal per `/close`; other qualifying lessons are not named.
 14. `/close` **reads** `.aar/rejected-lessons.md` at the novelty check, so a lesson Thomas has
     already rejected is not proposed again. The register itself is **append-only with no uniqueness
@@ -531,3 +535,29 @@ set from measured actuals during implementation and recorded in the Test notes. 
   - **Win:** Closes the gap in the load-bearing containment check so a future instruction to write to a deployed artifact during disposition is caught, at the cost of a one-line sed range adjustment. Makes the static half of AC16 actually cover the behavior AC16 names.
 
 `regressions` is empty, as the contract requires at the review-time approach pass.
+
+## Decisions (2026-08-06) — approach pass
+
+Thomas, 2026-08-06: *"fix both, then run correctness"*.
+
+| Finding | Disposition | Applied |
+|---|---|---|
+| Spec/implementation mismatch on the durability invariant | **fix** | §3 rewritten to name `.aar/proposals/<slug>.md` as the durable copy and to record why the echo option was rejected; AC12 and §4 re-pointed at that file |
+| AC16 containment test's range excludes step 4's disposition body | **fix, refined** | `tests/reviewer_test.sh` — see below |
+
+**The second fix needed to be narrower than the alternative proposed.** Widening the range to all of
+step 4, as suggested, made the check fail on two **legitimate** lines: step 4 cites
+`workflow-protocol.md` for the consult-presentation rule, and the containment sentence itself names
+`.claude/workflow.json` in order to forbid writing there. The grep detects a path **mention**, not a
+write, so it must see only lines that are actually instructions about where lesson state goes. The
+shipped form concatenates two ranges — all of step 3b, plus step 4's three disposition bullets
+(approve / reject / defer) — and excludes the surrounding prose.
+
+**Demonstrated red both ways.** A write to a deployed path added to step 4's *Approved* bullet
+(`also record it in workflow-AGENTS.md`) fails the new check —
+`lesson step references a deployed/config path: workflow-AGENTS.md` — and produces **zero** hits
+under the old narrow range, which would have stayed green. The hole the approach pass named was
+real, and the check now closes it.
+
+Neither was shape-changing, so the approach verdict stands and correctness runs this round on the
+corrected branch.

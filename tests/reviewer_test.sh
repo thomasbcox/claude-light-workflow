@@ -283,7 +283,19 @@ echo "== pin: handling a lesson never writes to a deployed artifact =="
 # observational half needs a branch where a lesson actually ran and is filed as OPS-28; this
 # static half can fail today. Silent failure: /close grows an instruction to edit a deployed
 # path during lesson handling, and the loop starts rewriting its own rules estate-wide.
-lesson_block="$(sed -n '/^3b\. \*\*Lesson check/,/^4\. \*\*Re-review fork/p' "$CLOSE")"
+# TWO ranges, concatenated: step 3b (detect/assemble) AND step 4's three disposition bullets
+# (approve/reject/defer). Stopping at step 4's HEADING left disposition unguarded — the half
+# where a runtime write to a deployed path would most plausibly be added. But taking ALL of
+# step 4 is wrong too: its body legitimately CITES workflow-protocol.md for the consult rule,
+# and the containment sentence itself names .claude/workflow.json in order to forbid it. This
+# grep detects a path MENTION, not a write, so it must see only the lines that are actually
+# instructions about where lesson state goes. Both halves learned the same day
+# (lesson-proposals, 2026-08-06): the approach pass caught the narrow range, and widening it
+# naively then fired on two legitimate references.
+lesson_block="$(
+  sed -n '/^3b\. \*\*Lesson check/,/^4\. \*\*Re-review fork/p' "$CLOSE"
+  sed -n '/If step 3b produced a proposal/,/\*\*Deferred\*\*/p' "$CLOSE"
+)"
 if [ -z "$lesson_block" ]; then
   bad "cannot locate the /close lesson-check step — the containment check has nothing to read"
 else
