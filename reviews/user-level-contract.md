@@ -672,3 +672,7 @@ on top of his text: his AC5 (reaching repos that already hold a contract copy) i
 dissolved by this very story** — once the contract is shared rather than copied, an amendment
 reaches every repo on the next `./install.sh`. What survives is a **sequencing** requirement: build
 OPS-26 after this ships and after the OPS-25 migration, or it inherits the staleness its AC5 names.
+
+*Round 3 (2026-08-05):* AC→file map unchanged — round 2 touched one prompt string in
+`fireworks_runner.py`, plus `BACKLOG.md` (OPS-26) and this story file. Recorded as a line rather
+than a duplicated Build note section: a second near-identical copy is the drift OPS-17 documents.
