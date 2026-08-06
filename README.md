@@ -149,7 +149,9 @@ Repos without the marker are governed by the light workflow as normal.
 1. **Test** in this repo (skills/hook are project-local under `.claude/`). Run a real `/frame → /review → /close`.
 2. **Deploy** to every Claude Code app on this machine: `./install.sh` copies the skills + hook to
    `~/.claude/` and wires the hook into `~/.claude/settings.json` (idempotent, backs up first).
-3. In each app, run `/frame` once — it bootstraps that repo's `.claude/workflow.json` + `AGENTS.md`.
+3. In each app, run `/frame` once — it bootstraps that repo's `.claude/workflow.json`. The
+   reviewer contract is **shared** (`workflow-AGENTS.md`, deployed in step 2) — repos do not get
+   a copy, and a repo with no `AGENTS.md` is the normal case.
 
 ## Requirements
 `codex` CLI (`codex exec`), `git`, `python3`, `jq`. `gh` + a remote enable PR mode; without a

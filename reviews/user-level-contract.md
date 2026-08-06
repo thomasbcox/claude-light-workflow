@@ -568,3 +568,30 @@ were not."
   name — in a story whose entire point is that `AGENTS.md` no longer means this file.
   **Alternative:** "# The shared reviewer contract", matching the title the runner pushes.
   **Win:** the file's title agrees with its name and with the label the reviewer receives.
+
+## Decisions (2026-08-05)
+
+Round 1 — approach pass returned three findings, one root cause. Thomas decided all three; no
+redesign, so the correctness pass runs this same round per `review/SKILL.md` step 7's gate.
+
+**Approach**
+
+- **IMPORTANT — fireworks prompts still referenced `AGENTS.md` as the contract** → **fix**, as
+  proposed. Thomas: *"just fix finding 1 as you suggest; no guard added."* All five references in
+  the four pass prompts now point at **the contract the reviewer was handed**, naming no file at
+  all: `per the shared reviewer contract above`, `guardrails from that contract`, and — the sharpest
+  instance — `that contract's 'Hidden failure' bullet`, which had reintroduced in a new place the
+  exact dangling-reference defect this story exists to remove. Phrasing chosen so a future rename
+  cannot break it again: the prompts describe the *role* of the material, not its filename.
+- **IMPORTANT — README's deploy step still promised `/frame` bootstraps `AGENTS.md`** → **fix.**
+  Now matches `install.sh`'s hint. This finding was **predicted verbatim by the design pass** before
+  any code existed (AC8's regression: *"a 'the contract is global now' passage… alongside
+  old-arrangement procedures in the same files"*), and I committed exactly that defect anyway.
+- **NIT — `workflow-AGENTS.md`'s own H1 announced the old filename** → **fix.** Now
+  `# The shared reviewer contract`, matching the title the runner pushes.
+
+**A guard was offered and declined.** I proposed a check banning contract-framing phrases in the
+pass prompts so this class cannot silently recur. Thomas: *"no guard added."* Recorded with its
+accepted cost: recurrence is caught by the reviewer, which did catch it this round, and not by the
+gate. The counter-argument that lost — such a check cannot distinguish a legitimate future mention
+of the local-add-ons file from the bug — stands on the record rather than being re-litigated later.

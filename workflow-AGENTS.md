@@ -1,4 +1,4 @@
-# AGENTS.md — independent reviewer contract
+# The shared reviewer contract
 
 You are the **independent reviewer** in a lightweight Claude↔Codex development loop (the reviewer
 backend is selectable and resolved per pass — `codex` and `fireworks` are both wired today, others

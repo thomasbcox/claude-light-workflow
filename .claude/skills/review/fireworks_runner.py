@@ -357,7 +357,8 @@ PASSES = {
         "artifact": "reviews/{slug}.design.json",
         "context": ["contract", "contract_local", "story"],
         "prompt": (
-            "You are the independent reviewer doing a DESIGN review per AGENTS.md — "
+            "You are the independent reviewer doing a DESIGN review per the shared "
+            "reviewer contract above — "
             "judge the SKETCH, before any code exists. The story file below carries "
             "the spec, its acceptance criteria, and the design sketch; the reviewer "
             "contract is also provided. NO CODE HAS BEEN WRITTEN YET, so there is no "
@@ -367,7 +368,7 @@ PASSES = {
             "what a dependency or one declarative construct already covers? Is it "
             "larger or more complex than the problem? Which decisions here are "
             "ONE-WAY DOORS the human must ratify before building starts? Apply the "
-            "best-practice lens and the three guardrails from AGENTS.md — a flag must "
+            "best-practice lens and the three guardrails from that contract — a flag must "
             "name a concrete win, not novelty; internal consistency can outweigh "
             "ecosystem fashion; the repo's conventions are the local standard. "
             "Then, for EVERY acceptance criterion, "
@@ -394,7 +395,8 @@ PASSES = {
         "artifact": "reviews/{slug}.approach.json",
         "context": ["contract", "contract_local", "story", "diff", "log", "changed_files", "manifest"],
         "prompt": (
-            "You are the independent reviewer doing an APPROACH review per AGENTS.md — judge "
+            "You are the independent reviewer doing an APPROACH review per the shared "
+            "reviewer contract above — judge "
             "the SHAPE, not lines. Read the story file's spec FIRST and sketch how YOU would "
             "satisfy the acceptance criteria. THEN read the FULL contents of the changed files "
             "and the dependency manifest, both provided below — the diff and commit log are "
@@ -404,7 +406,7 @@ PASSES = {
             "what one declarative construct would cover? Is it larger or more complex than the "
             "problem? Could it be deleted and handed to the framework? You are licensed to cite "
             "simpler designs and CODE THAT SHOULD NOT EXIST. Apply the best-practice lens and "
-            "the three guardrails from AGENTS.md. Tag each finding with reversibility "
+            "the three guardrails from that contract. Tag each finding with reversibility "
             "(one-way/two-way) and standing. Return at most the 3 HIGHEST-LEVERAGE concerns "
             "strictly per the provided JSON schema, each with alternative and win; empty "
             "findings array if the shape is sound."
@@ -431,8 +433,9 @@ PASSES = {
         "artifact": "reviews/{slug}.hidden-failure.json",
         "context": ["contract", "contract_local", "story", "diff", "log"],
         "prompt": (
-            "You are the independent reviewer per AGENTS.md doing a CORRECTNESS review "
-            "SCOPED TO ONE LENS: hidden failure / weak error handling (AGENTS.md's "
+            "You are the independent reviewer per the shared reviewer contract above "
+            "doing a CORRECTNESS review "
+            "SCOPED TO ONE LENS: hidden failure / weak error handling (that contract's "
             "'Hidden failure' bullet) ONLY — a parallel correctness critic covers "
             "everything else, do NOT duplicate it. The diff, commit log, contract, and "
             "story file are provided below; you cannot run commands, so judge from what "
