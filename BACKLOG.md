@@ -610,7 +610,8 @@ retired falsification plan. **Estate note:** any Tier 1 change ships to every re
 `install.sh`, so its instruction weight is paid on every invocation everywhere — the standing
 tension the ROADMAP names as *reach* vs. the *lightweight* identity.)
 
-OPS-21 — **CLOSED 2026-08-05 by `user-level-contract` — its premise no longer exists.** The one file
+OPS-21 — **SHIPPED** via PR #52 / `merge: user-level-contract` (see [Done](#done)) — **its premise
+no longer exists**; the analysis below is retained as the design record. The one file
 serving two jobs is gone: the shared contract was renamed to `workflow-AGENTS.md` and deploys to
 `~/.claude/workflow-AGENTS.md`, so `AGENTS.md` in *every* repo — including this one — now means
 repo-specific additions and nothing else. Both options this item weighed (B: decouple the template;
@@ -895,6 +896,7 @@ _(OPS-10 shipped — see [Done](#done).)_
 
 | id | Summary | Shipped |
 |---|---|---|
+| OPS-21 | `AGENTS.md` served two jobs at once — this repo's reviewer contract *and* the template every other repo copied — so this repo structurally could not give its reviewer repo-specific guidance. Resolved by removing the premise rather than either option it weighed: the shared contract was renamed to `workflow-AGENTS.md` and deploys once to `~/.claude/`, so `AGENTS.md` in every repo now means repo-specific additions only. Options B (decouple the template) and B′ (an `AGENTS.local.md` addendum) are both moot — neither is needed once the contract is never copied. | PR #52 / `merge: user-level-contract` |
 | OPS-4 | `/close`'s merge step raced GitHub's async mergeability computation (5×5s `mergeStateStatus` poll loop). Fixed: replaced with `gh pr merge --auto`, delegating merge timing to GitHub; added `allow_auto_merge` pre-flight and MERGED-state poll. | PR #6 / `499d6b6` |
 | OPS-5 | `/close`'s auto-merge pre-flight aborted whenever `allow_auto_merge` was `false`, even with no required checks. Fixed: three-way merge strategy — auto-merge path when enabled, direct `gh pr merge` when disabled with no required checks, abort only when disabled *and* ≥1 required status check (detected via classic branch protection, degrading to zero on 403/404; rulesets out of scope). | PR #8 / `0406185` |
 | OPS-5-fix | Follow-up to OPS-5: the new pre-flight's required-check detection didn't degrade to zero on a 403/404 — an inline `\|\| echo 0` appended to gh's error body, yielding a non-integer that broke the `-gt` test. Fixed: capture on gh success only via a separate-statement fallback, then sanitise to an integer. Surfaced by dogfooding the PR #8 merge. | PR #9 / `1278814` |
