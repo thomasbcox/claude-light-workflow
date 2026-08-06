@@ -256,7 +256,7 @@ author's own tests fail the same way together.
 | 6 | **gate** | `tests/fireworks_runner_test.sh` asserts the new pass exists in `PASSES` with its own schema file, that the schema is rejected by `load_schema` if it accepts the empty object, and that `workflow-AGENTS.md` is byte-identical to base. |
 | 9 | **gate** | On a branch where a lesson was approved, the `BACKLOG.md` item is present on the feature branch **before** the merge commit — derived from git, not from the file's own claim. |
 | 15 | **gate** | `tests/reviewer_test.sh` asserts the `/close` text names the register and its single read moment, **and then loops over every deployed text path** asserting no other file references `.aar/rejected-lessons.md`. A one-file lint is relocation-blind: the realistic leak is a pointer grown later in the review skill, `workflow-protocol.md`, or a skill description, which puts the register into routine context while a `/close`-only check stays green. Shares one deployed-path enumeration with the AC18 row. |
-| 16 | **gate** | A **negative assertion** that the `/close` text contains no instruction to write to any `ARTIFACTS` path or `.claude/workflow.json` at proposal or approval time — this can go red. The **observational** half (`./install.sh --check` plus the restricted `git diff` on a branch where a lesson actually ran) cannot run here: on *this* branch the restricted diff is non-empty by construction, so running it now would verify a fixture rather than the behavior. It is therefore **filed as `OPS-25` in this story's own diff**, not left as an intention — a story whose thesis is that unscheduled intentions fail must not ship one. |
+| 16 | **gate** | A **negative assertion** that the `/close` text contains no instruction to write to any `ARTIFACTS` path or `.claude/workflow.json` at proposal or approval time — this can go red. The **observational** half (`./install.sh --check` plus the restricted `git diff` on a branch where a lesson actually ran) cannot run here: on *this* branch the restricted diff is non-empty by construction, so running it now would verify a fixture rather than the behavior. It is therefore **filed as `OPS-28` in this story's own diff**, not left as an intention — a story whose thesis is that unscheduled intentions fail must not ship one. |
 | 18 | **gate** | Line-count assertion over **every deployed path**, not only the ones this story names — a ceiling counted only on named files is met by relocating text to an unnamed one. Ceiling settled in Open question 5. |
 
 Scope containment for this story's own diff: `git diff --name-only main...HEAD -- . ':(exclude)reviews/'`
@@ -311,7 +311,7 @@ Each pairs with the oracle its criterion already carries above. All 18 criteria 
 ## Open questions
 
 1. **~~Should the guard hook leave a durable record?~~ — BACKLOGGED (Thomas, 2026-08-06).** Filed as
-   `OPS-24`. The stated limit stands for this story: class 1b is caught only when `/close` runs in the
+   `OPS-27`. The stated limit stands for this story: class 1b is caught only when `/close` runs in the
    originating session.
 2. **~~Prefix~~ — DECIDED (Thomas, 2026-08-06): `AAR-`, for After Action Review.** A **fourth**
    `BACKLOG.md` item family alongside `BUG-` / `OPS-` / `AUDIT-`. One-way door, ratified: every future
@@ -341,8 +341,8 @@ Each pairs with the oracle its criterion already carries above. All 18 criteria 
 `workflow-protocol.md`), `.claude/skills/review/fireworks_runner.py` (one `PASSES` entry + one
 `ALTITUDES` line), `.claude/skills/review/lesson-review-schema.json` (new),
 `.claude/skills/review/fireworks-models.json` (a route for the new pass), `tests/reviewer_test.sh` and
-`tests/fireworks_runner_test.sh` (assertions), and `BACKLOG.md` (the `AAR-` family plus `OPS-24` and
-`OPS-25`). The `review` skill directory is already deployed wholesale by `install.sh`, so the new
+`tests/fireworks_runner_test.sh` (assertions), and `BACKLOG.md` (the `AAR-` family plus `OPS-27` and
+`OPS-28`). The `review` skill directory is already deployed wholesale by `install.sh`, so the new
 schema needs no `ARTIFACTS` entry. **No change to `workflow-AGENTS.md`.**
 
 **The step.** One block near the end of `/close`, after the gate is green and before the merge
@@ -445,13 +445,13 @@ Binding on implementation. Do not re-litigate.
 |---|---|---|
 | Re-presentation rule depends on an artifact whose content was never specified | **fix** | §3 — the schema must carry the proposal verbatim |
 | AC15's gate lints one file while the hazard surface is every deployed file | **fix** | Test notes AC15 — loop over every deployed text path, sharing AC18's enumeration |
-| AC16's observational half deferred with nothing scheduling it | **fix** | Test notes AC16 — filed as `OPS-25` in this story's diff |
+| AC16's observational half deferred with nothing scheduling it | **fix** | Test notes AC16 — filed as `OPS-28` in this story's diff |
 
 | Round-1 finding | Disposition | Where it landed |
 |---|---|---|
 | The silence direction has no check (**one-way**, ratified) | **fix** | Open question 4 — lookback samples non-firings too |
 | Re-presentation after interruption blessed confabulation | **fix** | §4 + AC12 — re-present only from the durable artifact, else it is gone |
-| AC15's original gate was a tautology | **fix as amended** | Test notes — negative assertion now; observational half filed as `OPS-25` |
+| AC15's original gate was a tautology | **fix as amended** | Test notes — negative assertion now; observational half filed as `OPS-28` |
 
 **One-way doors ratified.**
 
@@ -463,7 +463,7 @@ Binding on implementation. Do not re-litigate.
 3. **A new shared schema** (`lesson-review-schema.json`) deployed to every repo via the `review`
    skill directory.
 
-**Backlogged rather than built** (Thomas's instruction): `OPS-24` — the guard hook writes nothing
+**Backlogged rather than built** (Thomas's instruction): `OPS-27` — the guard hook writes nothing
 durable, so a hook trip is only visible when `/close` runs in the originating session.
 
 **Still open, deliberately:** the lookback (Open question 4) is stated, not filed — flagged at the
