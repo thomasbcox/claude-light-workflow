@@ -289,7 +289,10 @@ if [ -z "$lesson_block" ]; then
 else
   writes=0
   for p in "workflow-protocol.md" "workflow-AGENTS.md" ".claude/workflow.json" "hooks/block-main-writes.sh"; do
-    printf '%s' "$lesson_block" | grep -qF -- "$p" && { bad "lesson step references a deployed/config path: $p"; writes=1; }
+    printf '%s' "$lesson_block" | grep -qF -- "$p" && {
+      bad "lesson step references a deployed/config path: $p"
+      writes=1
+    }
   done
   [ "$writes" = "0" ] && ok "the lesson step names no deployed artifact or workflow config"
 fi
