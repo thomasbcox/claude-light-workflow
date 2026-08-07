@@ -251,3 +251,48 @@ ungated; AC4's independent extractor must share no code or regex with the resolv
 needs a genuine deep-copied before-snapshot; AC6 cannot prove "one implementation" by output equality
 alone. Each is mine to address in the test notes as built, and any that cannot be closed will be
 stated rather than reshaped.
+
+## Demonstrate-red results (2026-08-07)
+
+Each gate criterion's regression applied, the named check observed failing, the change reverted.
+
+| Criterion | Regression | Result |
+|---|---|---|
+| 2 | A description pointed at `{{contract:Nope}}` | **red** — `marker '{{contract:Nope}}' names contract section 'Nope', which does not exist` |
+| 1 | A mapped field's marker replaced with restated prose | **red** — `marker map is out of step: design-review-schema.json.standing` |
+| 7 | A codex block re-pointed at the raw schema file | **red** — `codex was handed UNRESOLVED markers` |
+
+Criterion 7's demonstration is the one worth keeping: reverting a single `--output-schema` argument
+put raw `{{contract:…}}` text in front of codex, and the check caught it **because it executes the
+block and inspects what codex received**. The spelling-grep this replaced would have stayed green.
+
+## Deviations from the ratified test notes (2026-08-07)
+
+Recorded rather than reshaped, per step 9.
+
+- **AC6 has no separate equality test, and should not have one.** The plan was to render via
+  `--render-schema`, capture what the stubbed client received, and assert equality. Both paths call
+  the same `render_schema`, so that test compares a function against itself — the reviewer said as
+  much in its verdict ("output equality cannot prove 'one implementation'"). The property is held
+  **by construction**: one function, two callers, and `check_codex_render.py` proves the codex caller
+  reaches it end to end. Asserting it separately would be a check that cannot fail.
+- **`--render-schema`'s own fail-closedness is covered indirectly.** `tests/fireworks_runner_test.py`
+  exercises the altitude path directly; the render path is exercised for real by
+  `check_codex_render.py`, which fails if the render exits non-zero. Both funnel through
+  `render_schema`. **Stated limit:** there is no test that calls `--render-schema` with a broken
+  marker and asserts on its exit code alone.
+- **Two defects were found by the tests during implementation, not by review.** (1) The marker map's
+  first draft named `finding-schema.json` `severity`, which carries an enum and **no description** —
+  the migration silently did nothing there, which is why `check_marker_map` exists rather than being
+  trusted. (2) `--render-schema` required the `jsonschema` package, breaking the codex path in a
+  codex-only repo that has no venv — found by `check_codex_render.py` executing a real block, and
+  invisible to any grep. Both are now guarded.
+- **A superseded pin was removed, not left to rot.** `tests/reviewer_test.sh` asserted the literal
+  `--output-schema "$HOME/.claude/skills/review/finding-schema.json"`. Schemas are now rendered per
+  call, so that literal is gone by design; what it guarded is covered more strongly by the behavioral
+  check. Removing it is the prune half of the doctrine this story ships.
+- **The test fixture's stub contract had to become realistic.** Schema descriptions are now assembled
+  from the contract, so a bare `# contract` stub stopped every altitude run the moment markers
+  shipped. That is the coupling working as designed, not a test bug; the fixture now carries every
+  anchor `MARKER_MAP` names, and stays deliberately distinctive so the "pushed contract is the
+  fixture's, not the real `~/.claude`" assertion still means something.
