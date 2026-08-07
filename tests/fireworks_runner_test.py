@@ -847,7 +847,7 @@ with repo(contract=STALE) as root:
 # AC-4: every pass declares BOTH contract inputs. Anchored to the skill invocations, not to
 # PASSES alone — a check drawn only from the runner's own table cannot fail for a pass wired
 # somewhere else, which is internal consistency rather than the criterion.
-SKILL_ALTITUDES = ("design", "approach", "correctness")   # what frame/SKILL.md + review/SKILL.md invoke
+SKILL_ALTITUDES = ("design", "approach", "correctness", "lesson")   # frame/ + review/ + close/SKILL.md
 invoked = {p for a in SKILL_ALTITUDES for p in runner.ALTITUDES[a]}
 check("every pass the skills can invoke exists in PASSES", invoked <= set(runner.PASSES))
 for name in sorted(invoked):
@@ -855,6 +855,34 @@ for name in sorted(invoked):
     check(f"  ↳ {name} declares both contract inputs",
           "contract" in ctx and "contract_local" in ctx, str(ctx))
 
+
+# lesson-proposals AC6: the lesson pass gets its OWN schema, not a repurposed one.
+# The regression this exists to catch is a schema that is new in NAME but a structural
+# clone of design-review-schema.json — reversibility/standing/regressions surviving into a
+# lesson assessment where they mean nothing is exactly how an independent check becomes the
+# ceremonial field-filling the separate schema was created to avoid.
+LESSON_SCHEMA = ROOT / ".claude/skills/review/lesson-review-schema.json"
+check("the lesson pass exists", "lesson" in runner.PASSES)
+check("the lesson pass does not reuse an existing schema",
+      runner.PASSES["lesson"]["schema"] == "lesson-review-schema.json")
+_lesson = runner.load_schema("lesson", LESSON_SCHEMA)   # raises if it accepts {}
+check("the lesson schema constrains something (load_schema accepted it)", bool(_lesson))
+_props = set(_lesson.get("properties", {}))
+for dead in ("reversibility", "standing", "regressions"):
+    check(f"  ↳ no vestigial design-review field: {dead}", dead not in _props)
+for live in ("trigger_qualified", "stronger_explanation", "scope"):
+    check(f"  ↳ asks the lesson question: {live}", live in _props)
+# The proposal is NOT echoed by the model — it is written to its own file by /close, because
+# a model asked to reproduce a long proposal paraphrases or truncates it, silently defeating
+# the durability rule that requirement serves.
+check("the lesson pass reads the proposal as a declared context input",
+      "lesson_proposal" in runner.PASSES["lesson"]["context"])
+check("no echo-the-proposal field in the schema",
+      not {p for p in _props if "proposal" in p.lower()})
+# The shared contract was NOT extended for this pass — the pass's questions live in its own
+# prompt, so every other repo's reviews carry none of its weight.
+check("the shared reviewer contract is untouched by the lesson pass",
+      "lesson" not in (ROOT / "workflow-AGENTS.md").read_text().lower())
 
 print()
 print(f"passed={PASSED} failed={FAILED}")

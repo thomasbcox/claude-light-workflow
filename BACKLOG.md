@@ -17,11 +17,16 @@ to **Done** and reference it as `PR #N / merge: <slug>` (never a raw SHA — der
 land with the story they describe; open a follow-up only for a real defect or a new decision,
 never solely to reconcile a previous story's records.
 
-Three kinds of item, tracked separately:
+Four kinds of item, tracked separately:
 - **BUG-** — skill-behavior / workflow-correctness defects (change what the skills *do*).
 - **OPS-** — deployment, drift, and tooling ergonomics (change how the skills are *shipped*).
 - **AUDIT-** — findings graduated from a `/dev-audit` run (missing safeguards, best-practice gaps).
   Added only on an explicit instruction; the item text carries its `from /dev-audit <date>` provenance.
+- **AAR-** — *After Action Review*: a workflow lesson proposed by `/close` after a safeguard
+  activation and **approved by Thomas**. Added only through that path — never hand-filed, never
+  self-approved. An unapproved proposal is not an item; a rejected one goes to
+  `.aar/rejected-lessons.md` with its reason, not here. Prefix decided 2026-08-06 (`lesson-proposals`)
+  as a one-way door: every future lesson item copies it.
 
 ---
 
@@ -891,6 +896,53 @@ evidence; and OPS-23, since the contract is edited there too.)
 _(OPS-10 shipped — see [Done](#done).)_
 
 ---
+
+OPS-27 — **The guard hook leaves no durable record, so a hook trip is invisible to a later
+`/close`.** Filed 2026-08-06 by `lesson-proposals`, on Thomas's instruction, as that story's stated
+limit rather than a defect discovered later.
+
+- **What was verified.** `.claude/hooks/block-main-writes.sh` denies with a reason on **stderr** and
+  exits 2. It writes no log, no file, no marker. Confirmed by reading the script, not assumed.
+- **Why it matters now.** `lesson-proposals` triggers a workflow-lesson proposal on safeguard
+  *activation*. Of its activation sources, only `install.sh --check` is re-derivable on demand; a
+  hook trip and a runner fail-closed refusal are **session-observed only**. A `/close` run in a fresh
+  or resumed session cannot see either. The mechanism therefore *reduces* reliance on someone
+  noticing — it does not remove it, and the story says so in as many words.
+- **The change, if taken.** Have the hook append one line (timestamp, repo, blocked subcommand,
+  reason) to a durable path, and have `/close` read it for the current story's window.
+- **Cost.** A change to the single load-bearing hook, deployed to **every** repo on this machine,
+  with its own review surface and its own failure modes: where does it write; what if that path is
+  unwritable; does a failed append block the commit (fail-closed) or pass it (fail-open)? A guard
+  that can refuse a legitimate commit because a log write failed is worse than the gap it closes.
+- **Risk of leaving it.** The primary detector works only in the originating session, which is the
+  weaker half of the story's claim.
+- **Interacts with:** OPS-6, [decided against](#decided-against) — that item established the hook is
+  a **cooperative** tripwire, not an adversarial wall, and rejected hardening it. This is not
+  hardening; it is observability. The distinction is real, but the same "don't grow the one hook
+  everything depends on" caution applies, and OPS-6's reasoning should be read before taking this.
+
+OPS-28 — **The runtime containment check for lesson handling has no branch it can run on yet.**
+Filed 2026-08-06 by `lesson-proposals`, as the fix to that story's round-2 design finding — filed
+rather than intended, because the story's own thesis is that unscheduled intentions fail.
+
+- **What is missing.** `lesson-proposals` AC16 says that at runtime, proposing or approving a lesson
+  modifies no file in `install.sh`'s `ARTIFACTS` array and no `.claude/workflow.json`. Its static half
+  ships: a negative assertion that the `/close` text contains no instruction to write to those paths
+  at proposal or approval time. Its **observational** half — `./install.sh --check` plus a restricted
+  `git diff` on a branch where a lesson actually ran — could not run on the implementing branch,
+  where that diff is non-empty by construction because the story edits those very files. Running it
+  there would verify a fixture, not the behavior.
+- **Trigger.** The first story *after* `lesson-proposals` in which `/close` actually proposes or
+  approves a lesson.
+- **What to do.** On that branch, run `./install.sh --check` and
+  `git diff --name-only <base>...HEAD` restricted to the `ARTIFACTS` paths and `.claude/workflow.json`;
+  both must come back clean. Then decide whether the check is worth landing as a permanent test or
+  whether the one observation suffices.
+- **Cost.** Two commands on a branch that will exist anyway.
+- **Risk of leaving it.** The containment property the story calls load-bearing would rest
+  permanently on an instruction lint — a check on what the text *says*, never on what the loop
+  *does*.
+
 
 ## Done
 

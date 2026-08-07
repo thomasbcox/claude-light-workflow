@@ -1,0 +1,4 @@
+{
+  "summary": "The change adds a lesson-check step to the /close skill and a corresponding lesson-review pass in the runner, alongside the rejected-lessons register and supporting infrastructure. No new error-swallowing patterns are introduced. The runner's new context source reads the proposal from a file that must exist per the /close instructions; a missing file will cause a hard failure that the runner's existing fail-closed mechanism will surface, and /close is instructed to present such failures explicitly rather than absorb them. There are no bare except blocks, catch-log-continue paths, silent fallbacks, deleted assertions, or safety checks in the diff. Existing runner conventions disallow silently skipping a missing context source, and the instruction text reinforces surfacing over swallowing.",
+  "findings": []
+}
