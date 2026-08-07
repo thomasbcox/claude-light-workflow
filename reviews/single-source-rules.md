@@ -1,4 +1,4 @@
-Date: 2026-08-07 · Branch: claude/single-source-rules · Status: proposed
+Date: 2026-08-07 · Branch: claude/single-source-rules · Status: approved
 
 # Single-source the shared rules — assemble the reviewer's copy at call time, never store it
 
@@ -41,12 +41,30 @@ rule lives:
 "reversibility": { "description": "{{contract:Classify#reversibility}}" }
 ```
 
-Resolution targets a `##` section, optionally a bullet within it (`#term` matches the bullet whose
-bold lead-in is that term). Verified against the contract as it stands: `## Severity labels`,
-`## Classify` with `- **reversibility**` and `- **standing**` bullets, and
-`## Best-practice assessment` with its numbered guardrails are all addressable **without editing the
-contract**. Descriptions that explain a field's *shape* rather than a rule ("Short label for the
-finding") stay literal — they restate nothing.
+**The grammar, pinned before any schema copies it** (ratified 2026-08-07 as a one-way door — every
+future schema and its tests inherit it):
+
+- **(a) Section.** The name matches the heading text **up to any trailing parenthetical**,
+  case-sensitive, and must match **exactly one** heading. Against the contract as it stands this is
+  unambiguous: `Your role`, `Grounding`, `Best-practice assessment`, `Classify`, `You must NOT`,
+  `Severity labels`, `Output`. The design review caught the sketch's own first example failing here —
+  `{{contract:Classify#reversibility}}` cannot resolve under exact matching, because the heading is
+  `## Classify (design / approach findings)`. Rule (a) is what makes that example correct.
+- **(b) Term.** `#term` matches the **full bold lead-in**, exact match, of **either** a `-` bullet or
+  a numbered item — so `Classify`'s `- **reversibility**` and `Best-practice assessment`'s
+  `1. **Concrete win, not novelty.**` are both addressable. Bullets-only would have left the finest
+  anchors this story may need unreachable.
+- **(c) Whole-value only.** A `description` is *entirely* a marker or *entirely* literal — v1 does
+  not embed a marker inside surrounding prose. A description that today mixes a rule with
+  field-shape guidance either moves the shape text or is recorded as a **declared literal
+  exception**.
+- **(d) Anything else in `{{…}}` fails closed.** Any `{{…}}` sequence that is not a well-formed
+  contract marker is malformed (AC3). This reserves `{{skill:…}}` and every other namespace **for
+  free**, without building the general system — and it is why this story carries no open question
+  about namespace reservation.
+
+Descriptions that explain a field's *shape* rather than a rule ("Short label for the finding") stay
+literal — they restate nothing.
 
 ### 2. One resolver, both backends
 
@@ -57,7 +75,12 @@ finding") stay literal — they restate nothing.
   resolved schema to a temp file that the skill's codex block passes to `--output-schema`. **Same
   resolver, one implementation** — the two backends cannot disagree about what the reviewer was told.
 
-The rendered file is a temp, deleted after the call. No derived artifact is ever committed.
+**The rendered file is allocated under the system temp directory — never inside the working tree**
+— via `tempfile`/`mktemp`, with cleanup on the failure path too (a shell `trap`, matching the
+existing parallel-critic block). This is structural, not janitorial: a resolved schema cannot be
+committed because it never exists anywhere committable. Writing it repo-relative is the natural
+thing to put in a skill block and would mean an interrupted run leaves a resolved copy that one
+`git add -A` turns into the stored second copy this story exists to abolish.
 
 ### 3. Fail closed on any unresolved marker
 
@@ -116,7 +139,7 @@ one statement and discarded with the request** — never stored, never edited in
 | 4 | **gate** | Assert the resolved description equals the contract text extracted independently by the test — the test reads the contract itself rather than asking the resolver what it produced, so a resolver returning its own input cannot pass. |
 | 5 | **gate** | Deep-compare the schema before and after resolution with every `description` key stripped from both; assert equal. Catches a resolver that mutates enums or drops a `required`. |
 | 6 | **gate** | Render via `--render-schema` to a temp path, and separately capture what the stubbed client received on a real altitude run; assert the two are equal. |
-| 7 | **gate** | `tests/reviewer_test.sh` — assert both skills' codex blocks invoke `--render-schema` and that no `--output-schema` in either skill points at a raw `*-schema.json` path. Tier-1: silent failure means codex reviews against an unresolved marker. |
+| 7 | **gate** | **Behavioral, not a token grep.** Put a stub `codex` on `PATH` that records its argv and the *contents* of the file named by `--output-schema`; execute each skill's codex block; assert the consumed file contains **no** unresolved `{{` and **does** contain the contract's anchor text. A grep for `--render-schema` passes if the render sits in a comment, runs after the invocation, or the path is overridden later — none of which the criterion allows. Reworked from a spelling check during the frame consult. |
 | 8 | **gate** | `git ls-files` shows no rendered schema; the render path is under a temp directory. |
 | 9 | **reviewer** | Whether a doctrine line states rather than restates is not machine-checkable. Named plainly. |
 | 10 | **manual** | `git diff --name-only main...HEAD -- . ':(exclude)reviews/'` shows nothing beyond the sketch's list. |
@@ -202,3 +225,29 @@ artifact. Resolution runs **before** the API call specifically so a broken point
   - **Win:** Deletes open question 2 with a one-line rule instead of a future retrofit; prevents the resolver and the test's independent extractor from silently implementing two different matching rules; avoids a syntax migration across all schema files when the first numbered-item or inline marker is needed.
 
 **Coverage check.** All 10 criteria received at least one regression (20 total). No gap.
+
+## Design decisions (2026-08-07)
+
+**Scope — approved.** Thomas, 2026-08-07: *"approved, fix all three"*, on the redesign he asked for:
+*"can we not have a declared rule source, and other copies are created maybe temporarily as needed to
+give to agents, and then the derived copies go away once used… This feels like it should be a lot
+easier than this."*
+
+Binding on implementation. Do not re-litigate.
+
+| Finding | Disposition | Where it landed |
+|---|---|---|
+| Pin the marker grammar before it is copied (**one-way**, ratified) | **fix** | In scope §1 — rules (a)–(d), including the fail-closed catch-all that deletes the namespace open question |
+| AC7's gate greps skill markdown for tokens | **fix** | Test notes AC7 — stub `codex` on `PATH`, assert what it actually consumed |
+| Rendered-schema lifecycle is janitorial | **fix** | In scope §2 — system temp dir, never the working tree, cleanup on the failure path |
+
+**One-way door ratified:** the marker grammar. Every future schema and its tests inherit it;
+changing it later means migrating all of them.
+
+**Carried into implementation from the reviewer's oracle critique** (its verdict, not its findings —
+recorded so they are not quietly dropped): AC1 inherits the marker map's completeness, so a too-narrow
+map passes; AC2/3 exercise only the altitude path, leaving `--render-schema`'s fail-closedness
+ungated; AC4's independent extractor must share no code or regex with the resolver; AC5's comparison
+needs a genuine deep-copied before-snapshot; AC6 cannot prove "one implementation" by output equality
+alone. Each is mine to address in the test notes as built, and any that cannot be closed will be
+stated rather than reshaped.
