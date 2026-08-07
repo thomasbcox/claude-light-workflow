@@ -100,11 +100,38 @@ def stub(replies, calls=None, barrier=None, raise_on=None):
     return lambda _key: StubClient(replies, calls, barrier, raise_on), calls
 
 
+# The fixture's stand-in contract. It must carry every anchor MARKER_MAP names, because
+# schema descriptions are now assembled from the contract at call time and an unresolvable
+# marker fails the round closed — by design. A bare "# contract" stub stopped every altitude
+# run the moment markers shipped, which is the coupling working, not a test bug. Kept
+# deliberately distinctive so the "pushed contract is the fixture's, not the real ~/.claude"
+# assertion still means something.
+FIXTURE_CONTRACT = """# fixture contract (not the real one)
+
+## Your role
+You are the independent check. Hunt for what a builder rationalizes away.
+
+## Best-practice assessment (fixture)
+1. **Concrete win, not novelty.** Every flag names the payoff.
+2. **Weigh internal consistency.** Matching existing patterns can rightly win.
+
+## Classify (fixture axes)
+- **reversibility** — `one-way` vs `two-way`.
+- **standing** — `standard` / `nonstandard` / `dated` / `kludgy`.
+
+## Severity labels
+- **BLOCKER** — must fix before merge.
+- **IMPORTANT** — should fix.
+- **QUESTION** — needs a decision.
+- **NIT** — minor.
+"""
+
+
 # ── Fixture ───────────────────────────────────────────────────────────────────
 
 
 @contextlib.contextmanager
-def repo(slug="demo", story="# demo\n\nspec body\n", contract="# contract\n", change=True,
+def repo(slug="demo", story="# demo\n\nspec body\n", contract=None, change=True,
          local_contract=None):
     """A throwaway git repo, plus a throwaway SHARED contract the runner is pointed at.
 
@@ -121,7 +148,7 @@ def repo(slug="demo", story="# demo\n\nspec body\n", contract="# contract\n", ch
     """
     tmp = Path(tempfile.mkdtemp())
     shared = tmp / "_shared_contract.md"
-    shared.write_text(contract)
+    shared.write_text(FIXTURE_CONTRACT if contract is None else contract)
     saved_contract_path = runner.CONTRACT_PATH
     runner.CONTRACT_PATH = shared
     try:
@@ -883,6 +910,81 @@ check("no echo-the-proposal field in the schema",
 # prompt, so every other repo's reviews carry none of its weight.
 check("the shared reviewer contract is untouched by the lesson pass",
       "lesson" not in (ROOT / "workflow-AGENTS.md").read_text().lower())
+
+# ── single-source-rules: markers are resolved per call, never stored ──────────
+print()
+print("== single-source: schema rule text is assembled, not stored ==")
+
+import copy as _copy
+
+CONTRACT_TEXT = (ROOT / "workflow-AGENTS.md").read_text()
+
+# AC1 — the marker map covers exactly what it claims. A map naming a field that does
+# not exist, or a mapped field that lost its marker, is the silent-coverage-loss mode.
+check("marker map covers exactly what it claims",
+      runner.check_marker_map(ROOT / ".claude/skills/review") == [],
+      str(runner.check_marker_map(ROOT / ".claude/skills/review")))
+
+# AC1 (other half) — and the anchors it names still exist in the contract, so the pair
+# cannot pass by BOTH the schema and the contract losing the rule together.
+for (fname, field), marker in sorted(runner.MARKER_MAP.items()):
+    try:
+        runner.resolve_marker(marker, CONTRACT_TEXT)
+        ok(f"  ↳ anchor resolves: {marker}")
+    except runner.RunnerError as exc:
+        bad(f"  ↳ anchor resolves: {marker}", str(exc))
+
+# AC4 — the resolved text is the CONTRACT's text, extracted independently here.
+# This extractor shares no code and no regex with the resolver: it slices the raw
+# file by hand, so a resolver that echoed its own input cannot satisfy it.
+_lines = CONTRACT_TEXT.splitlines()
+_start = _lines.index("## Severity labels")
+_end = next(i for i in range(_start + 1, len(_lines)) if _lines[i].startswith("## "))
+_expected_severity = "\n".join(_lines[_start + 1:_end]).strip()
+check("resolved text equals the contract's own text (independent extraction)",
+      runner.resolve_marker("contract:Severity labels", CONTRACT_TEXT) == _expected_severity)
+check("  ↳ and is not empty", bool(_expected_severity.strip()))
+
+# AC5 — resolution touches descriptions and NOTHING else. Compared against a genuine
+# deep copy taken before the call, so a resolver mutating its input cannot hide.
+def _strip_desc(node):
+    if isinstance(node, dict):
+        return {k: _strip_desc(v) for k, v in node.items() if k != "description"}
+    if isinstance(node, list):
+        return [_strip_desc(x) for x in node]
+    return node
+
+_raw = runner.load_schema("design", ROOT / ".claude/skills/review/design-review-schema.json")
+_before = _copy.deepcopy(_raw)
+_resolved = runner.resolve_schema(_raw, CONTRACT_TEXT)
+check("resolution changes only descriptions", _strip_desc(_before) == _strip_desc(_resolved))
+check("  ↳ and does not mutate its input", _raw == _before)
+check("  ↳ and leaves no marker behind", "{{" not in json.dumps(_resolved))
+
+# AC2/AC3 — fail closed BEFORE spending an API call. The stub records every request,
+# so len(calls) == 0 is what proves the round stopped at resolution rather than after.
+for label, desc in (("missing anchor", "{{contract:Nope}}"),
+                    ("malformed marker", "{{garbage}}"),
+                    ("marker embedded in prose", "see {{contract:Output}} for details")):
+    with repo() as root:
+        sdir = root / "skills"; sdir.mkdir()
+        broken = json.loads((ROOT / ".claude/skills/review/finding-schema.json").read_text())
+        broken["properties"]["summary"]["description"] = desc
+        (sdir / "finding-schema.json").write_text(json.dumps(broken))
+        saved_here, saved_contract = runner.HERE, runner.CONTRACT_PATH
+        contract_file = root / "_contract.md"; contract_file.write_text(CONTRACT_TEXT)
+        runner.HERE, runner.CONTRACT_PATH = sdir, contract_file
+        try:
+            calls = []
+            rc, recorded, err = invoke(root, calls=calls)
+            check(f"{label} stops the round", rc != 0, f"rc={rc}")
+            check(f"  ↳ {label}: no API call was made", len(recorded) == 0, str(len(recorded)))
+            check(f"  ↳ {label}: no artifact written", artifacts(root) == [], str(artifacts(root)))
+        finally:
+            runner.HERE, runner.CONTRACT_PATH = saved_here, saved_contract
+
+# AC8 — a rendered schema may never be written inside a working tree.
+check("--out inside the repo is refused", runner._inside_working_tree(ROOT / "x.json"))
 
 print()
 print(f"passed={PASSED} failed={FAILED}")

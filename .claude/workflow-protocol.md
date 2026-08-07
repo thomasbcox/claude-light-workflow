@@ -47,6 +47,25 @@ Disposition follows the two tags (reversibility × standing): **one-way door OR 
 > **No bookkeeping-only stories:** open a follow-up only for a real defect or a new decision, never
 > solely to reconcile a previous story's records.
 
+## Stated once, assembled per call (single-source discipline)
+
+A behavioural rule is **stated once**, in the place its reader can reach. Where a second audience
+needs it **inline** and cannot follow a pointer — a pushed reviewer sees only what it is handed — the
+copy is **assembled at call time from that one statement and discarded with the request**. It is
+never stored, never committed, never edited in place.
+
+This is why schema `description` fields carry markers (`{{contract:Severity labels}}`) rather than
+rule text: `fireworks_runner.py` resolves them into the payload, and a marker naming an anchor that
+does not exist **stops the round before any API call** — a broken pointer is loud where divergent
+prose is silent, and that asymmetry is the whole reason to prefer one over the other. The `codex`
+path renders the same schema through the same resolver, into a temp **outside the working tree**, so
+a derived copy cannot become a committed one.
+
+Restatements whose reader *can* follow a pointer — a story's acceptance criteria, a test pin, a
+sample artifact — need no machinery: reference the rule instead of reproducing it. `BACKLOG.md`
+OPS-17 records why this discipline exists; a rule restated in five places gets fixed in one, and the
+next round reports the un-fixed copy as the same defect returning.
+
 ## Status & shipped-state (single source of truth)
 The story-file header records only **declared** state — `proposed → approved`, with `approved`
 as the terminal value. It never stores **observed** state. "Did it merge/ship?" is owned by git,

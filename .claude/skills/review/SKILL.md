@@ -59,8 +59,12 @@ The reviewer **role contract** is shared and lives once, at `~/.claude/workflow-
    **If `codex`** — run read-only. The shared contract is **pushed into the prompt**, not fetched — a review that ran with no contract is indistinguishable from a good one, and neither the sandbox's reach nor the model's obedience is verifiable. Codex still auto-reads the repo's own `AGENTS.md`, which carries **local additions only**:
    ```bash
    CONTRACT="$(cat "$HOME/.claude/workflow-AGENTS.md")" || { echo "ABORT: shared reviewer contract missing — run ./install.sh"; exit 1; }
+   # Rule text is stored once (the contract) and assembled per call. Render to a temp
+   # OUTSIDE the repo (the runner refuses an in-tree --out). Non-zero exit stops the round.
+   SCHEMA="$(mktemp)"; trap 'rm -f "$SCHEMA"' EXIT
+   python3 "$HOME/.claude/skills/review/fireworks_runner.py" --render-schema approach --out "$SCHEMA" || exit 1
    codex exec -s read-only \
-     --output-schema "$HOME/.claude/skills/review/design-review-schema.json" \
+     --output-schema "$SCHEMA" \
      -o reviews/<slug>.approach.json \
      ${codexModel:+-m "$codexModel"} \
      "Your reviewer contract is reproduced IN FULL below and is authoritative. It is the shared contract for every repository on this machine. If this repository also has an AGENTS.md, that file carries repo-specific ADDITIONS ONLY — never a replacement contract; read it as an addendum.
@@ -101,14 +105,19 @@ You are the independent reviewer doing an APPROACH review per that contract — 
    # kill. Arm the cleanup trap BEFORE the first mktemp so an interrupt between the two allocations
    # can't leak the first temp; `rm -f` on the still-empty vars is a harmless no-op.
    CONTRACT="$(cat "$HOME/.claude/workflow-AGENTS.md")" || { echo "ABORT: shared reviewer contract missing — run ./install.sh"; exit 1; }
-   tmp_c=""; tmp_h=""
-   trap 'rm -f "$tmp_c" "$tmp_h"' EXIT
+   tmp_c=""; tmp_h=""; SCHEMA_C=""; SCHEMA_H=""
+   trap 'rm -f "$tmp_c" "$tmp_h" "$SCHEMA_C" "$SCHEMA_H"' EXIT
+   # Both critics' schemas are assembled per call from the contract, into temps OUTSIDE
+   # the repo (the runner refuses an in-tree --out). Either failing stops the round.
+   SCHEMA_C="$(mktemp)"; SCHEMA_H="$(mktemp)"
+   python3 "$HOME/.claude/skills/review/fireworks_runner.py" --render-schema correctness    --out "$SCHEMA_C" || exit 1
+   python3 "$HOME/.claude/skills/review/fireworks_runner.py" --render-schema hidden-failure --out "$SCHEMA_H" || exit 1
    tmp_c="$(mktemp reviews/.<slug>.codex.XXXXXX)"
    tmp_h="$(mktemp reviews/.<slug>.hidden-failure.XXXXXX)"
 
    # correctness critic — prompt + finding-schema.json UNCHANGED; -o now a temp, promoted below
    codex exec -s read-only \
-     --output-schema "$HOME/.claude/skills/review/finding-schema.json" \
+     --output-schema "$SCHEMA_C" \
      -o "$tmp_c" ${codexModel:+-m "$codexModel"} \
      "Your reviewer contract is reproduced IN FULL below and is authoritative. It is the shared contract for every repository on this machine. If this repository also has an AGENTS.md, that file carries repo-specific ADDITIONS ONLY — never a replacement contract; read it as an addendum.
 
@@ -121,7 +130,7 @@ You are the independent reviewer defined by that contract. Review ONLY this bran
 
    # hidden-failure critic — its OWN schema; scoped to the hidden-failure lens ONLY
    codex exec -s read-only \
-     --output-schema "$HOME/.claude/skills/review/hidden-failure-schema.json" \
+     --output-schema "$SCHEMA_H" \
      -o "$tmp_h" ${codexModel:+-m "$codexModel"} \
      "Your reviewer contract is reproduced IN FULL below and is authoritative. It is the shared contract for every repository on this machine. If this repository also has an AGENTS.md, that file carries repo-specific ADDITIONS ONLY — never a replacement contract; read it as an addendum.
 

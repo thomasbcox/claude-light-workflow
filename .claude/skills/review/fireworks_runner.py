@@ -32,6 +32,7 @@ import concurrent.futures
 import difflib
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -651,6 +652,252 @@ def _jsonschema():
     return jsonschema
 
 
+# ── Marker resolution: the rule is STORED once, ASSEMBLED per call ────────────
+# A schema `description` that would otherwise restate a contract rule carries a
+# marker naming where that rule lives. The runner resolves it into the payload
+# and throws the result away with the request — the derived copy never lands on
+# disk, so it cannot drift and cannot be edited in place.
+#
+# Why not simply point the model at the contract it already receives? Because a
+# model silently failing to follow a pointer is the same silent divergence this
+# exists to remove. Deterministic resolution is cheap; pointer-following is
+# probabilistic.
+#
+# THE GRAMMAR — pinned 2026-08-07 (single-source-rules) as a ONE-WAY DOOR: every
+# schema and every test inherits it, so changing it later means migrating all of
+# them. Ratified by Thomas at that story's frame consult.
+#   (a) SECTION  matches the `##` heading text up to any trailing parenthetical,
+#       case-sensitive, and must match EXACTLY ONE heading. This rule is why
+#       `Classify` resolves against `## Classify (design / approach findings)`.
+#   (b) #TERM    matches the full bold lead-in, exact, of EITHER a `-` bullet or
+#       a numbered item — so `Classify#reversibility` and
+#       `Best-practice assessment#Concrete win, not novelty.` both work.
+#   (c) WHOLE-VALUE ONLY. A description is entirely a marker or entirely literal;
+#       v1 does not embed a marker inside surrounding prose.
+#   (d) ANYTHING ELSE in `{{…}}` IS MALFORMED and fails closed. That reserves
+#       `{{skill:…}}` and every other namespace for free, without building the
+#       general system.
+MARKER_RE = re.compile(r"^\{\{(.+?)\}\}$", re.S)
+ANY_MARKER_RE = re.compile(r"\{\{.*?\}\}", re.S)
+CONTRACT_MARKER_RE = re.compile(r"^contract:([^#]+?)(?:#(.+))?$", re.S)
+
+
+def _contract_sections(text: str) -> dict[str, str]:
+    """Split the contract on `##` headings, keyed by the name rule (a) defines."""
+    sections: dict[str, list[str]] = {}
+    key = None
+    for line in text.splitlines():
+        if line.startswith("## "):
+            # Rule (a): drop a trailing parenthetical, keep the rest verbatim.
+            key = re.sub(r"\s*\([^)]*\)\s*$", "", line[3:]).strip()
+            if key in sections:
+                raise RunnerError(
+                    f"contract has two '## {key}' sections — a marker naming it "
+                    "would be ambiguous; rename one"
+                )
+            sections[key] = []
+        elif key is not None:
+            sections[key].append(line)
+    return {k: "\n".join(v).strip() for k, v in sections.items()}
+
+
+def _select_term(body: str, term: str, marker: str) -> str:
+    """Rule (b): the item whose full bold lead-in is exactly `term`."""
+    items, current = [], None
+    for line in body.splitlines():
+        if re.match(r"^\s*(?:-|\d+\.)\s+\*\*", line):
+            if current is not None:
+                items.append(current)
+            current = [line]
+        elif current is not None:
+            current.append(line)
+    if current is not None:
+        items.append(current)
+    for item in items:
+        lead = re.search(r"\*\*(.+?)\*\*", item[0])
+        if lead and lead.group(1).strip() == term:
+            return "\n".join(item).strip()
+    raise RunnerError(
+        f"marker '{marker}' names term '{term}', which is not a bullet or "
+        f"numbered item in that contract section"
+    )
+
+
+def resolve_marker(marker: str, contract: str) -> str:
+    """Resolve one marker body to contract text, or fail closed naming it."""
+    m = CONTRACT_MARKER_RE.match(marker.strip())
+    if not m:
+        # Rule (d): not a well-formed contract marker ⇒ malformed, never a pass-through.
+        raise RunnerError(
+            f"malformed marker '{{{{{marker}}}}}' — only "
+            "'{{contract:Section}}' or '{{contract:Section#term}}' is supported"
+        )
+    section, term = m.group(1).strip(), (m.group(2) or "").strip() or None
+    sections = _contract_sections(contract)
+    if section not in sections:
+        raise RunnerError(
+            f"marker '{{{{{marker}}}}}' names contract section '{section}', which "
+            f"does not exist. Known sections: {', '.join(sorted(sections))}"
+        )
+    body = sections[section]
+    text = _select_term(body, term, marker) if term else body
+    if not text.strip():
+        raise RunnerError(f"marker '{{{{{marker}}}}}' resolved to empty text")
+    return text
+
+
+def resolve_schema(schema: dict, contract: str) -> dict:
+    """Return a copy with every `description` marker resolved.
+
+    Touches `description` values and nothing else — structure (`type`, `enum`,
+    `required`, `properties` keys) is carried through untouched, because a
+    resolver that could reshape the schema would change what the reply is
+    validated against.
+    """
+
+    def walk(node):
+        if isinstance(node, dict):
+            out = {}
+            for k, v in node.items():
+                if k == "description" and isinstance(v, str):
+                    whole = MARKER_RE.match(v.strip())
+                    if whole:
+                        out[k] = resolve_marker(whole.group(1), contract)
+                    elif ANY_MARKER_RE.search(v):
+                        # Rule (c): a marker inside surrounding prose is not v1 syntax.
+                        raise RunnerError(
+                            f"description embeds a marker in prose, which is not "
+                            f"supported (whole-value markers only): {v[:80]!r}"
+                        )
+                    else:
+                        out[k] = v
+                else:
+                    out[k] = walk(v)
+            return out
+        if isinstance(node, list):
+            return [walk(x) for x in node]
+        return node
+
+    return walk(schema)
+
+
+# WHICH schema field carries WHICH contract rule. This is the one hand-written
+# thing in the scheme, and it is deliberately hand-written: it *is* the definition
+# of "a rule shared with the contract", not a copy of a list that exists elsewhere.
+#
+# It is also the scheme's weak point, so it is validated rather than trusted — a map
+# entry naming a field that does not exist, or a mapped field that lost its marker,
+# is an error. Both were real: the first draft of this map named
+# finding-schema severity, which carries an enum and NO description, so the
+# migration silently did nothing there. A map that can quietly cover less than it
+# claims is the same silent-divergence failure this whole mechanism exists to end.
+MARKER_MAP = {
+    ("design-review-schema.json", "severity"): "contract:Severity labels",
+    ("design-review-schema.json", "reversibility"): "contract:Classify#reversibility",
+    ("design-review-schema.json", "standing"): "contract:Classify#standing",
+    ("design-review-schema.json", "win"): (
+        "contract:Best-practice assessment#Concrete win, not novelty."
+    ),
+    ("hidden-failure-schema.json", "claim"): "contract:Your role",
+}
+
+
+def _find_field(node, field: str):
+    """The first `properties` entry named `field`, at any depth, or None."""
+    if isinstance(node, dict):
+        for k, v in node.items():
+            if k == field and isinstance(v, dict) and ("type" in v or "description" in v):
+                return v
+            found = _find_field(v, field)
+            if found is not None:
+                return found
+    elif isinstance(node, list):
+        for x in node:
+            found = _find_field(x, field)
+            if found is not None:
+                return found
+    return None
+
+
+def check_marker_map(skill_dir: Path | None = None) -> list[str]:
+    """Every mapped field must exist AND still hold its declared marker.
+
+    Returns a list of problems; empty means the map covers exactly what it claims.
+    """
+    d = skill_dir or HERE
+    problems = []
+    for (fname, field), marker in sorted(MARKER_MAP.items()):
+        path = d / fname
+        if not path.is_file():
+            problems.append(f"{fname}: mapped schema file does not exist")
+            continue
+        try:
+            schema = json.loads(path.read_text())
+        except json.JSONDecodeError as exc:
+            problems.append(f"{fname}: not valid JSON ({exc})")
+            continue
+        node = _find_field(schema, field)
+        if node is None:
+            problems.append(f"{fname}: mapped field '{field}' does not exist")
+        elif node.get("description") != "{{%s}}" % marker:
+            problems.append(
+                f"{fname}.{field}: expected marker '{{{{{marker}}}}}', found "
+                f"{node.get('description', '<no description>')!r}"
+            )
+    return problems
+
+
+def _inside_working_tree(dest: Path) -> bool:
+    """True if `dest` would land inside a git working tree.
+
+    Asks git rather than string-matching a path: a repo reached through a symlink,
+    or a temp dir that happens to sit under one, is still committable, and a
+    prefix test would miss both.
+    """
+    probe = dest.parent if dest.parent.exists() else Path.cwd()
+    proc = subprocess.run(
+        ["git", "-C", str(probe), "rev-parse", "--is-inside-work-tree"],
+        capture_output=True, text=True, check=False,
+    )
+    return proc.returncode == 0 and proc.stdout.strip() == "true"
+
+
+def render_schema(
+    name: str, contract_path: Path | None = None, validate: bool = True
+) -> dict:
+    """The single entry point both backends resolve through.
+
+    `validate=False` skips the `load_schema` constrains-something guard, which needs
+    the `jsonschema` package. That is NOT a fail-open shortcut — it is what lets the
+    **codex** path render under plain `python3`, as a codex-only repo (which has no
+    fireworks venv) requires, the same constraint `--check-local-contract` is built
+    around. The guard still runs everywhere it can: on every fireworks call, and in
+    the gate, which imports this module with `jsonschema` present and checks every
+    schema regardless of which backend will consume it. Discovered by
+    `tests/check_codex_render.py` executing a real codex block — a grep for
+    `--render-schema` would have shipped a render step that always failed.
+    """
+    spec = PASSES.get(name)
+    if spec is None:
+        raise RunnerError(f"unknown pass '{name}' — cannot render its schema")
+    path = contract_path or CONTRACT_PATH
+    try:
+        contract = path.read_text()
+    except OSError as exc:
+        raise RunnerError(f"shared reviewer contract unreadable ({path}): {exc}")
+    schema_path = HERE / spec["schema"]
+    if validate:
+        schema = load_schema(name, schema_path)
+    else:
+        try:
+            schema = json.loads(schema_path.read_text())
+        except FileNotFoundError:
+            raise RunnerError(f"schema for '{name}' not found: {schema_path}")
+        except json.JSONDecodeError as exc:
+            raise RunnerError(f"schema for '{name}' is not valid JSON: {exc}")
+    return resolve_schema(schema, contract)
+
+
 def load_schema(name: str, path: Path) -> dict:
     """Read a schema AND prove it constrains something. Fails closed if it does not.
 
@@ -735,7 +982,9 @@ def run_pass(name: str, context: str, ctx: dict, routes: dict) -> dict:
     model = ctx["model_override"] or route["model"]
     context_length = ctx["context_length_override"] or route["contextLength"]
 
-    schema = load_schema(name, HERE / spec["schema"])
+    # Resolve markers BEFORE check_size (resolved text changes payload size) and
+    # before the request, so a broken pointer costs no API call.
+    schema = render_schema(name)
 
     check_size(context, spec["prompt"], schema, context_length, purpose)
 
@@ -959,6 +1208,15 @@ def main() -> int:
         action="store_true",
         help="preflight: refuse a repo AGENTS.md that is a stale copy of the shared contract",
     )
+    parser.add_argument(
+        "--render-schema",
+        metavar="PASS",
+        help="resolve one pass's schema markers and write it to --out (the codex path)",
+    )
+    parser.add_argument(
+        "--out",
+        help="destination for --render-schema; must be OUTSIDE the working tree",
+    )
     args = parser.parse_args()
 
     try:
@@ -968,6 +1226,30 @@ def main() -> int:
         # exactly the repos whose backend the guard exists to cover.
         if args.check_local_contract:
             return check_local_contract(Path.cwd())
+
+        # Rendering needs neither routes nor a key: it resolves markers against the
+        # contract and writes JSON. A codex-only repo has neither, and this is the
+        # path that repo uses — requiring them would make it unrunnable there.
+        if args.render_schema:
+            if not args.out:
+                raise RunnerError("--render-schema requires --out")
+            dest = Path(args.out).resolve()
+            # Structural, not janitorial: a resolved schema must never exist inside a
+            # working tree, because an interrupted run would leave one behind and a
+            # `git add -A` would turn it into the stored second copy this whole
+            # mechanism exists to abolish. Refuse the path rather than trust cleanup.
+            if _inside_working_tree(dest):
+                raise RunnerError(
+                    f"--out must be outside the repository (got {dest}). A rendered "
+                    "schema is derived and must never be committable; allocate it "
+                    "with mktemp under the system temp directory."
+                )
+            # validate=False: stdlib only, so a codex-only repo can render. See render_schema.
+            dest.write_text(
+                json.dumps(render_schema(args.render_schema, validate=False), indent=2)
+            )
+            print(f"→ {dest}", file=sys.stderr)
+            return 0
 
         routes = load_routes()
 

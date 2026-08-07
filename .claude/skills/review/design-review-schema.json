@@ -2,11 +2,11 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "additionalProperties": false,
-  "description": "Shared schema for design-altitude review — used by both the frame-time design-sketch review and the review-time approach pass. Distinct from finding-schema.json, which the correctness pass uses.",
+  "description": "Shared schema for design-altitude review \u2014 used by both the frame-time design-sketch review and the review-time approach pass. Distinct from finding-schema.json, which the correctness pass uses.",
   "properties": {
     "verdict": {
       "type": "string",
-      "description": "Required, even when there are no findings. Frame: is this sketch a sound, modern way to satisfy the spec — and if not, what shape would you build instead? Review: if you built this from the spec yourself, would you build it this way? Name the simpler/declarative/library-based design when one exists."
+      "description": "Required, even when there are no findings. Frame: is this sketch a sound, modern way to satisfy the spec \u2014 and if not, what shape would you build instead? Review: if you built this from the spec yourself, would you build it this way? Name the simpler/declarative/library-based design when one exists."
     },
     "regressions": {
       "type": "array",
@@ -17,14 +17,17 @@
         "properties": {
           "criterion": {
             "type": "string",
-            "description": "Which acceptance criterion this targets — its number or a short quote identifying it."
+            "description": "Which acceptance criterion this targets \u2014 its number or a short quote identifying it."
           },
           "regression": {
             "type": "string",
-            "description": "A plausible way an implementation could satisfy this criterion's LETTER while violating its INTENT. Derived from the criterion itself, never from an intended implementation shape (a selector, an assertion, a file token) — none exists yet."
+            "description": "A plausible way an implementation could satisfy this criterion's LETTER while violating its INTENT. Derived from the criterion itself, never from an intended implementation shape (a selector, an assertion, a file token) \u2014 none exists yet."
           }
         },
-        "required": ["criterion", "regression"]
+        "required": [
+          "criterion",
+          "regression"
+        ]
       }
     },
     "findings": {
@@ -36,31 +39,72 @@
         "properties": {
           "severity": {
             "type": "string",
-            "enum": ["BLOCKER", "IMPORTANT", "QUESTION", "NIT"],
-            "description": "How strongly the shape is wrong / how big the win."
+            "enum": [
+              "BLOCKER",
+              "IMPORTANT",
+              "QUESTION",
+              "NIT"
+            ],
+            "description": "{{contract:Severity labels}}"
           },
           "reversibility": {
             "type": "string",
-            "enum": ["one-way", "two-way"],
-            "description": "one-way = expensive to reverse (architecture, data model, public contract, a new dependency, OR a cross-cutting pattern future code will copy) → blocks, needs Thomas. two-way = locally reversible → defaults to Claude, logged for veto."
+            "enum": [
+              "one-way",
+              "two-way"
+            ],
+            "description": "{{contract:Classify#reversibility}}"
           },
           "standing": {
             "type": "string",
-            "enum": ["standard", "nonstandard", "dated", "kludgy"],
-            "description": "Best-practice assessment vs. modern idiom AND the repo's own conventions. 'standard' findings are usually QUESTIONs/clarifications; the others are the flags."
+            "enum": [
+              "standard",
+              "nonstandard",
+              "dated",
+              "kludgy"
+            ],
+            "description": "{{contract:Classify#standing}}"
           },
-          "title": { "type": "string", "description": "Short label for the finding." },
+          "title": {
+            "type": "string",
+            "description": "Short label for the finding."
+          },
           "locus": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Where it lives: a design-sketch section at frame time, or a file:line / module at review time. Null for a finding about absent code (something that should exist but doesn't)."
           },
-          "claim": { "type": "string", "description": "What is structurally suboptimal / substandard, and why it matters." },
-          "alternative": { "type": "string", "description": "The simpler / more declarative / more idiomatic design that would replace it." },
-          "win": { "type": "string", "description": "The CONCRETE payoff that justifies the alternative — lines removed, a dependency dropped, an error path eliminated, an invariant centralized. Novelty alone ('it is newer') is not a win." }
+          "claim": {
+            "type": "string",
+            "description": "What is structurally suboptimal / substandard, and why it matters."
+          },
+          "alternative": {
+            "type": "string",
+            "description": "The simpler / more declarative / more idiomatic design that would replace it."
+          },
+          "win": {
+            "type": "string",
+            "description": "{{contract:Best-practice assessment#Concrete win, not novelty.}}"
+          }
         },
-        "required": ["severity", "reversibility", "standing", "title", "locus", "claim", "alternative", "win"]
+        "required": [
+          "severity",
+          "reversibility",
+          "standing",
+          "title",
+          "locus",
+          "claim",
+          "alternative",
+          "win"
+        ]
       }
     }
   },
-  "required": ["verdict", "findings", "regressions"]
+  "required": [
+    "verdict",
+    "findings",
+    "regressions"
+  ]
 }

@@ -16,17 +16,56 @@
         "properties": {
           "severity": {
             "type": "string",
-            "enum": ["BLOCKER", "IMPORTANT", "QUESTION", "NIT"]
+            "enum": [
+              "BLOCKER",
+              "IMPORTANT",
+              "QUESTION",
+              "NIT"
+            ]
           },
-          "title": { "type": "string", "description": "Short label for the finding." },
-          "file": { "type": ["string", "null"], "description": "Path the finding is about, or null." },
-          "line": { "type": ["integer", "null"], "description": "Line number, or null." },
-          "claim": { "type": "string", "description": "What is wrong and why it matters." },
-          "suggestion": { "type": ["string", "null"], "description": "Concrete proposed fix, or null." }
+          "title": {
+            "type": "string",
+            "description": "Short label for the finding."
+          },
+          "file": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Path the finding is about, or null."
+          },
+          "line": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Line number, or null."
+          },
+          "claim": {
+            "type": "string",
+            "description": "What is wrong and why it matters."
+          },
+          "suggestion": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Concrete proposed fix, or null."
+          }
         },
-        "required": ["severity", "title", "file", "line", "claim", "suggestion"]
+        "required": [
+          "severity",
+          "title",
+          "file",
+          "line",
+          "claim",
+          "suggestion"
+        ]
       }
     }
   },
-  "required": ["summary", "findings"]
+  "required": [
+    "summary",
+    "findings"
+  ]
 }

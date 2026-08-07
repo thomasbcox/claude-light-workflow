@@ -176,11 +176,19 @@ echo "== pin: the reviewer runs read-only against the repo =="
 # The posture is the whole basis for trusting an independent review.
 has "codex exec -s read-only" "$REVIEW" "codex exec -s read-only"
 
-echo "== pin: schema path is absolute, artifact path is repo-relative =="
+echo "== pin: artifact path is repo-relative =="
 # Silent failure: flip the -o and the artifact lands outside the repo — the review trail
-# vanishes with no error. (The schema half is pinned alongside it because the two are one
-# rule; inverting them is the mistake this split exists to prevent.)
-has "schema abs path (skill-local, installed under \$HOME)" "$REVIEW" '--output-schema "$HOME/.claude/skills/review/finding-schema.json"'
+# vanishes with no error.
+#
+# THE SCHEMA HALF OF THIS PIN WAS REMOVED, not lost (single-source-rules, 2026-08-07).
+# It asserted the literal string --output-schema "$HOME/.claude/skills/review/…json".
+# Schemas are now RENDERED per call to a temp outside the repo, so that literal is gone
+# by design and the pin would have failed for the right reason at the wrong altitude.
+# What it guarded — codex receiving a schema at a path that actually resolves — is now
+# covered strictly more strongly by the behavioral check above, which EXECUTES each
+# block: a broken path means codex is handed nothing and that check fails. Removing a
+# superseded assertion rather than leaving it to rot is the prune half of the doctrine
+# this story ships (workflow-protocol.md → Stated once, assembled per call).
 has "artifact -o repo-relative (review)" "$REVIEW" "-o reviews/<slug>.approach.json"
 has "artifact -o repo-relative (frame)" "$FRAME" "-o reviews/<slug>.design.json"
 
@@ -307,6 +315,37 @@ else
     }
   done
   [ "$writes" = "0" ] && ok "the lesson step names no deployed artifact or workflow config"
+fi
+
+echo "== behavioral: codex is handed a RESOLVED schema, never raw markers =="
+# TIER 1, and behavioral rather than a pin: the property is what codex CONSUMES.
+# A grep for --render-schema passes if the render sits in a comment, runs after the
+# invocation, or writes to a path a later assignment overrides — all realistic, and the
+# failure they hide is silent (a reviewer told nothing about severity still returns
+# confident, schema-valid findings). The helper runs each block for real against a stub
+# codex. It caught a render step that always failed on the codex path, which no grep would.
+if /usr/bin/env python3 "$ROOT/tests/check_codex_render.py" "$ROOT"; then
+  ok "every codex block hands over a resolved schema"
+else
+  bad "a codex block would review against unresolved markers"
+fi
+
+echo "== behavioral: the marker map covers exactly what it claims =="
+# Silent failure: a map entry naming a field that does not exist migrates nothing, so a
+# rule keeps a stored second copy while the map says it is single-sourced. Exactly that
+# happened while building this (finding-schema severity carries an enum and no description).
+map_problems="$(/usr/bin/env python3 -c '
+import importlib.util, sys
+from pathlib import Path
+root = Path(sys.argv[1])
+spec = importlib.util.spec_from_file_location("r", root / ".claude/skills/review/fireworks_runner.py")
+m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+print("; ".join(m.check_marker_map(root / ".claude/skills/review")))
+' "$ROOT" 2>/dev/null)"
+if [ -z "$map_problems" ]; then
+  ok "marker map covers exactly what it claims"
+else
+  bad "marker map is out of step: $map_problems"
 fi
 
 echo "== TIER 2 (decision guards): the retired falsification machinery has not crept back =="
