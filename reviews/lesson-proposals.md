@@ -217,7 +217,7 @@ since it was built. Schema conformance is asserted; live behaviour is unproven. 
   forever to record that nothing happened, and an attestation rather than a check: a run that skipped
   the step writes it just as easily. The instruction lint is the check.
 - **A new store for approved lessons.** `BACKLOG.md` remains the staging area. The **rejected**
-  register (§6) is a new per-repo file under `reviews/` — named here rather than smuggled in, and
+  register (§6) is a new per-repo file under `.aar/` — named here rather than smuggled in, and
   deliberately not a second home for approved work.
 - **Erasing rejected lessons.** Considered and rejected as a design; see §6 for the reasoning.
 - **A second approval track, or a separate remedy-approval step.**
@@ -602,3 +602,14 @@ context source fails hard on a missing proposal file rather than reviewing an em
 
 Both fixes are applied by `/close`. Neither is shape-changing, so no re-review is implied by these
 dispositions — the re-review-or-merge choice remains Thomas's at `/close`'s fork.
+
+## Fixes (2026-08-06)
+
+Both approved correctness findings, applied. No other change.
+
+| Approved finding | What changed |
+|---|---|
+| Non-goals said the rejected register is under `reviews/` | `reviews/lesson-proposals.md` — Non-goals now says `.aar/`, matching §6, the design sketch, and the built path. Three statements about the register's location, one answer. |
+| Step 3b's assemble list omitted the activation's class | `.claude/skills/close/SKILL.md` — the list now asks which class the activation came from, phrased as **re-derivable or session-observed** rather than the spec's internal `1a`/`1b` labels, which mean nothing to a reader of the skill in another repo. The reason it matters is stated inline: a session-observed activation cannot be re-checked on a later run. |
+
+Header stays `Status: approved` — whether this round merges is not known until the fork.
