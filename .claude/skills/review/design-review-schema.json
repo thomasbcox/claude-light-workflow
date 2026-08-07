@@ -2,11 +2,11 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "additionalProperties": false,
-  "description": "Shared schema for design-altitude review \u2014 used by both the frame-time design-sketch review and the review-time approach pass. Distinct from finding-schema.json, which the correctness pass uses.",
+  "description": "Shared schema for design-altitude review — used by both the frame-time design-sketch review and the review-time approach pass. Distinct from finding-schema.json, which the correctness pass uses.",
   "properties": {
     "verdict": {
       "type": "string",
-      "description": "Required, even when there are no findings. Frame: is this sketch a sound, modern way to satisfy the spec \u2014 and if not, what shape would you build instead? Review: if you built this from the spec yourself, would you build it this way? Name the simpler/declarative/library-based design when one exists."
+      "description": "Required, even when there are no findings. Frame: is this sketch a sound, modern way to satisfy the spec — and if not, what shape would you build instead? Review: if you built this from the spec yourself, would you build it this way? Name the simpler/declarative/library-based design when one exists."
     },
     "regressions": {
       "type": "array",
@@ -17,11 +17,11 @@
         "properties": {
           "criterion": {
             "type": "string",
-            "description": "Which acceptance criterion this targets \u2014 its number or a short quote identifying it."
+            "description": "Which acceptance criterion this targets — its number or a short quote identifying it."
           },
           "regression": {
             "type": "string",
-            "description": "A plausible way an implementation could satisfy this criterion's LETTER while violating its INTENT. Derived from the criterion itself, never from an intended implementation shape (a selector, an assertion, a file token) \u2014 none exists yet."
+            "description": "A plausible way an implementation could satisfy this criterion's LETTER while violating its INTENT. Derived from the criterion itself, never from an intended implementation shape (a selector, an assertion, a file token) — none exists yet."
           }
         },
         "required": [
