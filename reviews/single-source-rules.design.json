@@ -1,0 +1,117 @@
+{
+  "verdict": "Build it \u2014 the shape is right: call-time assembly from one authoritative source, fail-closed resolution before any API spend, one resolver feeding both backends, and no stored derived artifact. The sketch correctly refuses the two seductive wrong shapes (a stored second copy plus a drift checker, and a general templating system). I considered the still-simpler design \u2014 descriptions holding plain-text references into the contract the reviewer already receives in its prompt \u2014 and reject it on the story's own terms: a model silently failing to follow a pointer is precisely the silent-divergence failure this story exists to make loud, and deterministic fail-closed resolution is cheap where pointer-following is probabilistic. Three concerns, none blocking the concept: (1) the marker grammar is under-specified in exactly the spots every future schema will copy \u2014 the sketch's own example {{contract:Classify#reversibility}} does not resolve under exact heading matching against the actual heading '## Classify (design / approach findings)', '#term' is defined for bullets while the guardrails are numbered items, whole-value vs inline embedding is undecided, and namespace reservation (open question 2) is really a grammar decision cheapest made now. (2) AC7's gate greps skill markdown for flag tokens; the property that matters is what codex consumes. (3) The rendered temp file's lifecycle is left to happy-path shell janitorial work. Oracle notes: AC1's gate is well-shaped (the independent contract-side anchor check prevents both-missing collusion) but inherits the marker map's completeness \u2014 a too-narrow map passes; AC2/3's stubbed-client len(calls)==0 is behavior-derived and strong but exercises only the altitude path, leaving --render-schema's fail-closedness ungated; AC4's independent extraction is right only if the extractor shares no code or regex with the resolver; AC5's deep-compare is meaningful only against a deep-copied before-snapshot; AC6's output equality cannot prove 'one implementation' (two synchronized resolvers pass) and must define equality as the bytes the codex consumer actually reads; AC8's git ls-files is a point-in-time check blind to interrupt-leaked repo-relative temps; AC9/AC10 are honestly named human gates, though AC10's reviews/ exclusion is a blind spot that intersects AC8.",
+  "findings": [
+    {
+      "severity": "QUESTION",
+      "reversibility": "one-way",
+      "standing": "standard",
+      "title": "Pin the marker grammar before it is copied into every schema",
+      "locus": "Design sketch \u2192 Resolver; In scope \u00a71",
+      "claim": "The grammar every schema file will copy is under-specified in four places, and the sketch's own example exposes the first: {{contract:Classify#reversibility}} cannot resolve under exact heading matching, because the contract's heading is '## Classify (design / approach findings)' \u2014 so section matching is implicitly prefix/substring, with the rule unstated. Second, '#term matches the bullet whose bold lead-in is that term' covers '- ' bullets, but the Best-practice guardrails are numbered items, so the finest anchors the story may want (open question 1's fallback) are not addressable by the specified mechanism. Third, whole-value vs inline embedding is undecided: a description that mixes rule text with field-shape guidance must either lose the shape text to whole-value replacement or stay literal as an undeclared exception. Fourth, open question 2 (reserve {{skill:...}}?) is a grammar decision, not an implementation one \u2014 the cheap answer is 'any {{...}} that is not a well-formed contract marker fails closed', which reserves every namespace for free. This syntax is a cross-cutting pattern future schema edits will copy; retrofitting it later means migrating every schema plus the tests.",
+      "alternative": "Add a short grammar paragraph to the sketch before building: (a) section names match the heading text up to any trailing parenthetical, case-sensitive, and must match exactly one heading; (b) #term matches the full bold lead-in of both '- ' and numbered items, exact match only; (c) v1 markers are whole-value \u2014 descriptions mixing rule and shape guidance either move the shape text or are recorded as declared literal exceptions per open question 1; (d) any {{...}} sequence not matching the contract grammar is a malformed marker and fails closed (AC3), which reserves skill:/other namespaces without building the general system.",
+      "win": "Deletes open question 2 with a one-line rule instead of a future retrofit; prevents the resolver and the test's independent extractor from silently implementing two different matching rules; avoids a syntax migration across all schema files when the first numbered-item or inline marker is needed."
+    },
+    {
+      "severity": "IMPORTANT",
+      "reversibility": "two-way",
+      "standing": "kludgy",
+      "title": "AC7's gate greps skill markdown for tokens \u2014 test what codex consumes, not what the file spells",
+      "locus": "Test notes \u2192 AC7 row",
+      "claim": "The named mechanism \u2014 assert both skills' codex blocks invoke --render-schema and that no --output-schema points at a raw *-schema.json path \u2014 is derived from the implementation's spelling, not from the criterion ('codex blocks render before invoking and pass the rendered path'). It passes if the render call sits in a comment or dead branch, if the rendered path is overridden by a later variable assignment, if render runs after the codex invocation, or if the path flows through a variable the grep cannot classify. The failure it guards is Tier-1 and silent: codex reviewing against raw {{contract:...}} markers \u2014 exactly the silent-divergence mode this story exists to eliminate \u2014 and a token grep cannot see any of the realistic ways it happens.",
+      "alternative": "Make the gate behavioral in the same shell harness: put a stub codex executable on PATH that records argv and the content of the file named by --output-schema, execute each skill's codex block, then assert the consumed file contains no unresolved marker and does contain the contract's anchor text. Keep the token grep as a cheap pre-filter if desired.",
+      "win": "The gate tests the property (what the reviewer was told) instead of the spelling; ordering bugs, wrong-variable wiring, and dead render steps all become detectable; no reliance on markdown-layout discipline in skill files."
+    },
+    {
+      "severity": "IMPORTANT",
+      "reversibility": "two-way",
+      "standing": "kludgy",
+      "title": "Rendered-schema lifecycle is janitorial where it should be structural",
+      "locus": "Design sketch \u2192 Where it runs; In scope \u00a72 (codex)",
+      "claim": "'The rendered file is a temp, deleted after the call' puts the deletion duty in the skill's shell block, outside the runner's fail-closed error model. An interrupt, or a failed codex call with an &&-chained rm, leaves a resolved copy on disk \u2014 and the sketch never says WHERE the temp lives. If that path is repo-relative (the natural thing to write in a skill block), the leaked file is one git add -A away from becoming a committed second copy: the exact stored-duplicate failure this story exists to abolish, reintroduced through the temp file. AC8's gate (git ls-files at test time) cannot see a file that does not yet exist.",
+      "alternative": "Specify the render target as a tempfile/mktemp allocation under the system temp directory \u2014 never under the working tree \u2014 with deletion via a shell trap or runner-side cleanup so the failure path deletes too. Then AC8 holds structurally: a resolved schema cannot be committed because it never exists inside the repo.",
+      "win": "Converts AC8 from happy-path janitorial discipline into a structural property; eliminates the interrupt-leak \u2192 accidental-commit failure mode that resurrects the stored second copy; removes a cleanup branch from each skill block."
+    }
+  ],
+  "regressions": [
+    {
+      "criterion": "AC1 \u2014 every restating description carries a marker; rule text in exactly one file",
+      "regression": "The marker map is written to match what was converted rather than what restates: a description that restates a contract rule but sits outside the map \u2014 a nested items.description, a $defs entry, or a lesson-review-schema field beyond the named trigger_qualified \u2014 stays literal. The AC1 gate checks only mapped fields, so it passes while a stored copy remains; the map becomes the hiding place."
+    },
+    {
+      "criterion": "AC1 \u2014 every restating description carries a marker; rule text in exactly one file",
+      "regression": "The rule text leaves the description but persists in the same schema file under a different key \u2014 $comment, title, or an x- extension note. Every mapped description is a marker (letter satisfied), yet the schema file still stores a second copy of the rule (intent: the text appears in exactly one file, workflow-AGENTS.md)."
+    },
+    {
+      "criterion": "AC2 \u2014 missing anchor stops the round: non-zero exit, no API call, no artifact",
+      "regression": "Fail-closed is implemented on the fireworks altitude path only: --render-schema prints the error and exits 0, or writes the unresolved schema to --out before exiting non-zero. The AC2 gate runs the altitude and passes; the codex path proceeds with raw markers or a written artifact, violating the intent that ANY unresolved marker stops the round on either backend."
+    },
+    {
+      "criterion": "AC2 \u2014 missing anchor stops the round: non-zero exit, no API call, no artifact",
+      "regression": "The output is opened before resolution runs: the render path creates/truncates the --out file (or the altitude path creates a reviews/ placeholder) and only then discovers the bad marker. Non-zero exit and zero API calls satisfy the letter, but an artifact exists \u2014 the intent is failing before producing anything."
+    },
+    {
+      "criterion": "AC3 \u2014 malformed marker does the same",
+      "regression": "The parser 'helpfully' normalizes near-miss markers \u2014 wrong case ({{Contract:...}}), extra whitespace, ':' instead of '#', singular vs plural section names \u2014 and resolves them anyway. Only unparseable garbage trips the gate, so the typo class most likely to occur never stops the round; 'malformed' gets defined by what the parser tolerates rather than by exactness."
+    },
+    {
+      "criterion": "AC3 \u2014 malformed marker does the same",
+      "regression": "Marker detection is scoped to the fields in the marker map: a malformed marker sitting in an unmapped or nested description is never scanned, ships verbatim to the reviewer, and the round proceeds. The gate plants its malformed marker in a mapped field, so it passes while the intent \u2014 any marker-shaped string anywhere in descriptions is validated \u2014 fails."
+    },
+    {
+      "criterion": "AC4 \u2014 resolved description equals the contract's actual text for the named anchor, never empty",
+      "regression": "Wrong-anchor resolution returning genuine contract text: the section is matched by substring ('Classify' matches the first heading containing the word) or #term matches the first bullet that mentions the word rather than equality on the bold lead-in, so the description fills with real, non-empty contract prose for the wrong anchor. 'Actual text, not a paraphrase, never empty' is satisfied; 'for the named anchor' is not."
+    },
+    {
+      "criterion": "AC4 \u2014 resolved description equals the contract's actual text for the named anchor, never empty",
+      "regression": "The test's 'independent' extractor reuses the resolver's regex or helper, so a systematic mangle \u2014 collapsing a multi-bullet section into one line, dropping the bold lead-in, trimming a heading's parenthetical \u2014 appears identically on both sides of the equality and the gate passes against text that is not what a human reads in the contract."
+    },
+    {
+      "criterion": "AC5 \u2014 resolution changes only description values; structure identical",
+      "regression": "The test's before-snapshot aliases the resolver's input dict instead of deep-copying it; in-place mutation makes before and after identical by construction, so a resolver that drops a required entry or mutates an enum is invisible \u2014 the gate cannot fail no matter the structural damage."
+    },
+    {
+      "criterion": "AC5 \u2014 resolution changes only description values; structure identical",
+      "regression": "The walk visits only top-level properties.*.description and never recurses into items, $defs, or nested properties. Those subtrees are identical before and after precisely because nothing was done to them \u2014 AC5 passes \u2014 while markers inside them reach the reviewer unresolved, violating the paired intent: every description resolved, nothing else touched."
+    },
+    {
+      "criterion": "AC6 \u2014 --render-schema output equals what the fireworks path sends; one resolver",
+      "regression": "The --render-schema CLI handler duplicates the resolution logic instead of calling the altitude path's function; the two copies agree today, the output-equality gate passes, and 'one implementation' holds only until the next edit. The gate as specified \u2014 compare outputs \u2014 structurally cannot detect a second implementation."
+    },
+    {
+      "criterion": "AC6 \u2014 --render-schema output equals what the fireworks path sends; one resolver",
+      "regression": "Equality is checked on parsed JSON dicts while codex consumes file bytes: the render path serializes differently from the wire payload (unicode escaping, key ordering, trailing newline), so the two are 'equal' per the test's notion and different per the actual consumer \u2014 codex is not told byte-for-byte what the fireworks reviewer is told."
+    },
+    {
+      "criterion": "AC7 \u2014 both skills' codex blocks render before invoking and pass the rendered path",
+      "regression": "Dead-token satisfaction: the skill invokes --render-schema in a comment, an unused helper, or a branch that does not run, while the live codex invocation passes a raw schema path through a variable (--output-schema \"$SCHEMA\") that the token grep cannot classify. The gate passes; codex reviews against raw {{contract:...}} markers; the failure is silent."
+    },
+    {
+      "criterion": "AC7 \u2014 both skills' codex blocks render before invoking and pass the rendered path",
+      "regression": "Wiring/ordering broken with all tokens present: render runs after the codex invocation, or renders altitude A's schema while the altitude B call consumes it, or the rendered path is computed but a stale or never-assigned variable is what actually gets passed. Every greppable token is in place; the property is broken."
+    },
+    {
+      "criterion": "AC8 \u2014 no rendered schema committed; render target is a temp path",
+      "regression": "The render target is a repo-relative dotfile (e.g., reviews/.tmp-schema.json) deleted on the happy path; an interrupt or a failed codex call with &&-chained rm leaves it behind, and a later git add -A commits a resolved copy. git ls-files is clean at test time (letter), but the design permits the committed second copy to recur (intent)."
+    },
+    {
+      "criterion": "AC8 \u2014 no rendered schema committed; render target is a temp path",
+      "regression": "The gate pattern-misses the artifact: the ls-files assertion greps for a filename convention (e.g., *rendered* or *-schema.resolved.json) while the skill writes the resolved schema under a name outside that pattern \u2014 committed, green, and exactly the stored duplicate the story abolishes."
+    },
+    {
+      "criterion": "AC9 \u2014 workflow-protocol.md states the doctrine once and names assemble-and-discard",
+      "regression": "The doctrine paragraph states assemble-and-discard but illustrates it by inlining actual rule text 'for example' \u2014 quoting the reversibility definitions or a severity bullet \u2014 so the doctrine file itself becomes a new stored copy, recreating the drift site one level up while the letter (stated once, rule named) passes."
+    },
+    {
+      "criterion": "AC9 \u2014 workflow-protocol.md states the doctrine once and names assemble-and-discard",
+      "regression": "The same diff adds fresh rule restatements in the skill files' prose while editing their codex blocks for AC7. AC9 names only workflow-protocol.md, so the letter passes while the story's own change introduces new copies \u2014 violating the single-source intent it codifies."
+    },
+    {
+      "criterion": "AC10 \u2014 diff touches only the files the design sketch names",
+      "regression": "Yardstick editing: implementation discovers it needs an unlisted file (a shared test fixture, a third consumer) and amends the sketch's file list to match what was touched, so the diff-vs-sketch comparison passes. The intent \u2014 the human ratifies scope before building \u2014 is defeated by editing the yardstick instead of surfacing the scope change."
+    },
+    {
+      "criterion": "AC10 \u2014 diff touches only the files the design sketch names",
+      "regression": "The reviews/ exclusion becomes the smuggling route: a committed fixture, helper output, or sample rendered schema lands under reviews/ where the name-only diff never looks, satisfying the letter while the diff reaches beyond what was designed."
+    }
+  ]
+}
