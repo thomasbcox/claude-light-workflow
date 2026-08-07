@@ -584,3 +584,21 @@ corrected branch.
 **Summary.** The change adds a lesson-check step to the /close skill and a corresponding lesson-review pass in the runner, alongside the rejected-lessons register and supporting infrastructure. No new error-swallowing patterns are introduced. The runner's new context source reads the proposal from a file that must exist per the /close instructions; a missing file will cause a hard failure that the runner's existing fail-closed mechanism will surface, and /close is instructed to present such failures explicitly rather than absorb them. There are no bare except blocks, catch-log-continue paths, silent fallbacks, deleted assertions, or safety checks in the diff. Existing runner conventions disallow silently skipping a missing context source, and the instruction text reinforces surfacing over swallowing.
 
 **Findings.** None — empty array returned.
+
+## Decisions (2026-08-06) — correctness round
+
+Thomas, 2026-08-06: *"fix both"*.
+
+**Correctness (2 findings)**
+
+| Finding | Severity | Disposition |
+|---|---|---|
+| Non-goals section says the rejected register is under `reviews/` (stale — §6 and the implementation use `.aar/`) | NIT | **fix** |
+| Step 3b's assemble paragraph omits the class-identification (1a/1b) element scope item 2 requires | NIT | **fix** |
+
+**Hidden-failure (0 findings)** — clean return, nothing to decide. The critic confirmed the new
+context source fails hard on a missing proposal file rather than reviewing an empty one, and that
+`/close` is instructed to surface a failed lesson pass rather than absorb it.
+
+Both fixes are applied by `/close`. Neither is shape-changing, so no re-review is implied by these
+dispositions — the re-review-or-merge choice remains Thomas's at `/close`'s fork.
