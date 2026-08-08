@@ -400,3 +400,36 @@ but a **parsed** description can: `"a\nb"` decodes to a real two-line string. Dr
 `ANY_MARKER_RE` therefore turns a marker containing a newline from *caught as malformed* into
 *silently shipped as literal text* — a fail-open in the exact catch-all (grammar rule (d)) that
 reserves every namespace. Measured both ways: with `re.S` the search matches; without it, it does not.
+
+## Decisions (2026-08-07) — correctness round
+
+Thomas, 2026-08-07: *"1 answer as suggested; 2 fix; 3 reject"*.
+
+**Correctness (3 findings)**
+
+| Finding | Severity | Disposition |
+|---|---|---|
+| `_inside_working_tree` probes `dest.parent`, falling back to cwd | QUESTION | **answered** |
+| The correctness block's render is checked only for marker *absence*, never for resolution | NIT | **fix** |
+| Drop `re.S` from the marker regexes | NIT | **rejected** |
+
+**The answer to finding 1.** The cwd fallback is intended and stays. The guard errs toward
+**refusal** in every case the reviewer enumerated, and that asymmetry is deliberate: a wrongly
+refused path is recoverable in one step (create the parent directory, or pass an existing one),
+while a wrongly *allowed* path puts a resolved schema somewhere committable — the stored second copy
+this entire story exists to abolish. Fail-closed is the correct bias for a guard whose false-negative
+reintroduces the disease and whose false-positive is an inconvenience.
+
+**Why finding 3 was rejected.** Its premise — that JSON strings cannot hold newlines, so DOTALL is
+inert — is false for the value that actually reaches the regex. A JSON *source* line cannot span
+lines, but a **parsed** description can: `"a\nb"` decodes to a real two-line string. Measured both
+ways: with `re.S`, a marker containing a newline is caught as malformed; without it, the same marker
+passes through as ordinary literal text and ships **unresolved**. Removing the flag would convert
+grammar rule (d) — the catch-all that reserves every namespace by failing closed — into a fail-open.
+The flag is load-bearing, and this paragraph is the record of why, so the next reader does not have
+to re-derive it.
+
+**Hidden-failure (0 findings)** — clean return, nothing to decide.
+
+Only finding 2 changes code. It is not shape-changing, so no re-review is implied by these
+dispositions — the re-review-or-merge choice remains Thomas's at `/close`'s fork.
