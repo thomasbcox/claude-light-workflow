@@ -769,50 +769,6 @@ one signal telling you a re-install is unsafe.
 *findings graduated from a `/dev-audit` run*, and this came from a review round, not a recon pass.
 **Interacts with:** OPS-20's computed-extents rule, which candidate (a) is a direct application of.)
 
-OPS-25 — **Migrate the remaining repos to the shared reviewer contract.** Filed 2026-08-05 by
-`user-level-contract`, which shipped the mechanism. **Manual work in other repositories, deliberately
-outside that story's diff** — a scope-containment AC governs only this repo.
-
-- **Do this only after `./install.sh` has run**, or the deployed reviewer still expects a per-repo
-  `AGENTS.md` and reviews will fail closed in any repo already migrated.
-- **Verified 2026-08-05 in-session**, by classifying every line of each file against the union of all
-  six historical generations of the contract (from this repo's git history) rather than by eyeballing
-  similarity. Emphasis markers normalised, since one repo runs Prettier over Markdown and rewrites
-  `*shape*` as `_shape_`.
-
-| Repo | Lines | Genuinely local | Action | State (2026-08-07) |
-|---|---|---|---|---|
-| `ruleset-sim` | 99 | **68** (one block) | **Trim** — keep `## Project rules to enforce` → end of that section | **DONE, committed** `f93c0ab` on `master`. Trimmed *and* given the standard addendum header; now 88 lines, local content from line 20 |
-| `txl-assessment-collector` | 120 | **84** (one block) | **Trim** — keep `## Project testing convention (the gate)` → EOF | **DONE, committed** `cf6a8cb` on `main`. Same shape; now 113 lines, local content from line 20 |
-| `zoom-meeting-cost` | 25 | 0 | **Delete** | **DONE, committed** 2026-08-07 — `chore:`/`merge:` pair on `main`; nothing local to keep |
-| `sudoku-hints` | 85 | 0 | **Delete** | **OUTSTANDING** — still tracked on `master`; see below |
-
-- **The line numbers originally recorded here were already stale** when this item was next picked up
-  (both files had moved: 99→88 and 120→113). Re-derive boundaries from the files, never from this
-  table. Both trims landed on a `##` heading as predicted, so the top-and-tail shape held.
-- **`sudoku-hints` is the one repo left.** The deletion sits **uncommitted** on its working tree and
-  is therefore live-but-fragile: `_contract_local` reads `AGENTS.md` from the **working tree**, so
-  reviews there already behave as migrated — until any `git checkout .`, stash, or fresh clone
-  restores the file and fails them closed. The original caution here (don't fold it into an unrelated
-  story's diff) **no longer applies**: `claude/puzzle-bank-generator` had zero commits of its own, so
-  there was no story diff to pollute. **What blocks it now is different** — an attempt on 2026-08-07
-  found a *concurrent session* actively running `/frame` in that repo (it committed
-  `spec: puzzle-bank-generator` mid-attempt and had begun editing engine files). Branch-switching
-  under a live session is unsafe, so the attempt was abandoned with no changes made. **Do this when
-  that repo is idle:** commit the deletion on a short branch off `master` and merge it, exactly as
-  `zoom-meeting-cost` was done.
-- **Out of scope:** `hw-biz-model` runs the heavier v3 protocol with its own contract lineage, and
-  `convo2article` names a different reviewer tool (`fireworks-reviewer`) — Thomas excluded it
-  explicitly.
-- **A caution on provenance.** A delegated survey that informed the first cut of this work was wrong
-  twice: it named a repo that does not exist (`fathom2article`), and it mis-reasoned about
-  `sudoku-hints`. Its *conclusions* held for the four real repos; its *specifics* did not. Re-verify
-  against the files before acting on any table, including this one.
-
-(Logged 2026-08-05. A **thirteenth** `OPS-` item. **Interacts with:** OPS-21, closed by the same
-story; and OPS-24, since `install.sh --check` will keep reporting a false HAND-EDITED while the
-deployed runner carries bytecode.)
-
 _(OPS-10 shipped — see [Done](#done).)_
 
 ---
@@ -887,10 +843,55 @@ OPS-29 — **The correctness critic's `severity` field carries no description at
   If they do not move, the gap is cosmetic and this should be closed as decided-against rather than
   fixed — the cheaper outcome, and the one this item should prefer absent evidence.
 
+OPS-30 — **Nothing detects a second session working in the same repo.** Filed 2026-08-08 by
+`dependency-cost-rule`, from a failed attempt during the OPS-25 migration. Thomas: *"file the
+concurrent-session item"*.
+
+- **What happened.** While committing the `AGENTS.md` deletion in `sudoku-hints`, a **second session
+  was running `/frame` in that same repo**. Mid-attempt it committed `spec: puzzle-bank-generator`
+  — timestamped 23 seconds before the collision was noticed — and restored `AGENTS.md` to the
+  working tree. The in-flight `git add AGENTS.md` then staged nothing and `git commit` reported
+  *"nothing added to commit"*. That is git behaving correctly, and it is **indistinguishable from an
+  ordinary no-op**. The attempt was abandoned; `master` was verified untouched and nothing was lost.
+- **What has no guard.** Nothing in the loop detects this. The guard hook checks the branch and the
+  flags, not concurrency. `/frame`, `/review` and `/close` each switch branches, stage files, and
+  commit on the assumption that they are the only writer — no lock, no lease, no check for another
+  process in the same worktree.
+- **Why it is worse than the symptom suggests.** The dangerous half is not the empty commit, it is
+  the **branch switching**. `/close` checks out the base branch to merge; `/frame` checks out a new
+  feature branch. Doing either underneath another session's uncommitted work is how edits land on
+  the wrong branch, or are reverted by a checkout their author never ran. Here it surfaced harmlessly
+  only by luck of timing.
+- **How it was caught, and why that is not a control.** By reading `git reflog` after a commit
+  behaved oddly, and spotting a commit at `HEAD@{0}` that this session had not made. That is a reader
+  noticing an anomaly, not a mechanism. A session that did not think to look would have reported the
+  deletion as committed — and the OPS-25 table would have carried that claim, exactly the kind of
+  stale-because-unverified entry that item already had to correct twice.
+- **Blast radius: every repo.** The four skills deploy via `install.sh`'s ARTIFACTS to `~/.claude`
+  and run everywhere. This is not specific to this repo's stack, layout, or test surface.
+- **Options — costs stated, none yet chosen.**
+  - *Advisory lease* — a `.claude/session.lock` written at skill entry carrying pid + timestamp,
+    checked and refused on conflict. **Cost:** every skill grows an entry/exit step plus a staleness
+    rule for crashed sessions. **Risk:** a stale lock blocks legitimate work — the classic failure of
+    this design, and the reason to prefer a warning over a hard refusal.
+  - *Detect rather than prevent* — record `HEAD` and worktree state before any checkout or commit,
+    re-check immediately before acting, STOP loudly if either moved. **Cost:** small, and it fails in
+    the right direction. **Risk:** narrows the window, does not close it.
+  - *Document it and do nothing* — state in `workflow-protocol.md` that one repo takes one session.
+    **Cost:** nothing. **Risk:** relies on the human remembering, which is what failed here.
+- **Not yet established, and worth answering before building anything.** How often this happens, and
+  whether running parallel sessions in one repo is normal practice or was a one-off. If it is rare,
+  the third option is the correct and cheapest outcome; this item should prefer that absent evidence.
+
+**Interacts with:** OPS-25, whose migration this interrupted; and OPS-27, since like an unrecorded
+hook trip it left nothing durable — it was recoverable only from `git reflog`, and only within the
+session that witnessed it.
+
 ## Done
 
 | id | Summary | Shipped |
 |---|---|---|
+| OPS-25 | Five repos carried a stale whole-file copy of the reviewer contract, each a second competing rulebook the reviewer would silently reconcile against the real one. **All four in-scope repos are migrated.** `ruleset-sim` (`f93c0ab`, master) and `txl-assessment-collector` (`cf6a8cb`, main) were trimmed to local add-ons under the standard addendum header; `zoom-meeting-cost` and `sudoku-hints` had zero local content and were deleted outright — a repo needing no local guidance correctly has no `AGENTS.md`. `hw-biz-model` and `convo2article` were excluded by Thomas and are **not** covered. **Three corrections the item earned along the way:** its recorded line numbers were already stale when next picked up (99→88, 120→113), so boundaries must be re-derived from the files, never from a table; its "don't fold this into an unrelated story's diff" caution did not apply to `sudoku-hints` (that branch had no commits of its own) — what actually blocked it was a **concurrent session live in the repo**, a hazard the workflow has no guard for; and the deletions sat uncommitted for two days, which reads as migrated because `_contract_local` checks the **working tree**, while any `git checkout .` or fresh clone restores the file and fails reviews closed. Each deletion landed on the repo's base branch via its own `chore:`/`merge:` pair, and `sudoku-hints`' story branch merged base immediately after, so its review diff is unaffected. | `merge: drop the stale reviewer-contract copy` in each repo (local-only; no PR) |
 | OPS-26 | A reviewer could reject an available library on "it would be a dependency" alone — a proxy standing in for costs nobody named. In `txl-assessment-collector` that reasoning blessed a hand-rolled URL-state module which shipped a user-visible bug (multi-word filter terms could not be typed) that **passed all four of that story's review passes**; `nuqs` covers ~70% of it declaratively. **Shipped as a fourth guardrail on the best-practice lens** in `workflow-AGENTS.md`, so every pass at both altitudes inherits it with no per-prompt edit: weigh libraries that *could* be added (not only those installed), name the candidate, give a **specific** cost to reject it (upgrade coupling, surface area, maintenance posture, licence — never dependency *count*), and say what would change the answer. **AC5 dissolved into sequencing** rather than distribution, as the item predicted: the contract is shared, not copied, so the amendment reaches every repo on the next `./install.sh`. Built after the OPS-25 migration per that ordering. **Carried by the same change:** the hardcoded "three guardrails" count was **dropped, not incremented**, at the four prompt sites that restated it — those readers receive the full contract and can follow a pointer, and incrementing would leave the identical trap for a fifth guardrail. | PR #56 / `merge: dependency-cost-rule` |
 | OPS-17 | Rules restated across skill prose, schema `description` fields, ACs, drift pins and samples meant a fix landed on one copy and the siblings kept the old text, so a later round reported the un-fixed copy as the same defect returning. **Decided and shipped: remove the copy, do not police it.** Rule text now lives once in `workflow-AGENTS.md`; schema descriptions carry markers (`{{contract:Classify#reversibility}}`) that the runner resolves **into the request** and discards with it, so no derived copy is stored and none can drift. Fail-closed before any API spend; one resolver feeds both backends; the codex render goes to a temp the runner refuses to place inside a working tree. The item's own recommended fix — have descriptions *reference* the skill — was **verified impossible**: descriptions are the reviewer's live instructions and it cannot follow a pointer. **Deliberately excluded:** restatements sourced from a skill rather than the contract (`lesson-review-schema.json`'s `trigger_qualified`), and the AC / test-pin / sample copies — those readers *can* follow a pointer, so `workflow-protocol.md` → *Stated once, assembled per call* covers them by convention rather than machinery. A new item, not this one, if either later needs building. | PR #54 / `merge: single-source-rules` |
 | OPS-21 | `AGENTS.md` served two jobs at once — this repo's reviewer contract *and* the template every other repo copied — so this repo structurally could not give its reviewer repo-specific guidance. Resolved by removing the premise rather than either option it weighed: the shared contract was renamed to `workflow-AGENTS.md` and deploys once to `~/.claude/`, so `AGENTS.md` in every repo now means repo-specific additions only. Options B (decouple the template) and B′ (an `AGENTS.local.md` addendum) are both moot — neither is needed once the contract is never copied. | PR #52 / `merge: user-level-contract` |
