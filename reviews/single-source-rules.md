@@ -95,6 +95,27 @@ One statement in `workflow-protocol.md`: a behavioural rule is **stated once**; 
 audience needs it inline and cannot follow a pointer, the copy is **assembled at call time from that
 one statement and discarded with the request** — never stored, never edited in place.
 
+## Build note (2026-08-07)
+
+AC → file map.
+
+| AC | Where it lives |
+|---|---|
+| 1 | `.claude/skills/review/design-review-schema.json` (4 markers), `hidden-failure-schema.json` (1 marker); `fireworks_runner.py` → `MARKER_MAP` + `check_marker_map`; `tests/reviewer_test.sh` → marker-map block |
+| 2, 3 | `fireworks_runner.py` → `resolve_marker` / `_contract_sections` / `_select_term`, raising `RunnerError`; `tests/fireworks_runner_test.py` → the three fail-closed cases asserting `len(calls) == 0` |
+| 4 | `fireworks_runner.py` → `resolve_marker`; `tests/fireworks_runner_test.py` → independent hand-sliced extraction of the contract section |
+| 5 | `fireworks_runner.py` → `resolve_schema` (walks, replaces only `description`); test deep-compares against a `copy.deepcopy` snapshot |
+| 6 | Held **by construction**: `render_schema` is the single entry point both paths call. See *Deviations* — no separate equality test, because it would compare a function with itself |
+| 7 | `.claude/skills/frame/SKILL.md`, `.claude/skills/review/SKILL.md` (render → temp → `--output-schema "$SCHEMA*"`); `tests/check_codex_render.py` executes each block against a stub `codex` |
+| 8 | `fireworks_runner.py` → `_inside_working_tree`, refusing an in-tree `--out` |
+| 9 | `.claude/workflow-protocol.md` → *Stated once, assembled per call* |
+| 10 | Diff limited to the sketch's file list; `finding-schema.json` was reverted after an incidental reformat |
+
+**No new test suite and no `.claude/workflow.json` / CI change.** The sketch predicted both; the checks
+landed inside `tests/reviewer_test.sh` and `tests/fireworks_runner_test.py`, which the gate already runs,
+so `testCommand` is unchanged and the CI↔config comparison stays green without edits.
+
+
 ## Non-goals
 
 - **Editing the contract's wording.** The markers address it as it stands.
