@@ -111,6 +111,10 @@ FIXTURE_CONTRACT = """# fixture contract (not the real one)
 ## Your role
 You are the independent check. Hunt for what a builder rationalizes away.
 
+- **Correctness:** drift from the spec, missed edge cases, unsafe assumptions.
+  - **Hidden failure:** swallowed or blind exception handling, catch-log-continue where
+    propagating is correct, silent fallbacks, deleted assertions.
+
 ## Best-practice assessment (fixture)
 1. **Concrete win, not novelty.** Every flag names the payoff.
 2. **Weigh internal consistency.** Matching existing patterns can rightly win.

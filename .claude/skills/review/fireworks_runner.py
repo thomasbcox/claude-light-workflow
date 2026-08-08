@@ -798,7 +798,12 @@ MARKER_MAP = {
     ("design-review-schema.json", "win"): (
         "contract:Best-practice assessment#Concrete win, not novelty."
     ),
-    ("hidden-failure-schema.json", "claim"): "contract:Your role",
+    # The FINE anchor, not the whole section: `Your role` is ~16 lines covering every
+    # altitude, and this field is where the hidden-failure critic writes its main
+    # output. Narrowed at the approach review (2026-08-07) — and it settles the
+    # per-anchor question the story left open: excerpt the smallest anchor that says
+    # what the field is for, not the section that happens to contain it.
+    ("hidden-failure-schema.json", "claim"): "contract:Your role#Hidden failure:",
 }
 
 

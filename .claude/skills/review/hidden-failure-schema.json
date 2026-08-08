@@ -44,7 +44,7 @@
           },
           "claim": {
             "type": "string",
-            "description": "{{contract:Your role}}"
+            "description": "{{contract:Your role#Hidden failure:}}"
           },
           "suggestion": {
             "type": [

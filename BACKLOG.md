@@ -944,6 +944,29 @@ rather than intended, because the story's own thesis is that unscheduled intenti
   *does*.
 
 
+OPS-29 — **The correctness critic's `severity` field carries no description at all.** Filed
+2026-08-07 by `single-source-rules`, from an audit its approach review prompted. Thomas: *"backlog"*.
+
+- **What was found.** Auditing `finding-schema.json` to answer whether it held restated contract
+  rules (it does not — all seven descriptions are field-shape guidance), its `severity` property
+  turned out to have an `enum` and **no `description`**. Every other severity-bearing schema now
+  resolves `{{contract:Severity labels}}` into that field.
+- **Why it may matter.** The correctness critic gets severity semantics only from the contract in
+  its prompt, never inline at the field it is filling. The other critics get both. Whether that
+  changes how severities are assigned is **unmeasured** — this is a filed observation, not a
+  demonstrated defect.
+- **Why it was not fixed in the story that found it.** `single-source-rules` migrates *existing*
+  restatements to markers. Adding a description where none existed is **new payload**, pushed on
+  every correctness review in every repo `install.sh` reaches — a different decision, and the
+  opposite of that story's direction, which was to remove copies rather than add text.
+- **The decision, if taken.** Add `"description": "{{contract:Severity labels}}"` to
+  `finding-schema.json`'s severity. **Cost:** ~5 lines of contract text in the payload of every
+  correctness review, forever. **Risk of leaving it:** the one critic whose whole job is grading
+  severity is the only one not told inline what the grades mean.
+- **Worth measuring first.** Compare severity distributions before and after on a few real reviews.
+  If they do not move, the gap is cosmetic and this should be closed as decided-against rather than
+  fixed — the cheaper outcome, and the one this item should prefer absent evidence.
+
 ## Done
 
 | id | Summary | Shipped |

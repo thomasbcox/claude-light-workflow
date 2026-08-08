@@ -344,3 +344,24 @@ resolves to **3** and is the near-exact text the marker replaced — the resolve
 sub-bullet, as the reviewer said. And `finding-schema.json`'s seven descriptions were audited field by
 field: all are field-shape guidance ("Short label for the finding", "Path the finding is about, or
 null"), none restates a contract rule, and its `severity` carries **no description at all**.
+
+## Decisions (2026-08-07) — approach round
+
+Thomas, 2026-08-07: *"1 fix; 2 backlog"*.
+
+| Finding | Severity | Disposition | Where it landed |
+|---|---|---|---|
+| `hidden-failure` `claim` marker resolves the whole 16-line role section | IMPORTANT | **fix** | Marker narrowed to `{{contract:Your role#Hidden failure:}}` (3 lines) in the schema **and** in `MARKER_MAP`; the fixture contract gained the sub-bullet anchor |
+| `finding-schema.json` coverage unverifiable from the pushed context | QUESTION | **backlog** | Audited (no rule restatements — all seven descriptions are field-shape). The `severity`-has-no-description gap it surfaced is filed as **OPS-29** |
+
+**This settles the story's open question 1** — *does a whole-section excerpt read well as a field
+description?* The answer, now recorded rather than left open: **excerpt the smallest anchor that says
+what the field is for, not the section that happens to contain it.** The rule is written into
+`MARKER_MAP` beside the entry it governs.
+
+**Two things the gate caught while applying the fix, both the design working rather than defects:**
+- `check_marker_map` went red the moment the schema and the map disagreed — which is precisely the
+  silent-coverage-loss mode it was built for, catching its author mid-edit.
+- The test fixture's contract lacked the finer anchor, so every altitude run failed closed until the
+  fixture gained it. A finer anchor demands the fixture carry it; that coupling is the mechanism, not
+  a test bug.
