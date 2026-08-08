@@ -843,6 +843,50 @@ OPS-29 — **The correctness critic's `severity` field carries no description at
   If they do not move, the gap is cosmetic and this should be closed as decided-against rather than
   fixed — the cheaper outcome, and the one this item should prefer absent evidence.
 
+OPS-30 — **Nothing detects a second session working in the same repo.** Filed 2026-08-08 by
+`dependency-cost-rule`, from a failed attempt during the OPS-25 migration. Thomas: *"file the
+concurrent-session item"*.
+
+- **What happened.** While committing the `AGENTS.md` deletion in `sudoku-hints`, a **second session
+  was running `/frame` in that same repo**. Mid-attempt it committed `spec: puzzle-bank-generator`
+  — timestamped 23 seconds before the collision was noticed — and restored `AGENTS.md` to the
+  working tree. The in-flight `git add AGENTS.md` then staged nothing and `git commit` reported
+  *"nothing added to commit"*. That is git behaving correctly, and it is **indistinguishable from an
+  ordinary no-op**. The attempt was abandoned; `master` was verified untouched and nothing was lost.
+- **What has no guard.** Nothing in the loop detects this. The guard hook checks the branch and the
+  flags, not concurrency. `/frame`, `/review` and `/close` each switch branches, stage files, and
+  commit on the assumption that they are the only writer — no lock, no lease, no check for another
+  process in the same worktree.
+- **Why it is worse than the symptom suggests.** The dangerous half is not the empty commit, it is
+  the **branch switching**. `/close` checks out the base branch to merge; `/frame` checks out a new
+  feature branch. Doing either underneath another session's uncommitted work is how edits land on
+  the wrong branch, or are reverted by a checkout their author never ran. Here it surfaced harmlessly
+  only by luck of timing.
+- **How it was caught, and why that is not a control.** By reading `git reflog` after a commit
+  behaved oddly, and spotting a commit at `HEAD@{0}` that this session had not made. That is a reader
+  noticing an anomaly, not a mechanism. A session that did not think to look would have reported the
+  deletion as committed — and the OPS-25 table would have carried that claim, exactly the kind of
+  stale-because-unverified entry that item already had to correct twice.
+- **Blast radius: every repo.** The four skills deploy via `install.sh`'s ARTIFACTS to `~/.claude`
+  and run everywhere. This is not specific to this repo's stack, layout, or test surface.
+- **Options — costs stated, none yet chosen.**
+  - *Advisory lease* — a `.claude/session.lock` written at skill entry carrying pid + timestamp,
+    checked and refused on conflict. **Cost:** every skill grows an entry/exit step plus a staleness
+    rule for crashed sessions. **Risk:** a stale lock blocks legitimate work — the classic failure of
+    this design, and the reason to prefer a warning over a hard refusal.
+  - *Detect rather than prevent* — record `HEAD` and worktree state before any checkout or commit,
+    re-check immediately before acting, STOP loudly if either moved. **Cost:** small, and it fails in
+    the right direction. **Risk:** narrows the window, does not close it.
+  - *Document it and do nothing* — state in `workflow-protocol.md` that one repo takes one session.
+    **Cost:** nothing. **Risk:** relies on the human remembering, which is what failed here.
+- **Not yet established, and worth answering before building anything.** How often this happens, and
+  whether running parallel sessions in one repo is normal practice or was a one-off. If it is rare,
+  the third option is the correct and cheapest outcome; this item should prefer that absent evidence.
+
+**Interacts with:** OPS-25, whose migration this interrupted; and OPS-27, since like an unrecorded
+hook trip it left nothing durable — it was recoverable only from `git reflog`, and only within the
+session that witnessed it.
+
 ## Done
 
 | id | Summary | Shipped |
