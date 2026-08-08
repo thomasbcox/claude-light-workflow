@@ -34,8 +34,8 @@ declaratively.
   rejection must show, not the disposition.
 - Re-litigating `txl-assessment-collector`'s parked `nuqs` evaluation. That is that repo's
   call and is already recorded there.
-- Machinery to enforce the rule. It is prompt text, judged by a model, like the three
-  guardrails beside it.
+- Machinery to enforce the rule. It is prompt text, judged by a model, like the guardrails
+  beside it.
 
 ## Acceptance criteria
 
@@ -168,3 +168,14 @@ swallow or silently degrade on failure.
 Thomas: *"fix the nit and close"*.
 
 **Hidden-failure** — no findings; nothing to decide.
+
+## Fixes (2026-08-07)
+
+- **NIT — Story file Non-goals still says "three guardrails".** Changed *"like the three
+  guardrails beside it"* → *"like the guardrails beside it"* in **Non-goals**, matching the
+  count-free style this change applies to the deployed files. One line; no deployed artifact
+  touched.
+
+Not changed, deliberately: the design sketch's *"re-enumerated all three guardrails
+verbatim"* is a past-tense statement about what those prompt files used to contain. It is
+accurate history, not a live count, and the reviewer did not flag it.
