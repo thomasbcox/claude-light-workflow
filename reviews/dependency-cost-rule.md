@@ -159,3 +159,12 @@ missed it. The critic cited line 22 — the claim is correct, the line number is
 **Summary:** clean, no findings. The change is editorial — no executable error-handling
 paths, assertions, or safety checks are introduced, removed, or weakened. Nothing can
 swallow or silently degrade on failure.
+
+## Decisions (2026-08-07)
+
+**Approach pass** — no findings; nothing to decide.
+
+**Correctness — NIT, Story file Non-goals still says "three guardrails":** **FIX.**
+Thomas: *"fix the nit and close"*.
+
+**Hidden-failure** — no findings; nothing to decide.
