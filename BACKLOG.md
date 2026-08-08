@@ -442,41 +442,6 @@ becomes the **N+1** that fails the scope-containment AC — a defect the workflo
 enhancement — filed `OPS-` as workflow-tooling ergonomics, estate-wide via `install.sh`. A **sixth**
 `OPS-` workflow item; the prefix-revisit question OPS-11 opened keeps accruing data points.)
 
-OPS-17 — **Fixes keep "re-appearing" because each rule is restated in multiple artifacts; single-source
-it.** Filed 2026-07-24 from Thomas's observation ("why do we keep seeing issues re-appear we thought
-we'd fixed"), root-caused during `deep-audit-plan`. Evaluate-and-decide.
-
-- **The root cause (not a mystery — a consistent pattern).** Every rule in a skill-story is stated
-  in **several places**: the **skill prose** (`SKILL.md`), the **schema `description` fields**
-  (which restate rules as English), the **story ACs**, the **drift-linter pins** (which quote skill
-  text), and the **smoke/example artifact**. A fix updates the copy the finding cited and misses the
-  siblings, and **nothing cross-checks the copies for agreement** — so a later review finds the
-  un-fixed copy and it reads as "the same issue, again." Documented instances in this one story:
-  round-4 replayability (fixed the AC, missed skill+linter → resurfaced round 8), round-6 tier
-  removal (fixed skill+smoke, missed schema → resurfaced round 8), round-8 F1/F3 (fixed skill, missed
-  schema → resurfaced at re-review as RR-1/RR-2). Same shape every time.
-- **The worst offender: schema `description` fields.** JSON-Schema *structural* constraints
-  (`required`/`enum`/`oneOf`) are **enforced**; the `description` strings are **unenforced prose**
-  that duplicate skill rules ("derives deterministically", "never overwrites"). The drift linter
-  pins only the *skill* text, so schema descriptions drift silently. This is a DRY violation dressed
-  as documentation.
-- **Candidate fixes (evaluate).** (a) **Minimise restatement** — each rule lives in exactly one
-  authoritative place (the skill); schema descriptions describe a field's *shape/meaning* and
-  **reference** the skill for the *rule* rather than restating it; ACs reference, don't duplicate.
-  (This is the fix `deep-audit-plan`'s RR-1/RR-2 applied locally.) (b) **Cross-consistency linting**
-  — the drift linter asserts skill↔schema↔AC agreement on shared claims (more pins chasing copies;
-  brittle). (c) A **frame/close doctrine line**: "a behavioural rule is stated once; other artifacts
-  reference it." Lean: (a)+(c) — remove the duplicate copies rather than police them.
-- **A second, related reliability lesson (record, may split out).** During the same re-review the
-  **independent reviewer echoed prior findings** verbatim from the story file (which quotes them)
-  instead of re-reading the current sources — a false "recurrence." Mitigation: the re-review prompt
-  should direct the reviewer to verify against *current file contents* and treat the story's recorded
-  findings as historical. (Caught by content-diffing the reviewer output vs. the prior artifact.)
-
-(Logged 2026-07-24. A **seventh** `OPS-` workflow item and the first about the loop's **DRY /
-single-source-of-truth** discipline — estate-wide, since it is inherent to how skill+schema+AC+linter
-restate rules. The prefix-revisit question OPS-11 opened keeps accruing data points.)
-
 OPS-18 — **/review-side falsification companion**: the reviewer proposes mutations for test-bearing
 stories at review time, complementing the frame-side plan (spec-time, criterion-derived, executed as
 step-9 demonstrate-red — shipped via `reviews/frame-falsification-plan.md`). Filed 2026-08-02 as
@@ -971,6 +936,7 @@ OPS-29 — **The correctness critic's `severity` field carries no description at
 
 | id | Summary | Shipped |
 |---|---|---|
+| OPS-17 | Rules restated across skill prose, schema `description` fields, ACs, drift pins and samples meant a fix landed on one copy and the siblings kept the old text, so a later round reported the un-fixed copy as the same defect returning. **Decided and shipped: remove the copy, do not police it.** Rule text now lives once in `workflow-AGENTS.md`; schema descriptions carry markers (`{{contract:Classify#reversibility}}`) that the runner resolves **into the request** and discards with it, so no derived copy is stored and none can drift. Fail-closed before any API spend; one resolver feeds both backends; the codex render goes to a temp the runner refuses to place inside a working tree. The item's own recommended fix — have descriptions *reference* the skill — was **verified impossible**: descriptions are the reviewer's live instructions and it cannot follow a pointer. **Deliberately excluded:** restatements sourced from a skill rather than the contract (`lesson-review-schema.json`'s `trigger_qualified`), and the AC / test-pin / sample copies — those readers *can* follow a pointer, so `workflow-protocol.md` → *Stated once, assembled per call* covers them by convention rather than machinery. A new item, not this one, if either later needs building. | PR #54 / `merge: single-source-rules` |
 | OPS-21 | `AGENTS.md` served two jobs at once — this repo's reviewer contract *and* the template every other repo copied — so this repo structurally could not give its reviewer repo-specific guidance. Resolved by removing the premise rather than either option it weighed: the shared contract was renamed to `workflow-AGENTS.md` and deploys once to `~/.claude/`, so `AGENTS.md` in every repo now means repo-specific additions only. Options B (decouple the template) and B′ (an `AGENTS.local.md` addendum) are both moot — neither is needed once the contract is never copied. | PR #52 / `merge: user-level-contract` |
 | OPS-4 | `/close`'s merge step raced GitHub's async mergeability computation (5×5s `mergeStateStatus` poll loop). Fixed: replaced with `gh pr merge --auto`, delegating merge timing to GitHub; added `allow_auto_merge` pre-flight and MERGED-state poll. | PR #6 / `499d6b6` |
 | OPS-5 | `/close`'s auto-merge pre-flight aborted whenever `allow_auto_merge` was `false`, even with no required checks. Fixed: three-way merge strategy — auto-merge path when enabled, direct `gh pr merge` when disabled with no required checks, abort only when disabled *and* ≥1 required status check (detected via classic branch protection, degrading to zero on 403/404; rulesets out of scope). | PR #8 / `0406185` |
