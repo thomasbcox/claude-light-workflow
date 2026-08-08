@@ -17,17 +17,56 @@
         "properties": {
           "severity": {
             "type": "string",
-            "enum": ["BLOCKER", "IMPORTANT", "QUESTION", "NIT"]
+            "enum": [
+              "BLOCKER",
+              "IMPORTANT",
+              "QUESTION",
+              "NIT"
+            ]
           },
-          "title": { "type": "string", "description": "Short label for the hidden-failure finding." },
-          "file": { "type": ["string", "null"], "description": "Path the finding is about, or null." },
-          "line": { "type": ["integer", "null"], "description": "Line number, or null." },
-          "claim": { "type": "string", "description": "How the diff swallows/absorbs/silently degrades on error (bare or blind except|catch, catch-log-continue where propagating is correct, silent fallback, deleted assertion or safety check) and why letting it continue unsurfaced matters." },
-          "suggestion": { "type": ["string", "null"], "description": "Concrete way to surface the failure instead (propagate, assert, fail loudly), or null." }
+          "title": {
+            "type": "string",
+            "description": "Short label for the hidden-failure finding."
+          },
+          "file": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Path the finding is about, or null."
+          },
+          "line": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Line number, or null."
+          },
+          "claim": {
+            "type": "string",
+            "description": "{{contract:Your role#Hidden failure:}}"
+          },
+          "suggestion": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Concrete way to surface the failure instead (propagate, assert, fail loudly), or null."
+          }
         },
-        "required": ["severity", "title", "file", "line", "claim", "suggestion"]
+        "required": [
+          "severity",
+          "title",
+          "file",
+          "line",
+          "claim",
+          "suggestion"
+        ]
       }
     }
   },
-  "required": ["summary", "findings"]
+  "required": [
+    "summary",
+    "findings"
+  ]
 }

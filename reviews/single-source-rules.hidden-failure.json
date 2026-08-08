@@ -1,0 +1,4 @@
+{
+  "summary": "The diff introduces call-time marker resolution with a strict fail-closed error model: unresolved or malformed markers raise `RunnerError` before any API call, `--render-schema` exits non\u2011zero on failure, and schema-loading errors are caught and re\u2011raised as loud errors with descriptive messages. No bare except/catch blocks, no catch\u2011log\u2011continue patterns, and no deleted assertions or safety checks are present. The change is designed to make failure visible, not to absorb it, so no hidden failures were found.",
+  "findings": []
+}

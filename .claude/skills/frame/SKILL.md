@@ -51,8 +51,14 @@ Step 1 of the lightweight Claude↔Codex review loop. Doctrine: `~/.claude/workf
    **If `codex`** — run read-only. The shared contract is **pushed into the prompt**, not fetched: asking the model to go read a path depends on both the sandbox permitting the read *and* the model bothering to do it, and a review that ran with no contract is indistinguishable from a good one. Interpolation removes both failure modes. (`"$CONTRACT"` is safe despite the contract's backticks — parameter expansion is not re-scanned for command substitution.) Codex still auto-reads the repo's own `AGENTS.md`, which under this arrangement carries **local additions only**:
    ```bash
    CONTRACT="$(cat "$HOME/.claude/workflow-AGENTS.md")" || { echo "ABORT: shared reviewer contract missing — run ./install.sh"; exit 1; }
+   # The schema's rule text is STORED ONCE (in the contract) and ASSEMBLED per call.
+   # Render to a temp OUTSIDE the repo — the runner refuses an in-tree --out, because a
+   # resolved schema left behind by an interrupt is one `git add -A` away from becoming
+   # the stored second copy this mechanism abolishes. Non-zero exit stops the round.
+   SCHEMA="$(mktemp)"; trap 'rm -f "$SCHEMA"' EXIT
+   python3 "$HOME/.claude/skills/review/fireworks_runner.py" --render-schema design --out "$SCHEMA" || exit 1
    codex exec -s read-only \
-     --output-schema "$HOME/.claude/skills/review/design-review-schema.json" \
+     --output-schema "$SCHEMA" \
      -o reviews/<slug>.design.json \
      ${codexModel:+-m "$codexModel"} \
      "Your reviewer contract is reproduced IN FULL below and is authoritative. It is the shared contract for every repository on this machine. If this repository also has an AGENTS.md, that file carries repo-specific ADDITIONS ONLY — never a replacement contract; read it as an addendum to what follows.

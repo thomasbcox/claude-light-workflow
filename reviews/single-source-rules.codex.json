@@ -1,0 +1,29 @@
+{
+  "summary": "The implementation faithfully realizes the ratified spec: marker resolution from a single contract source, fail-closed on any unresolved/malformed marker, one resolver feeding both backends, structural prevention of in-tree rendered schemas, and a behavioral codex-render check. The grammar rules (a)\u2013(d) are implemented exactly as pinned. The marker map is validated, the resolver walks the full schema tree, and the fire-closed cases assert zero API calls. I found no correctness defects that would block merge. A few minor observations below.",
+  "findings": [
+    {
+      "severity": "QUESTION",
+      "title": "_inside_working_tree probes dest.parent, not dest itself \u2014 is that the intended boundary?",
+      "file": ".claude/skills/review/fireworks_runner.py",
+      "line": 908,
+      "claim": "_inside_working_tree checks `git -C <probe> rev-parse --is-inside-work-tree` where probe = dest.parent if it exists, else cwd. For a dest like /tmp/schema.json, dest.parent (/tmp) is outside any working tree, so the check passes correctly. But for a dest whose parent exists and is inside a working tree while dest itself is also inside it, this works. The edge case: if dest.parent does not exist (a yet-uncreated temp subdirectory), it falls back to Path.cwd() \u2014 which in a repo context IS a working tree, so a path under a non-existent /tmp/subdir/schema.json would be incorrectly refused (false positive, fail-closed, safe). The more concerning inverse: a dest inside a working tree reached via a parent that itself is outside (e.g., a symlinked temp dir that resolves into a repo). .resolve() is called on dest before _inside_working_tree, so symlinks are resolved \u2014 good. This is fail-safe (errs toward refusal), so not a blocker, but the cwd fallback when parent doesn't exist could surprise a caller using a novel temp subdirectory.",
+      "suggestion": "Confirm the cwd fallback is acceptable (it fails safe). If a novel temp subdir path is ever needed, create the parent directory first, or probe dest itself via git -C with the file path."
+    },
+    {
+      "severity": "NIT",
+      "title": "review/SKILL.md correctness pass uses --render-schema correctness and hidden-failure but the test sentinel only checks Severity labels",
+      "file": "tests/check_codex_render.py",
+      "line": 29,
+      "claim": "SENTINEL_SECTIONS = (\"Severity labels\",) and the check asserts at least one consumed schema carries that section's text. The correctness critic's schema (finding-schema.json) carries no markers (per the story's audit), so its rendered form is identical to its stored form \u2014 the sentinel text would only appear in the design/approach/hidden-failure schemas. The review/SKILL.md block renders both correctness and hidden-failure; the correctness render produces a schema with no resolved contract text, so it contributes no sentinel. The check still passes because the hidden-failure render does carry resolved text. This is fine \u2014 the check's purpose is to prove resolution ran end-to-end at least once, not on every block \u2014 but it means the correctness block's render is only checked for absence of markers, not presence of resolved text.",
+      "suggestion": "No change needed. If you want stronger coverage, add a sentinel from the hidden-failure schema's claim description (e.g., the Hidden failure bullet) so the correctness critic's sibling block is also proven to carry resolved text."
+    },
+    {
+      "severity": "NIT",
+      "title": "MARKER_RE and ANY_MARKER_RE use re.S (DOTALL) which is unnecessary for single-line descriptions",
+      "file": ".claude/skills/review/fireworks_runner.py",
+      "line": 678,
+      "claim": "MARKER_RE = re.compile(r\"^\\{\\{(.+?)\\}\\}$\", re.S) and ANY_MARKER_RE = re.compile(r\"\\{\\{.*?\\}\\}\", re.S) both pass re.S. JSON description values are single-line strings (JSON strings cannot contain literal newlines without \\n escapes), so DOTALL has no effect here. It's harmless but could mislead a future reader into thinking markers can span newlines.",
+      "suggestion": "Drop re.S from both compilations, or add a comment noting it's harmless for JSON string values."
+    }
+  ]
+}
