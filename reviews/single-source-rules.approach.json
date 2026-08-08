@@ -1,0 +1,26 @@
+{
+  "verdict": "The shape is sound: call-time marker resolution from one authoritative source, fail-closed before any API spend, one resolver feeding both backends, structural prevention of committed derived copies, and a behavioral test that inspects what codex consumes rather than what the skill spells. The grammar is pinned and well-documented. The error model is consistent with the runner's existing doctrine. No dependency is reinvented and no framework feature is hand-rolled \u2014 the ~100-line resolver is deliberately narrow (contract-only, fail-closed) where a general templating engine would be both overbuilt and unable to provide the fail-closed guarantee that is the whole point. One marker choice degrades a field description, and one file's coverage cannot be verified from what was provided.",
+  "findings": [
+    {
+      "severity": "IMPORTANT",
+      "reversibility": "two-way",
+      "standing": "standard",
+      "title": "hidden-failure-schema claim marker is too coarse \u2014 a #term anchor was available and more appropriate",
+      "locus": ".claude/skills/review/hidden-failure-schema.json \u2192 properties.findings.items.properties.claim.description",
+      "claim": "The marker {{contract:Your role}} resolves to the entire multi-altitude role section (~15 lines: independent-check preamble, correctness bullet with hidden-failure sub-bullet, design/approach bullet, shape-flaw sub-bullet). The claim field in a hidden-failure schema should describe what hidden-failure findings look like, not what all review roles are \u2014 the model already receives the full contract in its prompt, so the field description's job is field-specific guidance, not general role context. The resolver's _select_term matches indented sub-bullets (the regex ^\\s*(?:-|\\d+\\.)\\s+\\*\\* accepts leading whitespace), so {{contract:Your role#Hidden failure:}} would have resolved to just the focused hidden-failure bullet \u2014 text nearly identical to the original description the marker replaced. Open question 1 said to settle per anchor and record which; no recording is visible in the story file or the code. The other four markers (severity, reversibility, standing, win) are well-chosen \u2014 this one is the exception.",
+      "alternative": "Change the marker to {{contract:Your role#Hidden failure:}} (the sub-bullet bold lead-in, exact match). The resolved text becomes the 3-line hidden-failure definition instead of the 15-line role section. If the colon in the lead-in is undesirable, declare this field a literal exception per open question 1 and keep the original focused description.",
+      "win": "The claim field \u2014 the primary output of the hidden-failure critic \u2014 gets focused hidden-failure guidance instead of generic multi-altitude role context. The field description becomes 3 lines instead of 15, and the per-anchor settlement open question 1 required is either resolved or declared."
+    },
+    {
+      "severity": "QUESTION",
+      "reversibility": "two-way",
+      "standing": "standard",
+      "title": "finding-schema.json was not provided \u2014 cannot verify AC1 migration completeness for it",
+      "locus": ".claude/skills/review/finding-schema.json (not in the provided file set)",
+      "claim": "AC1 requires that every schema description restating a contract rule carries a marker. The MARKER_MAP has 5 entries across design-review-schema.json and hidden-failure-schema.json \u2014 none for finding-schema.json. The story says finding-schema.json was 'reverted after an incidental reformat' but neither converts its descriptions nor names them as a non-goal (the way lesson-review-schema.json's trigger_qualified is explicitly named). finding-schema.json shares the same finding shape as hidden-failure-schema.json (severity, title, file, line, claim, suggestion), and hidden-failure-schema's claim field had a restating description that was converted. If finding-schema.json's claim field (or any other field) likewise restates a contract rule, it is a stored second copy AC1 should have addressed. The file's full contents were not provided, so this cannot be verified from the materials given.",
+      "alternative": "Provide finding-schema.json's full contents so the migration's completeness can be verified. If its descriptions are field-shape guidance (not rule restatements), note that in the story file. If any restate contract rules, either convert them to markers or name them as a declared literal exception / non-goal.",
+      "win": "Closes the verification gap for AC1's 'every' quantifier \u2014 the criterion either covers finding-schema.json (and is now verified) or the file is explicitly out of scope (and the non-goal is named, not silently skipped)."
+    }
+  ],
+  "regressions": []
+}
