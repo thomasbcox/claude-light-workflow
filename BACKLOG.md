@@ -780,18 +780,27 @@ outside that story's diff** — a scope-containment AC governs only this repo.
   similarity. Emphasis markers normalised, since one repo runs Prettier over Markdown and rewrites
   `*shape*` as `_shape_`.
 
-| Repo | Lines | Genuinely local | Action |
-|---|---|---|---|
-| `ruleset-sim` | 99 | **68** (one block) | **Trim** — keep lines 25–93 (`## Project rules to enforce` → end of that section); delete 1–24 and 94–99 |
-| `txl-assessment-collector` | 120 | **84** (one block) | **Trim** — keep lines 27–120 (`## Project testing convention (the gate)` → EOF); delete 1–26 |
-| `sudoku-hints` | 85 | 0 | **DONE** — file deleted 2026-08-05 (uncommitted) |
-| `zoom-meeting-cost` | 25 | 0 | **DONE** — file deleted 2026-08-05 (uncommitted) |
+| Repo | Lines | Genuinely local | Action | State (2026-08-07) |
+|---|---|---|---|---|
+| `ruleset-sim` | 99 | **68** (one block) | **Trim** — keep `## Project rules to enforce` → end of that section | **DONE, committed** `f93c0ab` on `master`. Trimmed *and* given the standard addendum header; now 88 lines, local content from line 20 |
+| `txl-assessment-collector` | 120 | **84** (one block) | **Trim** — keep `## Project testing convention (the gate)` → EOF | **DONE, committed** `cf6a8cb` on `main`. Same shape; now 113 lines, local content from line 20 |
+| `zoom-meeting-cost` | 25 | 0 | **Delete** | **DONE, committed** 2026-08-07 — `chore:`/`merge:` pair on `main`; nothing local to keep |
+| `sudoku-hints` | 85 | 0 | **Delete** | **OUTSTANDING** — still tracked on `master`; see below |
 
-- **Both trims are a single contiguous block** and both boundaries land on a `##` heading, so each is
-  a top-and-tail, not surgery. Line numbers are against each repo's committed `AGENTS.md` at filing.
-- **The two deletions are uncommitted** and sit on those repos' working trees; `sudoku-hints` was
-  mid-story on a feature branch when it was done, so committing it needs care not to fold a contract
-  deletion into an unrelated story's diff.
+- **The line numbers originally recorded here were already stale** when this item was next picked up
+  (both files had moved: 99→88 and 120→113). Re-derive boundaries from the files, never from this
+  table. Both trims landed on a `##` heading as predicted, so the top-and-tail shape held.
+- **`sudoku-hints` is the one repo left.** The deletion sits **uncommitted** on its working tree and
+  is therefore live-but-fragile: `_contract_local` reads `AGENTS.md` from the **working tree**, so
+  reviews there already behave as migrated — until any `git checkout .`, stash, or fresh clone
+  restores the file and fails them closed. The original caution here (don't fold it into an unrelated
+  story's diff) **no longer applies**: `claude/puzzle-bank-generator` had zero commits of its own, so
+  there was no story diff to pollute. **What blocks it now is different** — an attempt on 2026-08-07
+  found a *concurrent session* actively running `/frame` in that repo (it committed
+  `spec: puzzle-bank-generator` mid-attempt and had begun editing engine files). Branch-switching
+  under a live session is unsafe, so the attempt was abandoned with no changes made. **Do this when
+  that repo is idle:** commit the deletion on a short branch off `master` and merge it, exactly as
+  `zoom-meeting-cost` was done.
 - **Out of scope:** `hw-biz-model` runs the heavier v3 protocol with its own contract lineage, and
   `convo2article` names a different reviewer tool (`fireworks-reviewer`) — Thomas excluded it
   explicitly.
