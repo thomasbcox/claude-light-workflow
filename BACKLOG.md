@@ -813,60 +813,6 @@ outside that story's diff** — a scope-containment AC governs only this repo.
 story; and OPS-24, since `install.sh --check` will keep reporting a false HAND-EDITED while the
 deployed runner carries bytecode.)
 
-OPS-26 — **A dependency rejection must name its cost.** Filed 2026-08-05 by Thomas, in his own
-words below.
-
-**Story.** *As the product owner reading a review, I want any reviewer who rejects an available
-library in favour of hand-rolled code to name what that library would specifically cost, so that I
-can weigh reinvention against dependency on stated evidence instead of treating "it would be a
-dependency" as self-evidently decisive.*
-
-**Why now.** In `txl-assessment-collector`, a hand-rolled URL-state module was blessed because
-*"adding one for two small consumers would lose the concrete dependency-free win."* It shipped a
-user-visible bug — **multi-word filter terms cannot be typed** — that **passed all four of that
-story's review passes** and was caught two stories later by a different pass. `nuqs` covers roughly
-70% of that module declaratively. The reasoning was a proxy ("fewer dependencies") standing in for
-costs nobody named.
-
-**Acceptance criteria.**
-
-1. A review that rejects an available dependency states a **specific cost** — upgrade coupling,
-   surface area, maintenance posture, or licence. A rejection resting only on dependency *count* is
-   incomplete, and reads as incomplete to the person deciding.
-2. *"No installed dependency does this"* is **not** a sufficient answer to *"does this reinvent
-   something."* The reviewer weighs dependencies that **could be added**, not only those already
-   present.
-3. Where a candidate library exists, the reviewer **names it**, so the decision is a trade between
-   two concrete options rather than an abstraction.
-4. *"Too small to justify a dependency"* is not accepted on its own, because it is true at every
-   increment — the reviewer says **what would change the answer** (e.g. a third consumer).
-5. The change lands in the workflow's reviewer-contract template and **reaches repos that already
-   hold a copy** — historically `/frame` seeded the template only when `AGENTS.md` was absent, so
-   existing repos needed an explicit path.
-
-**AC5 note — Thomas flagged it as the one most likely to be missed, and `user-level-contract`
-largely dissolves it.** Once that story merges the contract is **shared, not copied**: it lives at
-`~/.claude/workflow-AGENTS.md` and every repo reads that same file, so an amendment reaches every
-repo on the next `./install.sh` with no per-repo path needed. What remains of AC5 is a **sequencing**
-requirement, not a distribution one: this item should be built **after** `user-level-contract` ships
-and the OPS-25 migration is done, or it inherits the very staleness problem AC5 names. If it is
-built first, AC5 stands as originally written.
-
-**Where the rule belongs.** The three guardrails on the best-practice lens (*concrete win not
-novelty; weigh internal consistency; repo conventions are the local standard*) live in the shared
-contract and are quoted by every pass prompt. This item adds a fourth constraint to the same lens —
-the natural home is beside them, so every altitude inherits it without a per-prompt edit.
-
-**Bearing on the loop's own evidence.** The cited failure is a defect that **survived four review
-passes** and was caught only by a later, differently-framed one. That is the same class OPS-20
-addresses — a check that cannot fail in the way that matters — arriving from the *dependency*
-direction rather than the *test* direction, and it is worth weighing in OPS-22's lookback.
-
-(Logged 2026-08-05. A **fourteenth** `OPS-` item, and the first sourced from a defect observed in a
-consumer repo rather than in this one. **Interacts with:** `user-level-contract` and OPS-25, which
-together resolve AC5's distribution half; OPS-22, whose lookback should weigh the four-passes-missed
-evidence; and OPS-23, since the contract is edited there too.)
-
 _(OPS-10 shipped — see [Done](#done).)_
 
 ---
@@ -945,6 +891,7 @@ OPS-29 — **The correctness critic's `severity` field carries no description at
 
 | id | Summary | Shipped |
 |---|---|---|
+| OPS-26 | A reviewer could reject an available library on "it would be a dependency" alone — a proxy standing in for costs nobody named. In `txl-assessment-collector` that reasoning blessed a hand-rolled URL-state module which shipped a user-visible bug (multi-word filter terms could not be typed) that **passed all four of that story's review passes**; `nuqs` covers ~70% of it declaratively. **Shipped as a fourth guardrail on the best-practice lens** in `workflow-AGENTS.md`, so every pass at both altitudes inherits it with no per-prompt edit: weigh libraries that *could* be added (not only those installed), name the candidate, give a **specific** cost to reject it (upgrade coupling, surface area, maintenance posture, licence — never dependency *count*), and say what would change the answer. **AC5 dissolved into sequencing** rather than distribution, as the item predicted: the contract is shared, not copied, so the amendment reaches every repo on the next `./install.sh`. Built after the OPS-25 migration per that ordering. **Carried by the same change:** the hardcoded "three guardrails" count was **dropped, not incremented**, at the four prompt sites that restated it — those readers receive the full contract and can follow a pointer, and incrementing would leave the identical trap for a fifth guardrail. | PR #56 / `merge: dependency-cost-rule` |
 | OPS-17 | Rules restated across skill prose, schema `description` fields, ACs, drift pins and samples meant a fix landed on one copy and the siblings kept the old text, so a later round reported the un-fixed copy as the same defect returning. **Decided and shipped: remove the copy, do not police it.** Rule text now lives once in `workflow-AGENTS.md`; schema descriptions carry markers (`{{contract:Classify#reversibility}}`) that the runner resolves **into the request** and discards with it, so no derived copy is stored and none can drift. Fail-closed before any API spend; one resolver feeds both backends; the codex render goes to a temp the runner refuses to place inside a working tree. The item's own recommended fix — have descriptions *reference* the skill — was **verified impossible**: descriptions are the reviewer's live instructions and it cannot follow a pointer. **Deliberately excluded:** restatements sourced from a skill rather than the contract (`lesson-review-schema.json`'s `trigger_qualified`), and the AC / test-pin / sample copies — those readers *can* follow a pointer, so `workflow-protocol.md` → *Stated once, assembled per call* covers them by convention rather than machinery. A new item, not this one, if either later needs building. | PR #54 / `merge: single-source-rules` |
 | OPS-21 | `AGENTS.md` served two jobs at once — this repo's reviewer contract *and* the template every other repo copied — so this repo structurally could not give its reviewer repo-specific guidance. Resolved by removing the premise rather than either option it weighed: the shared contract was renamed to `workflow-AGENTS.md` and deploys once to `~/.claude/`, so `AGENTS.md` in every repo now means repo-specific additions only. Options B (decouple the template) and B′ (an `AGENTS.local.md` addendum) are both moot — neither is needed once the contract is never copied. | PR #52 / `merge: user-level-contract` |
 | OPS-4 | `/close`'s merge step raced GitHub's async mergeability computation (5×5s `mergeStateStatus` poll loop). Fixed: replaced with `gh pr merge --auto`, delegating merge timing to GitHub; added `allow_auto_merge` pre-flight and MERGED-state poll. | PR #6 / `499d6b6` |

@@ -42,7 +42,7 @@ builder rationalizes away.
 ## Best-practice assessment (always on, both altitudes)
 Assess every notable decision against **modern idiom AND this repo's own conventions**, and **flag
 nonstandard / dated / kludgy choices regardless of reversibility** — a perfectly reversible (two-way)
-choice still gets flagged if it's substandard. Three guardrails keep this honest:
+choice still gets flagged if it's substandard. These guardrails keep this honest:
 
 1. **Concrete win, not novelty.** Every flag names the payoff (lines removed, a dependency dropped,
    an error path eliminated, an invariant centralized). "It is newer" is not a reason — never churn
@@ -51,6 +51,12 @@ choice still gets flagged if it's substandard. Three guardrails keep this honest
    codebase; matching existing patterns can rightly win. Flag deviation from **both** the ecosystem
    norm and the repo's conventions.
 3. **Repo conventions are the local standard** — this file and any contributing docs define it.
+4. **A dependency rejection names its cost.** Weigh libraries that *could be added*, not only those
+   already installed — "nothing installed does this" does not answer "does this reinvent something."
+   Name the candidate, so the choice is a trade between two concrete options. To reject it, give a
+   **specific** cost — upgrade coupling, surface area, maintenance posture, licence; dependency
+   *count* is not one. "Too small to justify a dependency" is true at every increment, so say what
+   would change the answer (a third consumer, a second edge case).
 
 **Deployment reach.** If the repo maps files to consumers outside itself — an install script, a
 template or artifact manifest, a published package, a shared config — then changes to those files

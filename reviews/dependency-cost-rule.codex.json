@@ -1,0 +1,13 @@
+{
+  "summary": "The change adds a fourth guardrail to the reviewer contract requiring dependency rejections to name a concrete cost, and drops the hardcoded 'three guardrails' count from five live places. All five acceptance criteria are met: guardrail 4 in workflow-AGENTS.md covers ACs 1\u20134 (specific cost, weigh addable libraries, name the candidate, say what would change the answer), and AC5 is satisfied by amending the already-deployed workflow-AGENTS.md. The count-removal is consistently applied across frame/SKILL.md, review/SKILL.md, and both fireworks_runner.py prompt strings. The guardrail wording avoids the regression the test notes warn about \u2014 it constrains how to reject, not whether to accept, and doesn't override guardrail 1. One minor documentation inconsistency in the newly-written story file.",
+  "findings": [
+    {
+      "severity": "NIT",
+      "title": "Story file Non-goals still says 'three guardrails'",
+      "file": "reviews/dependency-cost-rule.md",
+      "line": 22,
+      "claim": "The Non-goals section, newly written in this diff, says 'like the three guardrails beside it' \u2014 but the change adds a fourth guardrail and the design sketch's whole rationale is dropping the count. Every deployed file was updated; this newly-authored story file was not.",
+      "suggestion": "Change to 'the guardrails beside it' (matching the count-free style applied to the deployed files) or 'the four guardrails beside it.'"
+    }
+  ]
+}

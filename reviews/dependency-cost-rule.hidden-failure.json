@@ -1,0 +1,4 @@
+{
+  "summary": "This change is entirely editorial \u2014 it drops hardcoded guardrail counts in prompt text and adds a new numbered rule. No executable error-handling paths, try/catch blocks, assertions, or safety checks are introduced, removed, or weakened. There is no mechanism to silently swallow or degrade on failure; the diff modifies only Markdown and a single JSON artifact. No hidden-failure issues are present.",
+  "findings": []
+}
