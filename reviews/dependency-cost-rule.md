@@ -124,3 +124,15 @@ Carried by the same change, not by any AC — the dropped guardrail count (see t
 sketch's flagged judgment call): `.claude/skills/frame/SKILL.md`,
 `.claude/skills/review/SKILL.md`, `.claude/skills/review/fireworks_runner.py` (two prompt
 strings).
+
+## Fireworks approach review (2026-08-07, base main, HEAD 1472abf)
+
+**Verdict:** approve
+
+No findings. No regressions proposed.
+
+*Noted for weight, not as a finding:* the verdict is a single word. Prior rounds in this
+repo returned a paragraph of reasoning in that field (see `single-source-rules.design.json`),
+so this pass gives less evidence of engagement than its clean result suggests. It clears the
+step-7 gate as written — empty findings blesses the shape — and that is recorded rather than
+overridden.
