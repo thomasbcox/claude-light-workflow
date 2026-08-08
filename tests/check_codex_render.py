@@ -34,7 +34,13 @@ from pathlib import Path
 # Anchors the rendered schema must actually contain, proving resolution happened
 # rather than merely that markers vanished. Derived from the contract at run time,
 # not retyped: a hardcoded phrase drifts the moment the contract is reworded.
-SENTINEL_SECTIONS = ("Severity labels",)
+#
+# TWO anchors, not one. With only "Severity labels", the correctness altitude's block
+# was checked solely for the ABSENCE of markers: neither schema it renders carries a
+# severity marker, so no capture from that block could ever contribute positive
+# evidence that resolution ran. The hidden-failure anchor is the one that block does
+# resolve. Added at the correctness review, 2026-08-07.
+SENTINEL_ANCHORS = (("Severity labels", None), ("Your role", "Hidden failure:"))
 
 STUB_CODEX = """#!/usr/bin/env bash
 # Records EVERY schema it is handed — one file per invocation, never overwriting.
@@ -67,16 +73,32 @@ def main() -> int:
     failures = 0
     contract_text = (root / "workflow-AGENTS.md").read_text()
     expected = []
-    for name in SENTINEL_SECTIONS:
-        lines = contract_text.splitlines()
-        i = lines.index(f"## {name}")
+    lines = contract_text.splitlines()
+    for name, term in SENTINEL_ANCHORS:
+        i = next(
+            (k for k, s in enumerate(lines)
+             if s.startswith("## ") and re.sub(r"\s*\([^)]*\)\s*$", "", s[3:]).strip() == name),
+            None,
+        )
+        if i is None:
+            print(f"FAIL  contract has no section '{name}' — nothing to assert against")
+            return 1
         j = next(
             (k for k in range(i + 1, len(lines)) if lines[k].startswith("## ")),
             len(lines),
         )
-        body = "\n".join(lines[i + 1 : j]).strip()
+        body_lines = lines[i + 1 : j]
+        if term is not None:
+            body_lines = [
+                s for s in body_lines
+                if re.match(r"^\s*(?:-|\d+\.)\s+\*\*" + re.escape(term) + r"\*\*", s)
+            ]
+            if not body_lines:
+                print(f"FAIL  contract section '{name}' has no '{term}' item")
+                return 1
+        body = "\n".join(body_lines).strip()
         if not body:
-            print(f"FAIL  contract section '{name}' is empty — nothing to assert against")
+            print(f"FAIL  contract anchor '{name}' is empty — nothing to assert against")
             return 1
         expected.append(body.splitlines()[0].strip())
 

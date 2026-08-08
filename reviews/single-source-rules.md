@@ -433,3 +433,13 @@ to re-derive it.
 
 Only finding 2 changes code. It is not shape-changing, so no re-review is implied by these
 dispositions — the re-review-or-merge choice remains Thomas's at `/close`'s fork.
+
+## Fixes (2026-08-07)
+
+The one approved code change. Findings 1 and 3 needed none — 1 was answered, 3 was rejected.
+
+| Approved finding | What changed |
+|---|---|
+| The correctness block's render was checked only for marker *absence* | `tests/check_codex_render.py` — `SENTINEL_SECTIONS` became `SENTINEL_ANCHORS`, carrying a **second** anchor (`Your role#Hidden failure:`) alongside `Severity labels`. Neither schema the correctness altitude renders carries a severity marker, so that block could never contribute positive evidence; the hidden-failure anchor is the one it does resolve. All three blocks now prove resolution ran, where two did before. |
+
+Header stays `Status: approved` — whether this round merges is unknown until the fork.
