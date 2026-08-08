@@ -136,3 +136,26 @@ repo returned a paragraph of reasoning in that field (see `single-source-rules.d
 so this pass gives less evidence of engagement than its clean result suggests. It clears the
 step-7 gate as written — empty findings blesses the shape — and that is recorded rather than
 overridden.
+
+## Fireworks correctness review (2026-08-07, base main, HEAD 6c58b4d)
+
+**Summary:** all five ACs met — guardrail 4 covers ACs 1–4, AC5 satisfied by amending the
+already-deployed `workflow-AGENTS.md`. Count-removal consistently applied across
+`frame/SKILL.md`, `review/SKILL.md`, and both `fireworks_runner.py` prompt strings. The
+wording avoids the regression the test notes warn about: it constrains *how* to reject, not
+*whether* to accept, and does not override guardrail 1.
+
+**NIT — Story file Non-goals still says "three guardrails"** (`reviews/dependency-cost-rule.md`)
+The Non-goals bullet reads *"like the three guardrails beside it"* while the change adds a
+fourth and the design sketch's whole rationale is dropping the count. Every deployed file
+was updated; this newly-authored story file was not.
+*Suggestion:* "the guardrails beside it", matching the count-free style applied to the
+deployed files.
+*Verified:* real. The phrase is split across lines 37–38, which is why a single-line grep
+missed it. The critic cited line 22 — the claim is correct, the line number is not.
+
+## Hidden-failure review (2026-08-07, base main, HEAD 6c58b4d)
+
+**Summary:** clean, no findings. The change is editorial — no executable error-handling
+paths, assertions, or safety checks are introduced, removed, or weakened. Nothing can
+swallow or silently degrade on failure.
