@@ -365,3 +365,38 @@ what the field is for, not the section that happens to contain it.** The rule is
 - The test fixture's contract lacked the finer anchor, so every altitude run failed closed until the
   fixture gained it. A finer anchor demands the fixture carry it; that coupling is the mechanism, not
   a test bug.
+
+## Fireworks correctness review (2026-08-07, base main, HEAD 5019e11)
+
+**Summary.** The implementation faithfully realizes the ratified spec: marker resolution from a single contract source, fail-closed on any unresolved/malformed marker, one resolver feeding both backends, structural prevention of in-tree rendered schemas, and a behavioral codex-render check. The grammar rules (a)–(d) are implemented exactly as pinned. The marker map is validated, the resolver walks the full schema tree, and the fire-closed cases assert zero API calls. I found no correctness defects that would block merge. A few minor observations below.
+
+**Findings.**
+
+- **[QUESTION] _inside_working_tree probes dest.parent, not dest itself — is that the intended boundary?**
+  - **Locus:** `.claude/skills/review/fireworks_runner.py`:908
+  - **Claim:** _inside_working_tree checks `git -C <probe> rev-parse --is-inside-work-tree` where probe = dest.parent if it exists, else cwd. For a dest like /tmp/schema.json, dest.parent (/tmp) is outside any working tree, so the check passes correctly. But for a dest whose parent exists and is inside a working tree while dest itself is also inside it, this works. The edge case: if dest.parent does not exist (a yet-uncreated temp subdirectory), it falls back to Path.cwd() — which in a repo context IS a working tree, so a path under a non-existent /tmp/subdir/schema.json would be incorrectly refused (false positive, fail-closed, safe). The more concerning inverse: a dest inside a working tree reached via a parent that itself is outside (e.g., a symlinked temp dir that resolves into a repo). .resolve() is called on dest before _inside_working_tree, so symlinks are resolved — good. This is fail-safe (errs toward refusal), so not a blocker, but the cwd fallback when parent doesn't exist could surprise a caller using a novel temp subdirectory.
+  - **Suggestion:** Confirm the cwd fallback is acceptable (it fails safe). If a novel temp subdir path is ever needed, create the parent directory first, or probe dest itself via git -C with the file path.
+
+- **[NIT] review/SKILL.md correctness pass uses --render-schema correctness and hidden-failure but the test sentinel only checks Severity labels**
+  - **Locus:** `tests/check_codex_render.py`:29
+  - **Claim:** SENTINEL_SECTIONS = ("Severity labels",) and the check asserts at least one consumed schema carries that section's text. The correctness critic's schema (finding-schema.json) carries no markers (per the story's audit), so its rendered form is identical to its stored form — the sentinel text would only appear in the design/approach/hidden-failure schemas. The review/SKILL.md block renders both correctness and hidden-failure; the correctness render produces a schema with no resolved contract text, so it contributes no sentinel. The check still passes because the hidden-failure render does carry resolved text. This is fine — the check's purpose is to prove resolution ran end-to-end at least once, not on every block — but it means the correctness block's render is only checked for absence of markers, not presence of resolved text.
+  - **Suggestion:** No change needed. If you want stronger coverage, add a sentinel from the hidden-failure schema's claim description (e.g., the Hidden failure bullet) so the correctness critic's sibling block is also proven to carry resolved text.
+
+- **[NIT] MARKER_RE and ANY_MARKER_RE use re.S (DOTALL) which is unnecessary for single-line descriptions**
+  - **Locus:** `.claude/skills/review/fireworks_runner.py`:678
+  - **Claim:** MARKER_RE = re.compile(r"^\{\{(.+?)\}\}$", re.S) and ANY_MARKER_RE = re.compile(r"\{\{.*?\}\}", re.S) both pass re.S. JSON description values are single-line strings (JSON strings cannot contain literal newlines without \n escapes), so DOTALL has no effect here. It's harmless but could mislead a future reader into thinking markers can span newlines.
+  - **Suggestion:** Drop re.S from both compilations, or add a comment noting it's harmless for JSON string values.
+
+
+## Hidden-failure review (2026-08-07, base main, HEAD 5019e11)
+
+**Summary.** The diff introduces call-time marker resolution with a strict fail-closed error model: unresolved or malformed markers raise `RunnerError` before any API call, `--render-schema` exits non‑zero on failure, and schema-loading errors are caught and re‑raised as loud errors with descriptive messages. No bare except/catch blocks, no catch‑log‑continue patterns, and no deleted assertions or safety checks are present. The change is designed to make failure visible, not to absorb it, so no hidden failures were found.
+
+**Findings.** None — empty array returned.
+
+**Verified before the consult — the `re.S` suggestion is wrong and must not be taken as written.**
+Its premise is that JSON strings cannot hold newlines, so DOTALL is inert. A JSON *source* line cannot,
+but a **parsed** description can: `"a\nb"` decodes to a real two-line string. Dropping `re.S` from
+`ANY_MARKER_RE` therefore turns a marker containing a newline from *caught as malformed* into
+*silently shipped as literal text* — a fail-open in the exact catch-all (grammar rule (d)) that
+reserves every namespace. Measured both ways: with `re.S` the search matches; without it, it does not.
